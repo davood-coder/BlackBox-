@@ -1,15 +1,20 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { AppHeader, Card, PrimaryButton, Screen } from "../../components/ui";
-import { timeRanges } from "../../data";
-import { useBooking } from "../../state/BookingContext";
-import { colors, fonts, radius, spacing } from "../../theme";
+import { AppHeader, Card, PrimaryButton, Screen } from "../components/ui";
+import { paymentMethods, timeRanges } from "../data";
+import { useBooking } from "../state/BookingContext";
+import { colors, fonts, radius, spacing } from "../theme";
 
 export default function BookingSummary({ navigation }) {
   const {
     selectedShop,
     selectedService,
     selectedBarber,
+    selectedAddOns,
+    selectedPreference,
+    selectedPaymentMethod,
+    setSelectedPaymentMethod,
+    appointmentNote,
     selectedDate,
     selectedTime,
     bookingTotal,
@@ -36,12 +41,22 @@ export default function BookingSummary({ navigation }) {
         <RowCard icon={selectedService.icon} title={selectedService.label} subtitle={selectedService.duration} price={`$${selectedService.price}`} />
       </SummarySection>
 
+      {selectedAddOns.length ? (
+        <SummarySection title="Add-ons">
+          <View style={styles.stackedRows}>
+            {selectedAddOns.map((addOn) => (
+              <RowCard key={addOn.id} icon={addOn.icon} title={addOn.label} subtitle={addOn.duration} price={`$${addOn.price}`} />
+            ))}
+          </View>
+        </SummarySection>
+      ) : null}
+
       <SummarySection title="Barber">
         <Card style={styles.rowCard}>
           <Image source={selectedBarber.image} style={styles.avatar} />
           <View style={{ flex: 1 }}>
             <Text style={styles.rowTitle}>{selectedBarber.name}</Text>
-            <Text style={styles.meta}>{selectedBarber.role}</Text>
+            <Text style={styles.meta}>{selectedBarber.role} - Next slot {selectedBarber.nextSlot}</Text>
           </View>
         </Card>
       </SummarySection>
@@ -53,21 +68,39 @@ export default function BookingSummary({ navigation }) {
         </Card>
       </SummarySection>
 
+      <SummarySection title="Visit Preferences">
+        <Card style={styles.textOnlyCard}>
+          <Text style={styles.rowTitle}>{selectedPreference.label}</Text>
+          <Text style={styles.meta}>{selectedPreference.description}</Text>
+          {appointmentNote.trim() ? <Text style={styles.noteText}>{appointmentNote.trim()}</Text> : null}
+        </Card>
+      </SummarySection>
+
       <Card style={styles.totalCard}>
         <Text style={styles.totalLabel}>Total Amount</Text>
         <Text style={styles.totalPrice}>${bookingTotal}</Text>
       </Card>
 
       <SummarySection title="Payment Method">
-        <Card style={styles.paymentCard}>
-          <View style={styles.visa}>
-            <Text style={styles.visaText}>Visa</Text>
-          </View>
-          <Text style={styles.paymentText}>Visa **** 4242</Text>
-          <Pressable style={styles.changeButton}>
-            <Text style={styles.changeText}>Change</Text>
-          </Pressable>
-        </Card>
+        <View style={styles.paymentList}>
+          {paymentMethods.map((method) => {
+            const selected = selectedPaymentMethod.id === method.id;
+            return (
+              <Pressable key={method.id} onPress={() => setSelectedPaymentMethod(method)} style={({ pressed }) => pressed && styles.pressed}>
+                <Card style={[styles.paymentCard, selected && styles.paymentSelected]}>
+                  <View style={[styles.paymentIcon, selected && styles.paymentIconSelected]}>
+                    <Feather name={method.icon as any} size={17} color={selected ? colors.black : colors.primary} />
+                  </View>
+                  <View style={styles.paymentCopy}>
+                    <Text style={styles.paymentTitle}>{method.label}</Text>
+                    <Text style={styles.paymentText}>{method.detail}</Text>
+                  </View>
+                  {selected ? <Feather name="check" size={18} color={colors.primary} /> : null}
+                </Card>
+              </Pressable>
+            );
+          })}
+        </View>
       </SummarySection>
       <PrimaryButton label="Confirm Booking" icon={null} onPress={handleConfirm} style={styles.confirm} />
     </Screen>
@@ -135,6 +168,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginBottom: 9
   },
+  stackedRows: {
+    gap: 10
+  },
   rowCard: {
     minHeight: 68,
     flexDirection: "row",
@@ -168,6 +204,13 @@ const styles = StyleSheet.create({
   textOnlyCard: {
     gap: 2
   },
+  noteText: {
+    color: colors.primary,
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 8
+  },
   totalCard: {
     minHeight: 56,
     flexDirection: "row",
@@ -185,43 +228,50 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     fontSize: 16
   },
+  paymentList: {
+    gap: 10
+  },
   paymentCard: {
     minHeight: 58,
     flexDirection: "row",
     alignItems: "center",
     gap: 10
   },
-  visa: {
-    paddingHorizontal: 7,
-    paddingVertical: 5,
-    borderRadius: 4,
-    backgroundColor: colors.white
+  paymentSelected: {
+    borderColor: colors.primary,
+    backgroundColor: "rgba(212,168,90,0.08)"
   },
-  visaText: {
-    color: "#1F4DB8",
-    fontFamily: fonts.bold,
-    fontSize: 11
+  paymentIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(212,168,90,0.1)"
   },
-  paymentText: {
+  paymentIconSelected: {
+    backgroundColor: colors.primary
+  },
+  paymentCopy: {
     flex: 1,
-    color: colors.secondaryText,
-    fontFamily: fonts.medium,
+    minWidth: 0
+  },
+  paymentTitle: {
+    color: colors.text,
+    fontFamily: fonts.semibold,
     fontSize: 13
   },
-  changeButton: {
-    borderWidth: 1,
-    borderColor: colors.divider,
-    borderRadius: 9,
-    paddingHorizontal: 10,
-    paddingVertical: 7
-  },
-  changeText: {
+  paymentText: {
     color: colors.secondaryText,
-    fontFamily: fonts.medium,
+    fontFamily: fonts.body,
     fontSize: 11
   },
   confirm: {
     marginTop: spacing.sm,
     marginBottom: 26
+  },
+  pressed: {
+    opacity: 0.76,
+    transform: [{ scale: 0.99 }]
   }
 });

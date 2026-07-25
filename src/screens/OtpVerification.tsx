@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { AppHeader, PrimaryButton, Screen } from "../../components/ui";
-import { colors, fonts, radius, spacing } from "../../theme";
+import { AppHeader, PrimaryButton, Screen } from "../components/ui";
+import { colors, fonts, radius, spacing } from "../theme";
 
 export default function OtpVerification({ navigation }) {
   const [digits, setDigits] = useState(["", "", "", ""]);

@@ -1,8 +1,8 @@
 import { ImageBackground, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { images } from "../../assets/images";
-import { PrimaryButton } from "../../components/ui";
-import { colors, fonts, spacing } from "../../theme";
+import { images } from "../assets/images";
+import { PrimaryButton } from "../components/ui";
+import { colors, fonts, spacing } from "../theme";
 
 export default function OnboardingThree({ navigation }) {
   const { width, height } = useWindowDimensions();

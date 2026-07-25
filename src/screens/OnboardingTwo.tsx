@@ -1,9 +1,9 @@
 import { ImageBackground, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { images } from "../../assets/images";
-import { PrimaryButton } from "../../components/ui";
-import { colors, fonts, radius, shadows, spacing } from "../../theme";
+import { images } from "../assets/images";
+import { PrimaryButton } from "../components/ui";
+import { colors, fonts, radius, shadows, spacing } from "../theme";
 
 export default function OnboardingTwo({ navigation }) {
   const { width, height } = useWindowDimensions();

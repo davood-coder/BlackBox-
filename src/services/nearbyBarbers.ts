@@ -40,6 +40,11 @@ export const DEFAULT_COORDS: Coordinates = {
 };
 
 const imagePool = [images.luxuryBarbershop, images.masterBarber, images.barberToolsBoard];
+const fallbackOffsets = [
+  { latitude: 0.006, longitude: -0.004 },
+  { latitude: -0.004, longitude: 0.005 },
+  { latitude: 0.003, longitude: 0.008 }
+];
 
 export function formatDistance(meters: number) {
   if (meters < 1000) return `${Math.max(120, Math.round(meters / 10) * 10)} m`;
@@ -57,14 +62,17 @@ export function distanceMeters(from: Coordinates, to: Coordinates) {
   return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export function fallbackShops(origin: Coordinates = DEFAULT_COORDS): Barbershop[] {
+export function fallbackShops(origin: Coordinates = DEFAULT_COORDS, localizeToOrigin = false): Barbershop[] {
   return barbershops
     .map((shop, index) => {
-      const meters = distanceMeters(origin, shop.coordinates);
+      const coordinates = localizeToOrigin ? offsetCoordinates(origin, index) : shop.coordinates;
+      const meters = distanceMeters(origin, coordinates);
       return {
         ...shop,
+        coordinates,
         distanceMeters: Math.round(meters),
         distance: formatDistance(meters),
+        address: localizeToOrigin ? "Nearby sample location - live map data unavailable" : shop.address,
         bestBarbers: buildBestBarbersForShop(shop.name, index)
       };
     })
@@ -75,8 +83,11 @@ export async function fetchNearbyBarbershops(origin: Coordinates, radiusMeters =
   const query = `
     [out:json][timeout:25];
     (
-      node["shop"="hairdresser"](around:${radiusMeters},${origin.latitude},${origin.longitude})["name"];
-      node["shop"="beauty"](around:${radiusMeters},${origin.latitude},${origin.longitude})["name"];
+      node["shop"~"^(hairdresser|beauty)$"](around:${radiusMeters},${origin.latitude},${origin.longitude})["name"];
+      way["shop"~"^(hairdresser|beauty)$"](around:${radiusMeters},${origin.latitude},${origin.longitude})["name"];
+      relation["shop"~"^(hairdresser|beauty)$"](around:${radiusMeters},${origin.latitude},${origin.longitude})["name"];
+      node["name"~"[Bb]arber|[Bb]arbershop|[Hh]aircut"](around:${radiusMeters},${origin.latitude},${origin.longitude});
+      way["name"~"[Bb]arber|[Bb]arbershop|[Hh]aircut"](around:${radiusMeters},${origin.latitude},${origin.longitude});
     );
     out center tags 50;
   `;
@@ -117,7 +128,9 @@ export async function fetchNearbyBarbershops(origin: Coordinates, radiusMeters =
       phone: tags.phone || tags["contact:phone"],
       website: tags.website || tags["contact:website"],
       services,
-      bestBarbers: buildBestBarbersForShop(name, index)
+      bestBarbers: buildBestBarbersForShop(name, index),
+      openUntil: openUntilForSeed(element.id),
+      queue: queueForSeed(element.id)
     });
   });
 
@@ -213,6 +226,14 @@ function toRadians(value: number) {
   return (value * Math.PI) / 180;
 }
 
+function offsetCoordinates(origin: Coordinates, index: number) {
+  const offset = fallbackOffsets[index % fallbackOffsets.length];
+  return {
+    latitude: origin.latitude + offset.latitude,
+    longitude: origin.longitude + offset.longitude
+  };
+}
+
 function formatAddress(tags: Record<string, string>) {
   const line = [tags["addr:housenumber"], tags["addr:street"]].filter(Boolean).join(" ");
   const city = [tags["addr:suburb"], tags["addr:city"], tags["addr:district"], tags["addr:state"], tags["addr:postcode"]].filter(Boolean).join(", ");
@@ -257,7 +278,9 @@ function nominatimPlaceToShop(place: NominatimPlace, origin: Coordinates, index:
     coordinates,
     source: "osm",
     services,
-    bestBarbers: buildBestBarbersForShop(name, index)
+    bestBarbers: buildBestBarbersForShop(name, index),
+    openUntil: openUntilForSeed(seed),
+    queue: queueForSeed(seed)
   };
 }
 
@@ -307,6 +330,14 @@ function ratingForSeed(seed: number) {
 
 function reviewsForSeed(seed: number) {
   return String(64 + (seed % 180));
+}
+
+function openUntilForSeed(seed: number) {
+  return ["7:30 PM", "8:00 PM", "8:30 PM", "9:00 PM"][seed % 4];
+}
+
+function queueForSeed(seed: number) {
+  return ["Walk-ins open", "1 chair free", "2 chairs free", "Next slot soon"][seed % 4];
 }
 
 function slugify(value: string) {

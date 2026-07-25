@@ -40,6 +40,12 @@ type CardProps = {
   style?: StyleProp<ViewStyle>;
 };
 
+type FadeInViewProps = {
+  children: ReactNode;
+  delay?: number;
+  style?: StyleProp<ViewStyle>;
+};
+
 type PillProps = {
   label: string;
   active?: boolean;
@@ -178,6 +184,40 @@ export function GhostButton({ label, icon, onPress, style }: ButtonProps) {
 
 export function Card({ children, style }: CardProps) {
   return <View style={[styles.card, style]}>{children}</View>;
+}
+
+export function FadeInView({ children, delay = 0, style }: FadeInViewProps) {
+  const entry = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(entry, {
+      toValue: 1,
+      duration: 420,
+      delay,
+      useNativeDriver: true
+    }).start();
+  }, [delay, entry]);
+
+  return (
+    <Animated.View
+      style={[
+        style,
+        {
+          opacity: entry,
+          transform: [
+            {
+              translateY: entry.interpolate({
+                inputRange: [0, 1],
+                outputRange: [16, 0]
+              })
+            }
+          ]
+        }
+      ]}
+    >
+      {children}
+    </Animated.View>
+  );
 }
 
 export function Pill({ label, active, icon, onPress, compact = false }: PillProps) {

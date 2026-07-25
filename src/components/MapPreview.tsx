@@ -1,27 +1,21 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { colors, fonts, radius } from "../theme";
-import type { Barbershop } from "../data";
+import type { Barbershop, Coordinates } from "../data";
 
 type MapPreviewProps = {
   shops: Barbershop[];
   selectedShop?: Barbershop;
+  origin?: Coordinates;
   height?: number;
   compact?: boolean;
   onMarkerPress?: (shop: Barbershop) => void;
 };
 
-const positions: Array<{ top: `${number}%`; left: `${number}%` }> = [
-  { top: "22%", left: "60%" },
-  { top: "36%", left: "32%" },
-  { top: "62%", left: "22%" },
-  { top: "30%", left: "78%" },
-  { top: "54%", left: "52%" },
-  { top: "70%", left: "68%" }
-];
-
-export function MapPreview({ shops, selectedShop, height = 300, compact = false, onMarkerPress }: MapPreviewProps) {
+export function MapPreview({ shops, selectedShop, origin, height = 300, compact = false, onMarkerPress }: MapPreviewProps) {
   const visibleShops = shops.slice(0, 6);
+  const markerPositions = buildMarkerPositions(visibleShops, origin);
+  const originPosition = origin ? buildPointPosition(origin, [...visibleShops.map((shop) => shop.coordinates), origin]) : null;
 
   return (
     <View style={[styles.map, { height }, compact && styles.compactMap]}>
@@ -35,7 +29,7 @@ export function MapPreview({ shops, selectedShop, height = 300, compact = false,
       <View style={styles.routeLine} />
       {visibleShops.map((shop, index) => {
         const active = selectedShop?.id === shop.id;
-        const position = positions[index % positions.length];
+        const position = markerPositions[index];
         return (
           <Pressable
             key={shop.id}
@@ -46,14 +40,65 @@ export function MapPreview({ shops, selectedShop, height = 300, compact = false,
           </Pressable>
         );
       })}
+      {originPosition && !compact ? (
+        <View style={[styles.originPin, originPosition]}>
+          <View style={styles.originPulse} />
+          <View style={styles.originDot} />
+        </View>
+      ) : null}
       {selectedShop ? (
         <View style={styles.mapBadge}>
           <Text style={styles.mapBadgeText} numberOfLines={1}>{selectedShop.name}</Text>
-          <Text style={styles.mapBadgeMeta}>{selectedShop.distance}</Text>
+          <Text style={styles.mapBadgeMeta}>{selectedShop.distance} - {selectedShop.queue || "Walk-ins open"}</Text>
         </View>
       ) : null}
     </View>
   );
+}
+
+function buildMarkerPositions(shops: Barbershop[], origin?: Coordinates) {
+  const points = origin ? [...shops.map((shop) => shop.coordinates), origin] : shops.map((shop) => shop.coordinates);
+  return shops.map((shop, index) => {
+    if (!shop.coordinates) {
+      return fallbackMarkerPosition(index);
+    }
+
+    return buildPointPosition(shop.coordinates, points);
+  });
+}
+
+function buildPointPosition(point: Coordinates, points: Coordinates[]) {
+  const latitudes = points.map((item) => item.latitude);
+  const longitudes = points.map((item) => item.longitude);
+  const minLat = Math.min(...latitudes);
+  const maxLat = Math.max(...latitudes);
+  const minLon = Math.min(...longitudes);
+  const maxLon = Math.max(...longitudes);
+  const latSpan = Math.max(maxLat - minLat, 0.01);
+  const lonSpan = Math.max(maxLon - minLon, 0.01);
+  const top = clamp(14 + ((maxLat - point.latitude) / latSpan) * 72, 12, 76);
+  const left = clamp(14 + ((point.longitude - minLon) / lonSpan) * 72, 12, 86);
+
+  return {
+    top: `${top}%` as const,
+    left: `${left}%` as const
+  };
+}
+
+function fallbackMarkerPosition(index: number) {
+  const positions: Array<{ top: `${number}%`; left: `${number}%` }> = [
+    { top: "22%", left: "60%" },
+    { top: "36%", left: "32%" },
+    { top: "62%", left: "22%" },
+    { top: "30%", left: "78%" },
+    { top: "54%", left: "52%" },
+    { top: "70%", left: "68%" }
+  ];
+  return positions[index % positions.length];
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }
 
 const styles = StyleSheet.create({
@@ -107,6 +152,31 @@ const styles = StyleSheet.create({
   },
   activePin: {
     transform: [{ translateX: -15 }, { translateY: -28 }]
+  },
+  originPin: {
+    position: "absolute",
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    transform: [{ translateX: -12 }, { translateY: -12 }]
+  },
+  originPulse: {
+    position: "absolute",
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "rgba(77,171,247,0.18)",
+    borderWidth: 1,
+    borderColor: "rgba(77,171,247,0.42)"
+  },
+  originDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: colors.info,
+    borderWidth: 2,
+    borderColor: colors.text
   },
   mapBadge: {
     position: "absolute",
