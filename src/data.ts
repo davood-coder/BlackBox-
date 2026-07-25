@@ -17,6 +17,29 @@ export type Service = {
   description: string;
 };
 
+export type ServiceAddOn = {
+  id: string;
+  label: string;
+  icon: string;
+  duration: string;
+  price: number;
+  description: string;
+};
+
+export type GroomingPreference = {
+  id: string;
+  label: string;
+  icon: string;
+  description: string;
+};
+
+export type PaymentMethod = {
+  id: string;
+  label: string;
+  detail: string;
+  icon: string;
+};
+
 export type Barber = {
   id: string;
   name: string;
@@ -27,6 +50,10 @@ export type Barber = {
   image: ImageSourcePropType;
   specialty: string;
   bio: string;
+  nextSlot: string;
+  availability: string[];
+  portfolio: string[];
+  languages: string[];
 };
 
 export type Barbershop = {
@@ -44,6 +71,8 @@ export type Barbershop = {
   website?: string;
   services?: Service[];
   bestBarbers?: Barber[];
+  openUntil?: string;
+  queue?: string;
 };
 
 export type Booking = {
@@ -52,6 +81,11 @@ export type Booking = {
   shop: string;
   service: string;
   status: "Confirmed" | "Pending" | "Cancelled" | "Completed";
+  barber?: string;
+  addOns?: string[];
+  preference?: string;
+  paymentMethod?: string;
+  note?: string;
   address?: string;
   total?: number;
 };
@@ -110,12 +144,87 @@ export const services: Service[] = [
   }
 ];
 
-export const dates = [
-  { day: "12", label: "FRI", full: "Friday, August 12, 2024" },
-  { day: "13", label: "SAT", full: "Saturday, August 13, 2024" },
-  { day: "14", label: "SUN", full: "Sunday, August 14, 2024" },
-  { day: "15", label: "MON", full: "Monday, August 15, 2024" },
-  { day: "16", label: "TUE", full: "Tuesday, August 16, 2024" }
+export const serviceAddOns: ServiceAddOn[] = [
+  {
+    id: "hot-towel",
+    label: "Hot Towel Finish",
+    icon: "wind",
+    duration: "10 min",
+    price: 8,
+    description: "Steam towel reset with calming aftershave."
+  },
+  {
+    id: "hair-wash",
+    label: "Hair Wash",
+    icon: "droplet",
+    duration: "12 min",
+    price: 10,
+    description: "Cleanse, condition, and towel dry before styling."
+  },
+  {
+    id: "style-photo",
+    label: "Style Match",
+    icon: "image",
+    duration: "8 min",
+    price: 6,
+    description: "Match your saved reference with barber guidance."
+  },
+  {
+    id: "home-care",
+    label: "Home Care Kit",
+    icon: "package",
+    duration: "Pickup",
+    price: 18,
+    description: "Travel pomade, beard oil, and comb bundle."
+  }
+];
+
+export const groomingPreferences: GroomingPreference[] = [
+  {
+    id: "consult-first",
+    label: "Consult First",
+    icon: "message-circle",
+    description: "Start with shape, length, and styling advice."
+  },
+  {
+    id: "quiet-chair",
+    label: "Quiet Chair",
+    icon: "volume-x",
+    description: "Keep conversation minimal during the service."
+  },
+  {
+    id: "sensitive-skin",
+    label: "Sensitive Skin",
+    icon: "shield",
+    description: "Use gentle products and avoid strong fragrance."
+  },
+  {
+    id: "occasion-ready",
+    label: "Occasion Ready",
+    icon: "award",
+    description: "Finish with extra polish for an event or shoot."
+  }
+];
+
+export const paymentMethods: PaymentMethod[] = [
+  { id: "card", label: "Card", detail: "Visa **** 4242", icon: "credit-card" },
+  { id: "wallet", label: "Wallet", detail: "Black Box balance", icon: "smartphone" },
+  { id: "shop", label: "Pay at Shop", detail: "Cash or counter card", icon: "briefcase" }
+];
+
+export const dates = buildBookingDates();
+
+export const barberHomeStats = [
+  { label: "Open Chairs", value: "8", tone: "info" },
+  { label: "Avg Wait", value: "18m", tone: "warning" },
+  { label: "Top Rated", value: "4.9", tone: "success" }
+];
+
+export const homeQuickActions = [
+  { label: "Nearby", icon: "map-pin", route: "SelectLocation", params: { nextScreen: "BookAppointment" } },
+  { label: "Styles", icon: "image", route: "Barbers" },
+  { label: "Rebook", icon: "refresh-cw", route: "MyBookings" },
+  { label: "Profile", icon: "user", route: "Profile" }
 ];
 
 export const times = ["10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM"];
@@ -137,7 +246,11 @@ export const barbers: Barber[] = [
     experience: "5+ Years Experience",
     image: images.masterBarber,
     specialty: "Precision cuts, beard work, classic styling",
-    bio: "Richard blends old-school barbering with clean modern finishing, especially for fades and beard lines."
+    bio: "Richard blends old-school barbering with clean modern finishing, especially for fades and beard lines.",
+    nextSlot: "10:00 AM",
+    availability: ["Today 10:00", "Today 12:00", "Tomorrow 11:00"],
+    portfolio: ["Executive taper", "Razor beard line", "Classic side part"],
+    languages: ["English", "Spanish"]
   },
   {
     id: "marco-rossi",
@@ -148,7 +261,11 @@ export const barbers: Barber[] = [
     experience: "4+ Years Experience",
     image: images.luxuryBarbershop,
     specialty: "Skin fades, tapers, textured crops",
-    bio: "Marco is a detail-first barber focused on balanced fades, texture, and everyday wearable shapes."
+    bio: "Marco is a detail-first barber focused on balanced fades, texture, and everyday wearable shapes.",
+    nextSlot: "11:00 AM",
+    availability: ["Today 11:00", "Today 01:00", "Tomorrow 10:00"],
+    portfolio: ["Skin fade", "Textured crop", "Sharp taper"],
+    languages: ["English", "Italian"]
   },
   {
     id: "jayden-malik",
@@ -159,7 +276,11 @@ export const barbers: Barber[] = [
     experience: "6+ Years Experience",
     image: images.masterBarber,
     specialty: "Styling, long hair, deluxe grooming",
-    bio: "Jayden is known for polished styling, consultation-led cuts, and a refined client experience."
+    bio: "Jayden is known for polished styling, consultation-led cuts, and a refined client experience.",
+    nextSlot: "12:00 PM",
+    availability: ["Today 12:00", "Today 02:00", "Tomorrow 12:00"],
+    portfolio: ["Deluxe finish", "Long hair shape", "Camera-ready styling"],
+    languages: ["English", "French"]
   },
   {
     id: "alex-carter",
@@ -170,7 +291,11 @@ export const barbers: Barber[] = [
     experience: "3+ Years Experience",
     image: images.luxuryBarbershop,
     specialty: "Beard shaping, straight razor shave",
-    bio: "Alex specializes in beard geometry, hot towel finishes, and sharp facial hair details."
+    bio: "Alex specializes in beard geometry, hot towel finishes, and sharp facial hair details.",
+    nextSlot: "01:00 PM",
+    availability: ["Today 01:00", "Tomorrow 10:00", "Tomorrow 03:00"],
+    portfolio: ["Full beard sculpt", "Straight razor shave", "Neckline detail"],
+    languages: ["English"]
   }
 ];
 
@@ -187,7 +312,9 @@ export const barbershops: Barbershop[] = [
     coordinates: { latitude: 40.7484, longitude: -73.9857 },
     source: "fallback",
     services,
-    bestBarbers: barbers.slice(0, 3)
+    bestBarbers: barbers.slice(0, 3),
+    openUntil: "9:00 PM",
+    queue: "2 chairs free"
   },
   {
     id: "the-barber-shop",
@@ -201,7 +328,9 @@ export const barbershops: Barbershop[] = [
     coordinates: { latitude: 40.7233, longitude: -73.9973 },
     source: "fallback",
     services,
-    bestBarbers: [barbers[1], barbers[2], barbers[3]]
+    bestBarbers: [barbers[1], barbers[2], barbers[3]],
+    openUntil: "8:30 PM",
+    queue: "Next slot soon"
   },
   {
     id: "good-place",
@@ -215,14 +344,46 @@ export const barbershops: Barbershop[] = [
     coordinates: { latitude: 40.7216, longitude: -74.0048 },
     source: "fallback",
     services,
-    bestBarbers: [barbers[2], barbers[0], barbers[3]]
+    bestBarbers: [barbers[2], barbers[0], barbers[3]],
+    openUntil: "8:00 PM",
+    queue: "Walk-ins open"
   }
 ];
 
 export const bookings: Booking[] = [
-  { date: "Aug 12, 2024 - 12:00 PM", shop: "Black Box Barbershop", service: "Haircut & Beard Trim", status: "Confirmed" },
-  { date: "Aug 18, 2024 - 03:00 PM", shop: "The Barber Shop", service: "Hair Color", status: "Pending" },
-  { date: "Aug 25, 2024 - 11:00 AM", shop: "Good Place", service: "Classic Shave", status: "Confirmed" }
+  {
+    date: "Jul 26, 2026 - 12:00 PM",
+    shop: "Black Box Barbershop",
+    service: "Haircut & Beard Trim",
+    barber: "Richard Anderson",
+    status: "Confirmed",
+    addOns: ["Hot Towel Finish"],
+    preference: "Consult First",
+    paymentMethod: "Visa **** 4242",
+    total: 53
+  },
+  {
+    date: "Jul 29, 2026 - 03:00 PM",
+    shop: "The Barber Shop",
+    service: "Hair Color",
+    barber: "Jayden Malik",
+    status: "Pending",
+    addOns: ["Style Match"],
+    preference: "Occasion Ready",
+    paymentMethod: "Pay at Shop",
+    total: 61
+  },
+  {
+    date: "Jul 18, 2026 - 11:00 AM",
+    shop: "Good Place",
+    service: "Classic Shave",
+    barber: "Alex Carter",
+    status: "Completed",
+    addOns: ["Hot Towel Finish"],
+    preference: "Quiet Chair",
+    paymentMethod: "Visa **** 4242",
+    total: 26
+  }
 ];
 
 export const reviews = [
@@ -239,3 +400,22 @@ export const reviews = [
     rating: 5
   }
 ];
+
+function buildBookingDates() {
+  const monthLabels = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const weekdayLabels = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const shortWeekdayLabels = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+  const start = new Date();
+  start.setHours(12, 0, 0, 0);
+
+  return Array.from({ length: 5 }, (_, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index + 1);
+    const day = String(date.getDate()).padStart(2, "0");
+    return {
+      day,
+      label: shortWeekdayLabels[date.getDay()],
+      full: `${weekdayLabels[date.getDay()]}, ${monthLabels[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`
+    };
+  });
+}

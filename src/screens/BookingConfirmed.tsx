@@ -1,17 +1,20 @@
 import { StyleSheet, Text, View } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { AppHeader, Card, GhostButton, PrimaryButton, Screen } from "../../components/ui";
-import { timeRanges } from "../../data";
-import { useBooking } from "../../state/BookingContext";
-import { colors, fonts, radius } from "../../theme";
+import { AppHeader, Card, GhostButton, PrimaryButton, Screen } from "../components/ui";
+import { timeRanges } from "../data";
+import { useBooking } from "../state/BookingContext";
+import { colors, fonts, radius } from "../theme";
 
 export default function BookingConfirmed({ navigation }) {
-  const { selectedShop, selectedDate, selectedTime, bookingId, lastConfirmation } = useBooking();
+  const { selectedShop, selectedDate, selectedTime, selectedBarber, selectedPreference, bookingTotal, bookingId, lastConfirmation } = useBooking();
   const confirmation = lastConfirmation || {
     id: bookingId,
     date: `${selectedDate.full} ${timeRanges[selectedTime] || selectedTime}`,
     shop: selectedShop.name,
-    address: selectedShop.address
+    address: selectedShop.address,
+    barber: selectedBarber.name,
+    preference: selectedPreference.label,
+    total: bookingTotal
   };
 
   return (
@@ -31,6 +34,11 @@ export default function BookingConfirmed({ navigation }) {
               <Text style={styles.address}>{confirmation.address}</Text>
             </View>
           </View>
+          <View style={styles.detailGrid}>
+            <DetailItem label="Barber" value={confirmation.barber || selectedBarber.name} />
+            <DetailItem label="Preference" value={confirmation.preference || selectedPreference.label} />
+            <DetailItem label="Total" value={`$${confirmation.total || bookingTotal}`} />
+          </View>
           <View style={styles.divider} />
           <View style={styles.idBlock}>
             <Text style={styles.idLabel}>Booking ID</Text>
@@ -41,6 +49,15 @@ export default function BookingConfirmed({ navigation }) {
       </View>
       <PrimaryButton label="View My Bookings" icon={null} onPress={() => navigation.replace("MyBookings")} style={styles.bottomButton} />
     </Screen>
+  );
+}
+
+function DetailItem({ label, value }) {
+  return (
+    <View style={styles.detailItem}>
+      <Text style={styles.detailLabel}>{label}</Text>
+      <Text style={styles.detailValue} numberOfLines={1}>{value}</Text>
+    </View>
   );
 }
 
@@ -102,6 +119,33 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     marginTop: 2
+  },
+  detailGrid: {
+    alignSelf: "stretch",
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 22
+  },
+  detailItem: {
+    flex: 1,
+    minHeight: 58,
+    borderRadius: radius.sm,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+    justifyContent: "center",
+    paddingHorizontal: 10
+  },
+  detailLabel: {
+    color: colors.muted,
+    fontFamily: fonts.body,
+    fontSize: 10
+  },
+  detailValue: {
+    color: colors.text,
+    fontFamily: fonts.semibold,
+    fontSize: 12,
+    marginTop: 4
   },
   divider: {
     width: "100%",

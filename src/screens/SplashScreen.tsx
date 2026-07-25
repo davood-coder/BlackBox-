@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { colors, fonts } from "../../theme";
+import { colors, fonts } from "../theme";
 
 export default function SplashScreen({ navigation }) {
   const intro = useRef(new Animated.Value(0)).current;
@@ -48,7 +48,7 @@ export default function SplashScreen({ navigation }) {
           Black Box <Text style={styles.titleAccent}>Barbers</Text>
         </Text>
       </Animated.View>
-      <Animated.Text style={[styles.footer, { opacity: intro }]}>Powered by Royal Cut</Animated.Text>
+      <Animated.Text style={[styles.footer, { opacity: intro }]}>Black Box Barbers</Animated.Text>
     </LinearGradient>
   );
 }

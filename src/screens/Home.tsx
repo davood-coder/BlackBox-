@@ -1,9 +1,10 @@
 import { Image, ImageBackground, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { BottomNav, GhostButton, PrimaryButton } from "../../components/ui";
-import { images } from "../../assets/images";
-import { colors, fonts, spacing } from "../../theme";
+import { BottomNav, FadeInView, GhostButton, PrimaryButton } from "../components/ui";
+import { images } from "../assets/images";
+import { barberHomeStats, homeQuickActions } from "../data";
+import { colors, fonts, spacing } from "../theme";
 
 export default function Home({ navigation }: any) {
   const { width, height } = useWindowDimensions();
@@ -33,14 +34,34 @@ export default function Home({ navigation }: any) {
             </Pressable>
           </View>
 
-          <View style={[styles.hero, { gap: isShort ? 12 : 18, marginBottom: isShort ? 4 : 18 }]}>
+          <FadeInView delay={120} style={[styles.hero, { gap: isShort ? 10 : 14, marginBottom: isShort ? 2 : 14 }]}>
             <Text style={[styles.title, { fontSize: titleSize, lineHeight: titleSize + 6 }]}>
               Elevate{"\n"}Your Look.
             </Text>
             <Text style={[styles.copy, { fontSize: isNarrow ? 15 : 17, lineHeight: isNarrow ? 22 : 25 }]}>Premium grooming for the modern gentleman.</Text>
+            <View style={styles.statsRow}>
+              {barberHomeStats.map((item) => (
+                <View key={item.label} style={styles.statCard}>
+                  <Text style={[styles.statValue, item.tone === "success" && styles.successText, item.tone === "info" && styles.infoText]}>{item.value}</Text>
+                  <Text style={styles.statLabel} numberOfLines={1}>{item.label}</Text>
+                </View>
+              ))}
+            </View>
             <View style={[styles.actions, { gap: isShort ? 10 : 12, marginTop: isShort ? 4 : 10 }]}>
               <PrimaryButton label="Book Appointment" icon={null} onPress={() => navigation.navigate("SelectLocation", { nextScreen: "BookAppointment" })} />
               <GhostButton label="Explore Barbers" onPress={() => navigation.navigate("SelectLocation", { nextScreen: "Barbers" })} />
+            </View>
+            <View style={styles.quickGrid}>
+              {homeQuickActions.map((action) => (
+                <Pressable
+                  key={action.label}
+                  onPress={() => navigation.navigate(action.route, "params" in action ? action.params : undefined)}
+                  style={({ pressed }) => [styles.quickAction, pressed && styles.pressed]}
+                >
+                  <Feather name={action.icon as any} size={17} color={colors.primary} />
+                  <Text style={styles.quickLabel}>{action.label}</Text>
+                </Pressable>
+              ))}
             </View>
             <View style={[styles.socialProof, { marginTop: isShort ? 12 : 22 }]}>
               <View style={styles.avatarStack}>
@@ -56,7 +77,7 @@ export default function Home({ navigation }: any) {
                 <Text style={styles.caption}>Trusted by 1k+ clients</Text>
               </View>
             </View>
-          </View>
+          </FadeInView>
         </LinearGradient>
       </ImageBackground>
       <BottomNav active="Home" navigation={navigation} />
@@ -110,6 +131,58 @@ const styles = StyleSheet.create({
   actions: {
     width: "100%"
   },
+  statsRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 2
+  },
+  statCard: {
+    flex: 1,
+    minHeight: 58,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(17,21,28,0.58)",
+    justifyContent: "center",
+    paddingHorizontal: 10
+  },
+  statValue: {
+    color: colors.warning,
+    fontFamily: fonts.heading,
+    fontSize: 18
+  },
+  successText: {
+    color: colors.success
+  },
+  infoText: {
+    color: colors.info
+  },
+  statLabel: {
+    color: colors.creamMuted,
+    fontFamily: fonts.medium,
+    fontSize: 10,
+    marginTop: 3
+  },
+  quickGrid: {
+    flexDirection: "row",
+    gap: 8
+  },
+  quickAction: {
+    flex: 1,
+    minHeight: 62,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)"
+  },
+  quickLabel: {
+    color: colors.cream,
+    fontFamily: fonts.medium,
+    fontSize: 11
+  },
   socialProof: {
     flexDirection: "row",
     alignItems: "center",
@@ -141,5 +214,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 12,
     marginTop: 2
+  },
+  pressed: {
+    opacity: 0.78,
+    transform: [{ scale: 0.98 }]
   }
 });

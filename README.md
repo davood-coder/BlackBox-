@@ -16,7 +16,9 @@ Selections are shared through `src/state/BookingContext.tsx`, so chosen nearby s
 
 Nearby barber shops are fetched through device location using `expo-location` and OpenStreetMap Overpass data, with local fallback data when permission or network access is unavailable.
 
-Each screen folder in `src/screens` now contains only the React Native `index.tsx` implementation. The design reference artifacts have been removed from `src` after migration.
+Each screen now lives as a single `.tsx` file directly inside `src/screens`, for example `src/screens/Home.tsx`.
+
+The booking flow includes barber-specific options such as service add-ons, visit preferences, barber availability, payment selection, booking status management, and lightweight client/barber profile modes.
 
 ## Run
 

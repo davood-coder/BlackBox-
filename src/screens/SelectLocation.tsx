@@ -3,12 +3,12 @@ import type { ImageStyle } from "react-native";
 import { ActivityIndicator, Image, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import * as Location from "expo-location";
 import { Feather } from "@expo/vector-icons";
-import { AppHeader, BottomNav, Field, GhostButton, Rating, Screen } from "../../components/ui";
-import { MapPreview } from "../../components/MapPreview";
-import type { Barbershop, Coordinates } from "../../data";
-import { useBooking } from "../../state/BookingContext";
-import { colors, fonts, radius, spacing } from "../../theme";
-import { fetchNearbyBarbershops, geocodeArea, reverseGeocodeAreaLabel, searchBarbershopsByAreaName } from "../../services/nearbyBarbers";
+import { AppHeader, BottomNav, Field, GhostButton, Rating, Screen } from "../components/ui";
+import { MapPreview } from "../components/MapPreview";
+import type { Barbershop, Coordinates } from "../data";
+import { useBooking } from "../state/BookingContext";
+import { colors, fonts, radius, spacing } from "../theme";
+import { fetchNearbyBarbershops, geocodeArea, reverseGeocodeAreaLabel, searchBarbershopsByAreaName } from "../services/nearbyBarbers";
 
 type LookupState = "loading" | "ready" | "permission-denied" | "unavailable" | "empty" | "place-not-found" | "area-empty" | "error";
 
@@ -22,6 +22,7 @@ export default function SelectLocation({ navigation, route }: any) {
   const [lookupState, setLookupState] = useState<LookupState>("loading");
   const [locationLabel, setLocationLabel] = useState("Current location");
   const [activeAreaQuery, setActiveAreaQuery] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState("Closest");
   const mapHeight = Math.min(300, Math.max(190, height * (height < 700 ? 0.28 : 0.31)));
   const isNarrow = width < 360;
   const nextScreen = route?.params?.nextScreen === "Barbers" ? "Barbers" : "BookAppointment";
@@ -168,12 +169,19 @@ export default function SelectLocation({ navigation, route }: any) {
 
   const filteredShops = useMemo(() => {
     const term = query.trim().toLowerCase();
-    if (!term) return realShops;
-    if (term.length >= 3) return realShops;
-    return realShops.filter((shop) => {
-      return [shop.name, shop.address, shop.distance].join(" ").toLowerCase().includes(term);
+    const visibleShops = !term || term.length >= 3
+      ? realShops
+      : realShops.filter((shop) => [shop.name, shop.address, shop.distance, shop.queue].join(" ").toLowerCase().includes(term));
+
+    const filtered = selectedFilter === "Walk-ins"
+      ? visibleShops.filter((shop) => /walk|chair|slot/i.test(shop.queue || ""))
+      : visibleShops;
+
+    return [...filtered].sort((a, b) => {
+      if (selectedFilter === "Top Rated") return Number(b.rating) - Number(a.rating);
+      return (a.distanceMeters || 0) - (b.distanceMeters || 0);
     });
-  }, [realShops, query, activeAreaQuery]);
+  }, [realShops, query, activeAreaQuery, selectedFilter]);
 
   const activeShop = useMemo(() => {
     return realShops.find((shop) => shop.id === selectedShop.id);
@@ -212,6 +220,13 @@ export default function SelectLocation({ navigation, route }: any) {
           autoCapitalize="words"
           style={styles.search}
         />
+        <View style={styles.filterRow}>
+          {["Closest", "Top Rated", "Open Now", "Walk-ins"].map((item) => (
+            <Pressable key={item} onPress={() => setSelectedFilter(item)} style={[styles.filterChip, selectedFilter === item && styles.filterChipActive]}>
+              <Text style={[styles.filterText, selectedFilter === item && styles.filterTextActive]}>{item}</Text>
+            </Pressable>
+          ))}
+        </View>
         <View style={styles.mapWrap}>
           <MapPreview shops={filteredShops.length ? filteredShops : realShops} selectedShop={activeShop} height={mapHeight} onMarkerPress={setSelectedShop} />
           {loading ? (
@@ -241,6 +256,11 @@ export default function SelectLocation({ navigation, route }: any) {
                   <Feather name="navigation" size={11} color={colors.muted} />
                   <Text style={styles.meta}>{shop.distance}</Text>
                   <Rating value={shop.rating} count={shop.reviews} small />
+                </View>
+                <View style={styles.statusRow}>
+                  <Text style={styles.statusText}>Open until {shop.openUntil || "8:00 PM"}</Text>
+                  <Text style={styles.statusDot}>-</Text>
+                  <Text style={styles.statusText}>{shop.queue || "Walk-ins open"}</Text>
                 </View>
               </View>
               <View style={[styles.selectButton, selectedShop.id === shop.id && styles.selectedButton]}>
@@ -370,7 +390,36 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.05)"
   },
   search: {
+    marginBottom: 10
+  },
+  filterRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
     marginBottom: spacing.md
+  },
+  filterChip: {
+    minHeight: 38,
+    borderRadius: radius.full,
+    paddingHorizontal: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border
+  },
+  filterChipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary
+  },
+  filterText: {
+    color: colors.secondaryText,
+    fontFamily: fonts.medium,
+    fontSize: 12
+  },
+  filterTextActive: {
+    color: colors.black,
+    fontFamily: fonts.bold
   },
   mapWrap: {
     marginBottom: spacing.lg
@@ -455,6 +504,23 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 12,
     marginRight: 8
+  },
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 6,
+    flexWrap: "wrap"
+  },
+  statusText: {
+    color: colors.primary,
+    fontFamily: fonts.medium,
+    fontSize: 11
+  },
+  statusDot: {
+    color: colors.muted,
+    fontFamily: fonts.body,
+    fontSize: 11
   },
   selectButton: {
     borderWidth: 1,

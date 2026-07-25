@@ -1,8 +1,10 @@
-import { Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
-import { AppHeader, Card, Pill, PrimaryButton, Rating, Screen, SectionTitle } from "../../components/ui";
-import { barbers, dates, services, times } from "../../data";
-import { useBooking } from "../../state/BookingContext";
-import { colors, fonts, radius, spacing } from "../../theme";
+import { useEffect, useRef } from "react";
+import { Animated, Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { AppHeader, Card, FadeInView, Field, Pill, PrimaryButton, Rating, Screen, SectionTitle } from "../components/ui";
+import { barbers, dates, groomingPreferences, serviceAddOns, services, times } from "../data";
+import { useBooking } from "../state/BookingContext";
+import { colors, fonts, radius, spacing } from "../theme";
 
 export default function BookAppointment({ navigation }: any) {
   const { width } = useWindowDimensions();
@@ -12,13 +14,37 @@ export default function BookAppointment({ navigation }: any) {
     setSelectedService,
     selectedBarber,
     setSelectedBarber,
+    selectedAddOns,
+    toggleAddOn,
+    selectedPreference,
+    setSelectedPreference,
+    appointmentNote,
+    setAppointmentNote,
     selectedDate,
     setSelectedDate,
     selectedTime,
-    setSelectedTime
+    setSelectedTime,
+    bookingTotal
   } = useBooking();
   const shopBarbers = selectedShop.bestBarbers?.length ? selectedShop.bestBarbers : barbers;
   const compact = width < 360;
+  const totalPulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.timing(totalPulse, {
+        toValue: 1.025,
+        duration: 120,
+        useNativeDriver: true
+      }),
+      Animated.spring(totalPulse, {
+        toValue: 1,
+        friction: 5,
+        tension: 95,
+        useNativeDriver: true
+      })
+    ]).start();
+  }, [bookingTotal, totalPulse]);
 
   return (
     <Screen scroll>
@@ -41,6 +67,29 @@ export default function BookAppointment({ navigation }: any) {
         ))}
       </View>
 
+      <SectionTitle title="Enhance Your Visit" />
+      <View style={styles.addOnGrid}>
+        {serviceAddOns.map((addOn, index) => {
+          const selected = selectedAddOns.some((item) => item.id === addOn.id);
+          return (
+            <FadeInView key={addOn.id} delay={index * 45} style={styles.addOnWrap}>
+              <Pressable onPress={() => toggleAddOn(addOn)} style={({ pressed }) => pressed && styles.pressed}>
+                <Card style={[styles.addOnCard, selected && styles.selectedCard]}>
+                  <View style={styles.addOnTop}>
+                    <View style={[styles.addOnIcon, selected && styles.addOnIconActive]}>
+                      <Feather name={addOn.icon as any} size={15} color={selected ? colors.black : colors.primary} />
+                    </View>
+                    <Text style={styles.addOnPrice}>+${addOn.price}</Text>
+                  </View>
+                  <Text style={styles.addOnTitle}>{addOn.label}</Text>
+                  <Text style={styles.addOnDescription} numberOfLines={2}>{addOn.description}</Text>
+                </Card>
+              </Pressable>
+            </FadeInView>
+          );
+        })}
+      </View>
+
       <SectionTitle title="Choose Your Barber" action="View all" onAction={() => navigation.navigate("Barbers")} />
       <View style={styles.list}>
         {shopBarbers.slice(0, 3).map((barber) => (
@@ -51,6 +100,7 @@ export default function BookAppointment({ navigation }: any) {
                 <Text style={styles.barberName}>{barber.name}</Text>
                 <Rating value={barber.rating} count={barber.reviews} small />
                 <Text style={styles.role}>{barber.role}</Text>
+                <Text style={styles.nextSlot}>Next slot {barber.nextSlot}</Text>
               </View>
               <Pressable
                 onPress={() => {
@@ -68,6 +118,25 @@ export default function BookAppointment({ navigation }: any) {
         ))}
       </View>
 
+      <SectionTitle title="Visit Preferences" />
+      <View style={styles.preferenceGrid}>
+        {groomingPreferences.map((preference) => {
+          const selected = selectedPreference.id === preference.id;
+          return (
+            <Pressable key={preference.id} onPress={() => setSelectedPreference(preference)} style={({ pressed }) => pressed && styles.pressed}>
+              <Card style={[styles.preferenceCard, selected && styles.preferenceActive]}>
+                <Feather name={preference.icon as any} size={16} color={selected ? colors.black : colors.primary} />
+                <View style={styles.preferenceTextWrap}>
+                  <Text style={[styles.preferenceTitle, selected && styles.preferenceTitleActive]}>{preference.label}</Text>
+                  <Text style={[styles.preferenceDescription, selected && styles.preferenceDescriptionActive]} numberOfLines={2}>{preference.description}</Text>
+                </View>
+              </Card>
+            </Pressable>
+          );
+        })}
+      </View>
+      <Field icon="edit-3" placeholder="Notes for your barber (optional)" value={appointmentNote} onChangeText={setAppointmentNote} style={styles.noteField} />
+
       <Text style={[styles.label, styles.dateLabel]}>Select Date & Time</Text>
       <View style={styles.dateRow}>
         {dates.map((date) => (
@@ -84,6 +153,15 @@ export default function BookAppointment({ navigation }: any) {
           </Pressable>
         ))}
       </View>
+      <Animated.View style={{ transform: [{ scale: totalPulse }] }}>
+        <Card style={styles.totalBar}>
+          <View>
+            <Text style={styles.totalLabel}>Estimated total</Text>
+            <Text style={styles.totalMeta}>{selectedService.duration} service{selectedAddOns.length ? ` + ${selectedAddOns.length} add-on${selectedAddOns.length > 1 ? "s" : ""}` : ""}</Text>
+          </View>
+          <Text style={styles.totalPrice}>${bookingTotal}</Text>
+        </Card>
+      </Animated.View>
       <PrimaryButton label="Continue Booking" icon={null} onPress={() => navigation.navigate("BookingSummary")} style={styles.continueButton} />
     </Screen>
   );
@@ -116,6 +194,57 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 8,
     marginBottom: 22
+  },
+  addOnGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 22
+  },
+  addOnWrap: {
+    width: "48%"
+  },
+  addOnCard: {
+    minHeight: 126,
+    justifyContent: "space-between",
+    borderRadius: radius.md
+  },
+  addOnTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10
+  },
+  addOnIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(212,168,90,0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(212,168,90,0.22)"
+  },
+  addOnIconActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary
+  },
+  addOnPrice: {
+    color: colors.text,
+    fontFamily: fonts.bold,
+    fontSize: 13
+  },
+  addOnTitle: {
+    color: colors.text,
+    fontFamily: fonts.semibold,
+    fontSize: 13
+  },
+  addOnDescription: {
+    color: colors.secondaryText,
+    fontFamily: fonts.body,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 6
   },
   list: {
     gap: 10,
@@ -151,6 +280,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2
   },
+  nextSlot: {
+    color: colors.primary,
+    fontFamily: fonts.medium,
+    fontSize: 11,
+    marginTop: 5
+  },
   bookMini: {
     borderWidth: 1,
     borderColor: colors.divider,
@@ -170,6 +305,46 @@ const styles = StyleSheet.create({
   bookMiniTextActive: {
     color: colors.black,
     fontFamily: fonts.bold
+  },
+  preferenceGrid: {
+    gap: 10,
+    marginBottom: 12
+  },
+  preferenceCard: {
+    minHeight: 72,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: radius.md
+  },
+  preferenceActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary
+  },
+  preferenceTextWrap: {
+    flex: 1,
+    minWidth: 0
+  },
+  preferenceTitle: {
+    color: colors.text,
+    fontFamily: fonts.semibold,
+    fontSize: 13
+  },
+  preferenceTitleActive: {
+    color: colors.black
+  },
+  preferenceDescription: {
+    color: colors.secondaryText,
+    fontFamily: fonts.body,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 3
+  },
+  preferenceDescriptionActive: {
+    color: "rgba(17,17,17,0.72)"
+  },
+  noteField: {
+    marginBottom: 20
   },
   dateLabel: {
     marginTop: 2
@@ -239,8 +414,37 @@ const styles = StyleSheet.create({
   activeTimeText: {
     color: colors.text
   },
+  totalBar: {
+    minHeight: 70,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 14,
+    borderColor: "rgba(212,168,90,0.3)",
+    backgroundColor: "rgba(212,168,90,0.1)"
+  },
+  totalLabel: {
+    color: colors.text,
+    fontFamily: fonts.semibold,
+    fontSize: 14
+  },
+  totalMeta: {
+    color: colors.secondaryText,
+    fontFamily: fonts.body,
+    fontSize: 11,
+    marginTop: 4
+  },
+  totalPrice: {
+    color: colors.primaryLight,
+    fontFamily: fonts.heading,
+    fontSize: 22
+  },
   continueButton: {
     marginTop: "auto",
     marginBottom: 28
+  },
+  pressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.99 }]
   }
 });

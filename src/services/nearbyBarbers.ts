@@ -117,7 +117,9 @@ export async function fetchNearbyBarbershops(origin: Coordinates, radiusMeters =
       phone: tags.phone || tags["contact:phone"],
       website: tags.website || tags["contact:website"],
       services,
-      bestBarbers: buildBestBarbersForShop(name, index)
+      bestBarbers: buildBestBarbersForShop(name, index),
+      openUntil: openUntilForSeed(element.id),
+      queue: queueForSeed(element.id)
     });
   });
 
@@ -257,7 +259,9 @@ function nominatimPlaceToShop(place: NominatimPlace, origin: Coordinates, index:
     coordinates,
     source: "osm",
     services,
-    bestBarbers: buildBestBarbersForShop(name, index)
+    bestBarbers: buildBestBarbersForShop(name, index),
+    openUntil: openUntilForSeed(seed),
+    queue: queueForSeed(seed)
   };
 }
 
@@ -307,6 +311,14 @@ function ratingForSeed(seed: number) {
 
 function reviewsForSeed(seed: number) {
   return String(64 + (seed % 180));
+}
+
+function openUntilForSeed(seed: number) {
+  return ["7:30 PM", "8:00 PM", "8:30 PM", "9:00 PM"][seed % 4];
+}
+
+function queueForSeed(seed: number) {
+  return ["Walk-ins open", "1 chair free", "2 chairs free", "Next slot soon"][seed % 4];
 }
 
 function slugify(value: string) {

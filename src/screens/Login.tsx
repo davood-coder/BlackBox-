@@ -2,23 +2,31 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { Field, PrimaryButton } from "../../components/ui";
-import { colors, fonts, radius, shadows, spacing } from "../../theme";
+import { Field, PrimaryButton } from "../components/ui";
+import { colors, fonts, radius, shadows, spacing } from "../theme";
 
 export default function Login({ navigation }) {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("Client");
 
   return (
     <LinearGradient colors={["#17130D", colors.backgroundWarm, colors.background]} style={styles.root}>
       <View style={styles.overlay}>
         <View style={styles.brand}>
           <Feather name="scissors" color={colors.primary} size={32} />
-          <Text style={styles.brandText}>Royal Cut</Text>
+          <Text style={styles.brandText}>Black Box</Text>
         </View>
         <View style={styles.card}>
           <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.copy}>Enter your details to access your appointments.</Text>
+          <Text style={styles.copy}>Enter your details to access appointments, barbers, and shop tools.</Text>
+          <View style={styles.roleSwitch}>
+            {["Client", "Barber"].map((item) => (
+              <Pressable key={item} onPress={() => setRole(item)} style={[styles.roleButton, role === item && styles.roleActive]}>
+                <Text style={[styles.roleText, role === item && styles.roleTextActive]}>{item}</Text>
+              </Pressable>
+            ))}
+          </View>
           <View style={styles.form}>
             <Field icon="user" placeholder="Email or Phone Number" value={identifier} onChangeText={setIdentifier} style={styles.warmField} />
             <Field icon="lock" placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry style={styles.warmField} />
@@ -97,7 +105,35 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 15,
     lineHeight: 22,
-    marginBottom: 26
+    marginBottom: 18
+  },
+  roleSwitch: {
+    height: 48,
+    flexDirection: "row",
+    padding: 4,
+    borderRadius: radius.full,
+    backgroundColor: "rgba(15,17,21,0.48)",
+    borderWidth: 1,
+    borderColor: "#594A35",
+    marginBottom: 22
+  },
+  roleButton: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radius.full
+  },
+  roleActive: {
+    backgroundColor: colors.primary
+  },
+  roleText: {
+    color: colors.creamMuted,
+    fontFamily: fonts.medium,
+    fontSize: 13
+  },
+  roleTextActive: {
+    color: colors.black,
+    fontFamily: fonts.bold
   },
   form: {
     gap: 14
