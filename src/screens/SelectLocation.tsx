@@ -8,7 +8,7 @@ import { MapPreview } from "../components/MapPreview";
 import type { Barbershop, Coordinates } from "../data";
 import { useBooking } from "../state/BookingContext";
 import { colors, fonts, radius, spacing } from "../theme";
-import { fetchNearbyBarbershops, geocodeArea, reverseGeocodeAreaLabel, searchBarbershopsByAreaName } from "../services/nearbyBarbers";
+import { DEFAULT_COORDS, fallbackShops, fetchNearbyBarbershops, geocodeArea, reverseGeocodeAreaLabel, searchBarbershopsByAreaName } from "../services/nearbyBarbers";
 
 type LookupState = "loading" | "ready" | "permission-denied" | "unavailable" | "empty" | "place-not-found" | "area-empty" | "error";
 
@@ -21,6 +21,7 @@ export default function SelectLocation({ navigation, route }: any) {
   const [loading, setLoading] = useState(false);
   const [lookupState, setLookupState] = useState<LookupState>("loading");
   const [locationLabel, setLocationLabel] = useState("Current location");
+  const [mapOrigin, setMapOrigin] = useState<Coordinates>(DEFAULT_COORDS);
   const [activeAreaQuery, setActiveAreaQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("Closest");
   const mapHeight = Math.min(300, Math.max(190, height * (height < 700 ? 0.28 : 0.31)));
@@ -56,14 +57,13 @@ export default function SelectLocation({ navigation, route }: any) {
     setActiveAreaQuery("");
     setLoading(true);
     setLookupState("loading");
-    setAvailableShops([]);
 
     try {
       const permission = await Location.requestForegroundPermissionsAsync();
       if (permission.status !== "granted") {
         commitLatest(requestId, () => {
           setLookupState("permission-denied");
-          setLocationLabel("Location off");
+          useFallbackResults("Location off", DEFAULT_COORDS);
         });
         return;
       }
@@ -72,7 +72,7 @@ export default function SelectLocation({ navigation, route }: any) {
       if (!position) {
         commitLatest(requestId, () => {
           setLookupState("unavailable");
-          setLocationLabel("Current location");
+          useFallbackResults("Current location", DEFAULT_COORDS);
         });
         return;
       }
@@ -81,22 +81,24 @@ export default function SelectLocation({ navigation, route }: any) {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude
       };
+      setMapOrigin(origin);
 
       const resolvedLabel = await resolveLocationLabel(origin);
       const nearbyShops = await fetchNearbyBarbershops(origin).catch(() => []);
       const widerNearbyShops = nearbyShops.length ? nearbyShops : await fetchNearbyBarbershops(origin, 15000).catch(() => []);
-      const shops = widerNearbyShops.length || resolvedLabel === "Current location" ? widerNearbyShops : await searchBarbershopsByAreaName(resolvedLabel, origin);
+      const areaShops = widerNearbyShops.length || resolvedLabel === "Current location" ? widerNearbyShops : await searchBarbershopsByAreaName(resolvedLabel, origin).catch(() => []);
+      const shops = areaShops.length ? areaShops : fallbackShops(origin, true);
 
       commitLatest(requestId, () => {
         setLocationLabel(resolvedLabel);
         setAvailableShops(shops);
 
-        if (!shops.length) {
+        if (!areaShops.length) {
           setLookupState("empty");
-          return;
+        } else {
+          setLookupState("ready");
         }
 
-        setLookupState("ready");
         const nextSelectedShop = shops.find((shop) => shop.id === selectedShop.id) || shops[0];
         setSelectedShop(nextSelectedShop);
         setSelectedBarber((current) => nextSelectedShop.bestBarbers?.[0] || current);
@@ -104,7 +106,7 @@ export default function SelectLocation({ navigation, route }: any) {
     } catch {
       commitLatest(requestId, () => {
         setLookupState("error");
-        setAvailableShops([]);
+        useFallbackResults("Current location", DEFAULT_COORDS);
       });
     } finally {
       commitLatest(requestId, () => setLoading(false));
@@ -134,18 +136,20 @@ export default function SelectLocation({ navigation, route }: any) {
 
       const namedShops = await searchBarbershopsByAreaName(term, place.coordinates);
       const nearbyShops = namedShops.length ? namedShops : await fetchNearbyBarbershops(place.coordinates, 12000).catch(() => []);
-      const shops = nearbyShops.length ? nearbyShops : await fetchNearbyBarbershops(place.coordinates, 30000).catch(() => []);
+      const widerShops = nearbyShops.length ? nearbyShops : await fetchNearbyBarbershops(place.coordinates, 30000).catch(() => []);
+      const shops = widerShops.length ? widerShops : fallbackShops(place.coordinates, true);
 
       commitLatest(requestId, () => {
         setLocationLabel(place.label);
+        setMapOrigin(place.coordinates);
         setAvailableShops(shops);
 
-        if (!shops.length) {
+        if (!widerShops.length) {
           setLookupState("area-empty");
-          return;
+        } else {
+          setLookupState("ready");
         }
 
-        setLookupState("ready");
         const nextSelectedShop = shops.find((shop) => shop.id === selectedShop.id) || shops[0];
         setSelectedShop(nextSelectedShop);
         setSelectedBarber((current) => nextSelectedShop.bestBarbers?.[0] || current);
@@ -165,32 +169,58 @@ export default function SelectLocation({ navigation, route }: any) {
     if (mounted.current && searchRequestId.current === requestId) update();
   }
 
-  const realShops = useMemo(() => availableShops.filter((shop) => shop.source !== "fallback"), [availableShops]);
+  function useFallbackResults(label: string, origin: Coordinates) {
+    const shops = fallbackShops(origin, origin !== DEFAULT_COORDS);
+    setLocationLabel(label);
+    setMapOrigin(origin);
+    setAvailableShops(shops);
+
+    const nextSelectedShop = shops.find((shop) => shop.id === selectedShop.id) || shops[0];
+    if (nextSelectedShop) {
+      setSelectedShop(nextSelectedShop);
+      setSelectedBarber((current) => nextSelectedShop.bestBarbers?.[0] || current);
+    }
+  }
+
+  const displayShops = useMemo(() => {
+    if (availableShops.length) return availableShops;
+    if (lookupState === "place-not-found") return [];
+    return fallbackShops(mapOrigin, mapOrigin !== DEFAULT_COORDS);
+  }, [availableShops, lookupState, mapOrigin]);
 
   const filteredShops = useMemo(() => {
     const term = query.trim().toLowerCase();
     const visibleShops = !term || term.length >= 3
-      ? realShops
-      : realShops.filter((shop) => [shop.name, shop.address, shop.distance, shop.queue].join(" ").toLowerCase().includes(term));
+      ? displayShops
+      : displayShops.filter((shop) => [shop.name, shop.address, shop.distance, shop.queue].join(" ").toLowerCase().includes(term));
 
-    const filtered = selectedFilter === "Walk-ins"
-      ? visibleShops.filter((shop) => /walk|chair|slot/i.test(shop.queue || ""))
-      : visibleShops;
+    const filtered = visibleShops.filter((shop) => {
+      if (selectedFilter === "Walk-ins") return /walk|chair|slot/i.test(shop.queue || "");
+      if (selectedFilter === "Open Now") return Boolean(shop.openUntil);
+      return true;
+    });
 
     return [...filtered].sort((a, b) => {
       if (selectedFilter === "Top Rated") return Number(b.rating) - Number(a.rating);
       return (a.distanceMeters || 0) - (b.distanceMeters || 0);
     });
-  }, [realShops, query, activeAreaQuery, selectedFilter]);
+  }, [displayShops, query, activeAreaQuery, selectedFilter]);
 
   const activeShop = useMemo(() => {
-    return realShops.find((shop) => shop.id === selectedShop.id);
-  }, [realShops, selectedShop.id]);
+    return displayShops.find((shop) => shop.id === selectedShop.id) || filteredShops[0];
+  }, [displayShops, filteredShops, selectedShop.id]);
+
+  const isUsingFallback = displayShops.some((shop) => shop.source === "fallback") && lookupState !== "ready";
 
   function openShop(shop: Barbershop) {
     setSelectedShop(shop);
     setSelectedBarber((current) => shop.bestBarbers?.[0] || current);
     navigation.navigate(nextScreen);
+  }
+
+  function selectMapShop(shop: Barbershop) {
+    setSelectedShop(shop);
+    setSelectedBarber((current) => shop.bestBarbers?.[0] || current);
   }
 
   const emptyCopy = getEmptyCopy(lookupState);
@@ -228,16 +258,22 @@ export default function SelectLocation({ navigation, route }: any) {
           ))}
         </View>
         <View style={styles.mapWrap}>
-          <MapPreview shops={filteredShops.length ? filteredShops : realShops} selectedShop={activeShop} height={mapHeight} onMarkerPress={setSelectedShop} />
+          <MapPreview shops={filteredShops.length ? filteredShops : displayShops} selectedShop={activeShop} origin={mapOrigin} height={mapHeight} onMarkerPress={selectMapShop} />
           {loading ? (
             <View style={styles.loadingOverlay}>
               <ActivityIndicator color={colors.primary} />
             </View>
           ) : null}
         </View>
+        {isUsingFallback && !loading ? (
+          <View style={styles.fallbackNotice}>
+            <Feather name="info" size={14} color={colors.primary} />
+            <Text style={styles.fallbackText}>Showing sample nearby shops while live map data is unavailable.</Text>
+          </View>
+        ) : null}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Nearby Barbershops</Text>
-          <Text style={styles.countText}>{loading ? "Searching" : `${filteredShops.length} found`}</Text>
+          <Text style={styles.countText}>{loading ? "Searching" : `${filteredShops.length} ${isUsingFallback ? "sample" : "found"}`}</Text>
         </View>
         <View style={styles.list}>
           {filteredShops.map((shop) => (
@@ -423,6 +459,26 @@ const styles = StyleSheet.create({
   },
   mapWrap: {
     marginBottom: spacing.lg
+  },
+  fallbackNotice: {
+    minHeight: 42,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: "rgba(212,168,90,0.24)",
+    backgroundColor: "rgba(212,168,90,0.08)",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    marginTop: -10,
+    marginBottom: 16
+  },
+  fallbackText: {
+    flex: 1,
+    color: colors.secondaryText,
+    fontFamily: fonts.medium,
+    fontSize: 11,
+    lineHeight: 16
   },
   loadingOverlay: {
     position: "absolute",
