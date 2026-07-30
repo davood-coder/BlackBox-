@@ -318,7 +318,7 @@ function buildMapHeaders() {
   };
 
   if (Platform.OS !== "web") {
-    headers["User-Agent"] = "BlackBoxBarbers/1.0";
+    headers["User-Agent"] = "Cutzix/1.0";
   }
 
   return headers;

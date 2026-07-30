@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { colors, fonts } from "../theme";
+import { colors, fonts } from "../../theme";
 
 export default function SplashScreen({ navigation }) {
   const intro = useRef(new Animated.Value(0)).current;
@@ -39,16 +39,16 @@ export default function SplashScreen({ navigation }) {
   };
 
   return (
-    <LinearGradient colors={[colors.background, "#121317", colors.background]} style={styles.container}>
+    <LinearGradient colors={[colors.mediaBackground, "#121317", colors.mediaBackground]} style={styles.container}>
       <Animated.View style={[styles.content, animatedStyle]}>
         <View style={styles.monogram}>
-          <Text style={styles.monogramText}>BB</Text>
+          <Text style={styles.monogramText}>CX</Text>
         </View>
         <Text style={styles.title}>
-          Black Box <Text style={styles.titleAccent}>Barbers</Text>
+          Cutz<Text style={styles.titleAccent}>ix</Text>
         </Text>
       </Animated.View>
-      <Animated.Text style={[styles.footer, { opacity: intro }]}>Black Box Barbers</Animated.Text>
+      <Animated.Text style={[styles.footer, { opacity: intro }]}>Cutzix</Animated.Text>
     </LinearGradient>
   );
 }

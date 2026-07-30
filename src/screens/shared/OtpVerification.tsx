@@ -1,13 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { AppHeader, PrimaryButton, Screen } from "../components/ui";
-import { colors, fonts, radius, spacing } from "../theme";
+import { AppHeader, PrimaryButton, Screen } from "../../components/ui";
+import { colors, fonts, radius, spacing } from "../../theme";
+import { useBooking } from "../../state/BookingContext";
+import { goBackOrNavigate } from "../../navigation/goBack";
 
-export default function OtpVerification({ navigation }) {
+export default function OtpVerification({ navigation, route }) {
   const [digits, setDigits] = useState(["", "", "", ""]);
   const [timeLeft, setTimeLeft] = useState(30);
   const inputs = useRef([]);
+  const { workspace, setWorkspace } = useBooking();
+  const role = route?.params?.role || workspace;
+
+  function continueToWorkspace() {
+    setWorkspace(role);
+    navigation.reset({
+      index: 0,
+      routes: [{ name: role === "Barber" ? "BarberDashboard" : "Home" }]
+    });
+  }
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -35,7 +47,7 @@ export default function OtpVerification({ navigation }) {
   return (
     <Screen>
       <View style={styles.glow} />
-      <AppHeader title="" onBack={() => navigation.goBack()} backVariant="circle" />
+      <AppHeader title="" onBack={() => goBackOrNavigate(navigation, "Login")} backVariant="circle" />
       <View style={styles.content}>
         <Text style={styles.title}>Verify Your Phone</Text>
         <Text style={styles.copy}>
@@ -59,7 +71,7 @@ export default function OtpVerification({ navigation }) {
             />
           ))}
         </View>
-        <PrimaryButton label="Verify & Continue" onPress={() => navigation.replace("SelectLocation")} style={styles.verify} />
+        <PrimaryButton label="Verify & Continue" onPress={continueToWorkspace} style={styles.verify} />
         <View style={styles.resendWrap}>
           {timeLeft > 0 ? (
             <Text style={styles.resendText}>
@@ -95,7 +107,7 @@ const styles = StyleSheet.create({
     paddingBottom: 70
   },
   title: {
-    color: colors.cream,
+    color: colors.text,
     fontFamily: fonts.headingHeavy,
     fontSize: 38,
     lineHeight: 46,
@@ -103,14 +115,14 @@ const styles = StyleSheet.create({
   },
   copy: {
     marginTop: 10,
-    color: colors.creamMuted,
+    color: colors.secondaryText,
     fontFamily: fonts.body,
     fontSize: 16,
     lineHeight: 24,
     textAlign: "center"
   },
   phone: {
-    color: colors.cream,
+    color: colors.text,
     fontFamily: fonts.semibold
   },
   otpRow: {
@@ -126,7 +138,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    color: colors.cream,
+    color: colors.text,
     textAlign: "center",
     fontFamily: fonts.headingHeavy,
     fontSize: 34
@@ -141,7 +153,7 @@ const styles = StyleSheet.create({
     justifyContent: "center"
   },
   resendText: {
-    color: colors.creamMuted,
+    color: colors.secondaryText,
     fontFamily: fonts.body,
     fontSize: 15
   },

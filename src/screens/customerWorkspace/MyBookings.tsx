@@ -1,23 +1,24 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { AppHeader, BottomNav, Card, FadeInView, Screen } from "../components/ui";
-import type { Booking } from "../data";
-import { useBooking } from "../state/BookingContext";
-import { colors, fonts, radius } from "../theme";
+import { AppHeader, BottomNav, Card, FadeInView, Screen } from "../../components/ui";
+import type { Booking } from "../../data";
+import { goBackOrNavigate } from "../../navigation/goBack";
+import { useBooking } from "../../state/BookingContext";
+import { colors, fonts, radius } from "../../theme";
 
 export default function MyBookings({ navigation }) {
   const [tab, setTab] = useState("Upcoming");
   const { bookings } = useBooking();
   const upcomingBookings = bookings.filter((booking) => booking.status === "Confirmed" || booking.status === "Pending");
   const pastBookings = bookings.filter((booking) => booking.status === "Completed");
-  const cancelledBookings = bookings.filter((booking) => booking.status === "Cancelled");
+  const cancelledBookings = bookings.filter((booking) => booking.status === "Cancelled" || booking.status === "Rejected");
   const visibleBookings = tab === "Upcoming" ? upcomingBookings : tab === "Past" ? pastBookings : cancelledBookings;
 
   return (
     <View style={styles.root}>
       <Screen scroll bottomInset>
-        <AppHeader title="My Bookings" onBack={() => navigation.navigate("Home")} right={<Feather name="search" size={20} color={colors.text} />} />
+        <AppHeader title="My Bookings" onBack={() => goBackOrNavigate(navigation, "Home")} right={<Feather name="search" size={20} color={colors.text} />} />
         <Card style={styles.summaryCard}>
           <View>
             <Text style={styles.summaryLabel}>Next appointment</Text>
@@ -53,10 +54,15 @@ export default function MyBookings({ navigation }) {
                 <View style={styles.bookingFooter}>
                   <Text style={styles.totalText}>{booking.total ? `$${booking.total}` : "Total pending"}</Text>
                   <View style={styles.actionRow}>
-                    <Pressable onPress={() => navigation.navigate("BookAppointment")} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
-                      <Text style={styles.actionText}>Rebook</Text>
+                    <Pressable onPress={() => navigation.navigate("BookingDetails", { bookingId: booking.id })} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
+                      <Text style={styles.actionText}>Details</Text>
                     </Pressable>
-                    <Pressable onPress={() => navigation.navigate(booking.status === "Completed" ? "BookingSummary" : "SelectLocation", { nextScreen: "BookAppointment" })} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
+                    <Pressable
+                      onPress={() => booking.status === "Completed"
+                        ? navigation.navigate("BookingDetails", { bookingId: booking.id })
+                        : navigation.navigate("SelectLocation", { nextScreen: "BookAppointment" })}
+                      style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}
+                    >
                       <Text style={styles.actionText}>{booking.status === "Completed" ? "Receipt" : "Reschedule"}</Text>
                     </Pressable>
                   </View>
@@ -80,14 +86,14 @@ export default function MyBookings({ navigation }) {
 function getStatusBadgeStyle(booking: Booking) {
   if (booking.status === "Pending") return styles.pendingBadge;
   if (booking.status === "Completed") return styles.completedBadge;
-  if (booking.status === "Cancelled") return styles.cancelledBadge;
+  if (booking.status === "Cancelled" || booking.status === "Rejected") return styles.cancelledBadge;
   return styles.confirmedBadge;
 }
 
 function getStatusTextStyle(booking: Booking) {
   if (booking.status === "Pending") return styles.pendingText;
   if (booking.status === "Completed") return styles.completedText;
-  if (booking.status === "Cancelled") return styles.cancelledText;
+  if (booking.status === "Cancelled" || booking.status === "Rejected") return styles.cancelledText;
   return styles.confirmedText;
 }
 
@@ -239,7 +245,7 @@ const styles = StyleSheet.create({
   },
   bookingFooter: {
     borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.06)",
+    borderTopColor: colors.border,
     paddingTop: 12,
     flexDirection: "row",
     alignItems: "center",

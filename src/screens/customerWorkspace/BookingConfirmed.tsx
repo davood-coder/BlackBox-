@@ -1,9 +1,10 @@
 import { StyleSheet, Text, View } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { AppHeader, Card, GhostButton, PrimaryButton, Screen } from "../components/ui";
-import { timeRanges } from "../data";
-import { useBooking } from "../state/BookingContext";
-import { colors, fonts, radius } from "../theme";
+import { AppHeader, Card, GhostButton, PrimaryButton, Screen } from "../../components/ui";
+import { timeRanges } from "../../data";
+import { goBackOrNavigate } from "../../navigation/goBack";
+import { useBooking } from "../../state/BookingContext";
+import { colors, fonts, radius } from "../../theme";
 
 export default function BookingConfirmed({ navigation }) {
   const { selectedShop, selectedDate, selectedTime, selectedBarber, selectedPreference, bookingTotal, bookingId, lastConfirmation } = useBooking();
@@ -14,18 +15,23 @@ export default function BookingConfirmed({ navigation }) {
     address: selectedShop.address,
     barber: selectedBarber.name,
     preference: selectedPreference.label,
-    total: bookingTotal
+    total: bookingTotal,
+    status: "Pending" as const
   };
+  const isPending = confirmation.status === "Pending";
 
   return (
     <Screen>
-      <AppHeader title="Booking Confirmed" onBack={() => navigation.replace("Home")} />
+      <AppHeader title={isPending ? "Request Sent" : "Booking Confirmed"} onBack={() => goBackOrNavigate(navigation, "Home")} />
       <View style={styles.content}>
         <Card style={styles.confirmCard}>
-          <View style={styles.checkCircle}>
-            <Feather name="check" size={34} color={colors.text} />
+          <View style={[styles.checkCircle, isPending && styles.pendingCircle]}>
+            <Feather name={isPending ? "clock" : "check"} size={34} color={isPending ? colors.warning : colors.success} />
           </View>
-          <Text style={styles.title}>Your booking is confirmed!</Text>
+          <Text style={styles.title}>{isPending ? "Your request is with the shop" : "Your booking is confirmed"}</Text>
+          <Text style={styles.requestCopy}>
+            {isPending ? "You will receive a notification when the barber accepts or suggests another time." : "Your chair is reserved. Show your ticket when you arrive."}
+          </Text>
           <Text style={styles.date}>{confirmation.date}</Text>
           <View style={styles.locationRow}>
             <Ionicons name="location-outline" size={23} color={colors.text} />
@@ -44,7 +50,7 @@ export default function BookingConfirmed({ navigation }) {
             <Text style={styles.idLabel}>Booking ID</Text>
             <Text style={styles.id}>{confirmation.id}</Text>
           </View>
-          <GhostButton label="Add to Calendar" icon="calendar" style={styles.calendarButton} />
+          <GhostButton label={isPending ? "View Request" : "Add to Calendar"} icon={isPending ? "clock" : "calendar"} onPress={() => navigation.navigate("BookingDetails", { bookingId: confirmation.id })} style={styles.calendarButton} />
         </Card>
       </View>
       <PrimaryButton label="View My Bookings" icon={null} onPress={() => navigation.replace("MyBookings")} style={styles.bottomButton} />
@@ -82,6 +88,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 24
   },
+  pendingCircle: {
+    borderColor: colors.warning,
+    backgroundColor: "rgba(169,105,0,0.08)"
+  },
   title: {
     color: colors.text,
     fontFamily: fonts.heading,
@@ -89,6 +99,15 @@ const styles = StyleSheet.create({
     lineHeight: 31,
     textAlign: "center",
     maxWidth: 260
+  },
+  requestCopy: {
+    color: colors.secondaryText,
+    fontFamily: fonts.body,
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: "center",
+    maxWidth: 290,
+    marginTop: 8
   },
   date: {
     color: colors.text,
@@ -130,9 +149,9 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 58,
     borderRadius: radius.sm,
-    backgroundColor: "rgba(255,255,255,0.04)",
+    backgroundColor: colors.elevated,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
+    borderColor: colors.border,
     justifyContent: "center",
     paddingHorizontal: 10
   },

@@ -3,12 +3,13 @@ import type { ImageStyle } from "react-native";
 import { ActivityIndicator, Image, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import * as Location from "expo-location";
 import { Feather } from "@expo/vector-icons";
-import { AppHeader, BottomNav, Field, GhostButton, Rating, Screen } from "../components/ui";
-import { MapPreview } from "../components/MapPreview";
-import type { Barbershop, Coordinates } from "../data";
-import { useBooking } from "../state/BookingContext";
-import { colors, fonts, radius, spacing } from "../theme";
-import { DEFAULT_COORDS, fallbackShops, fetchNearbyBarbershops, geocodeArea, reverseGeocodeAreaLabel, searchBarbershopsByAreaName } from "../services/nearbyBarbers";
+import { AppHeader, BottomNav, Field, GhostButton, Rating, Screen } from "../../components/ui";
+import { MapPreview } from "../../components/MapPreview";
+import type { Barbershop, Coordinates } from "../../data";
+import { goBackOrNavigate } from "../../navigation/goBack";
+import { useBooking } from "../../state/BookingContext";
+import { colors, fonts, radius, spacing } from "../../theme";
+import { DEFAULT_COORDS, fallbackShops, fetchNearbyBarbershops, geocodeArea, reverseGeocodeAreaLabel, searchBarbershopsByAreaName } from "../../services/nearbyBarbers";
 
 type LookupState = "loading" | "ready" | "permission-denied" | "unavailable" | "empty" | "place-not-found" | "area-empty" | "error";
 
@@ -26,7 +27,8 @@ export default function SelectLocation({ navigation, route }: any) {
   const [selectedFilter, setSelectedFilter] = useState("Closest");
   const mapHeight = Math.min(300, Math.max(190, height * (height < 700 ? 0.28 : 0.31)));
   const isNarrow = width < 360;
-  const nextScreen = route?.params?.nextScreen === "Barbers" ? "Barbers" : "BookAppointment";
+  const requestedScreen = route?.params?.nextScreen;
+  const nextScreen = requestedScreen === "Barbers" || requestedScreen === "ShopProfile" ? requestedScreen : "BookAppointment";
 
   useEffect(() => {
     mounted.current = true;
@@ -228,7 +230,7 @@ export default function SelectLocation({ navigation, route }: any) {
   return (
     <View style={styles.root}>
       <Screen scroll bottomInset contentStyle={styles.screenContent}>
-        <AppHeader title="Nearby Barbers" onBack={() => navigation.goBack()} />
+        <AppHeader title="Nearby Barbers" onBack={() => goBackOrNavigate(navigation, "Home")} />
         <View style={styles.locationRow}>
           <View style={styles.locationTextWrap}>
             <Feather name="map-pin" size={15} color={colors.primary} />
@@ -315,7 +317,7 @@ export default function SelectLocation({ navigation, route }: any) {
           </View>
         ) : null}
       </Screen>
-      <BottomNav active="Barbers" navigation={navigation} />
+      <BottomNav active="Explore" navigation={navigation} />
     </View>
   );
 }
@@ -396,7 +398,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 12,
     borderRadius: radius.md,
-    backgroundColor: "rgba(30,34,43,0.76)",
+    backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.border,
     flexDirection: "row",
@@ -423,7 +425,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.05)"
+    backgroundColor: colors.elevated
   },
   search: {
     marginBottom: 10

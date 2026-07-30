@@ -1,0 +1,12 @@
+[submodule ".claude/vendor/anthropic-skills"]
+	path = .claude/vendor/anthropic-skills
+	url = https://github.com/anthropics/skills.git
+[submodule ".claude/vendor/wshobson-agents"]
+	path = .claude/vendor/wshobson-agents
+	url = https://github.com/wshobson/agents.git
+[submodule ".claude/vendor/everything-claude-code"]
+	path = .claude/vendor/everything-claude-code
+	url = https://github.com/affaan-m/everything-claude-code.git
+[submodule ".claude/vendor/jeffallan-claude-skills"]
+	path = .claude/vendor/jeffallan-claude-skills
+	url = https://github.com/Jeffallan/claude-skills.git

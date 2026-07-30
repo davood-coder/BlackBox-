@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { AppHeader, BottomNav, Card, FadeInView, Field, GhostButton, Rating, Screen } from "../components/ui";
-import { MapPreview } from "../components/MapPreview";
-import { barbers } from "../data";
-import { useBooking } from "../state/BookingContext";
-import { colors, fonts, radius } from "../theme";
+import { AppHeader, BottomNav, Card, FadeInView, Field, GhostButton, Rating, Screen } from "../../components/ui";
+import { MapPreview } from "../../components/MapPreview";
+import { barbers } from "../../data";
+import { goBackOrNavigate } from "../../navigation/goBack";
+import { useBooking } from "../../state/BookingContext";
+import { colors, fonts, radius } from "../../theme";
 
 export default function Barbers({ navigation }: any) {
   const { selectedShop, selectedBarber, setSelectedBarber } = useBooking();
@@ -32,7 +33,7 @@ export default function Barbers({ navigation }: any) {
   return (
     <View style={styles.root}>
       <Screen scroll bottomInset>
-        <AppHeader title="Best Barbers" onBack={() => navigation.navigate("Home")} />
+        <AppHeader title="Best Barbers" onBack={() => goBackOrNavigate(navigation, "Home")} />
         <Card style={styles.shopCard}>
           <View style={styles.shopHeader}>
             <View style={styles.shopText}>
@@ -88,7 +89,7 @@ export default function Barbers({ navigation }: any) {
           ))}
         </View>
       </Screen>
-      <BottomNav active="Barbers" navigation={navigation} />
+      <BottomNav active="Explore" navigation={navigation} />
     </View>
   );
 }

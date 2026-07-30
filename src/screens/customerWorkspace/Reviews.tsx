@@ -1,17 +1,18 @@
 import { useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { AppHeader, Card, Screen } from "../components/ui";
-import { images } from "../assets/images";
-import { reviews } from "../data";
-import { colors, fonts, radius } from "../theme";
+import { AppHeader, Card, Screen } from "../../components/ui";
+import { images } from "../../assets/images";
+import { reviews } from "../../data";
+import { goBackOrNavigate } from "../../navigation/goBack";
+import { colors, fonts, radius } from "../../theme";
 
 export default function Reviews({ navigation }) {
   const [filter, setFilter] = useState("All Reviews");
 
   return (
     <Screen scroll>
-      <AppHeader title="Reviews" onBack={() => navigation.goBack()} />
+      <AppHeader title="Reviews" onBack={() => goBackOrNavigate(navigation, "ShopProfile")} />
       <View style={styles.summary}>
         <View style={styles.scoreBlock}>
           <Text style={styles.score}>4.8</Text>
@@ -136,7 +137,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm
   },
   segmentActive: {
-    backgroundColor: "rgba(255,255,255,0.06)"
+    backgroundColor: colors.border
   },
   segmentText: {
     color: colors.secondaryText,

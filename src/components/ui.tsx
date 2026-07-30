@@ -252,14 +252,15 @@ export function Field({ icon, placeholder, value, onChangeText, onSubmitEditing,
 export function BottomNav({ active, navigation }: BottomNavProps) {
   const items = [
     { key: "Home", label: "Home", icon: "home-outline", activeIcon: "home", route: "Home" },
+    { key: "Explore", label: "Explore", icon: "compass-outline", activeIcon: "compass", route: "SelectLocation", params: { nextScreen: "ShopProfile" } },
+    { key: "Scan", label: "Scan", icon: "scan-outline", activeIcon: "scan", route: "QRScanner" },
     { key: "Bookings", label: "Bookings", icon: "calendar-outline", activeIcon: "calendar", route: "MyBookings" },
-    { key: "Barbers", label: "Barbers", icon: "people-outline", activeIcon: "people", route: "SelectLocation", params: { nextScreen: "Barbers" } },
     { key: "Profile", label: "Profile", icon: "person-outline", activeIcon: "person", route: "Profile" }
   ];
 
   return (
     <View style={styles.bottomNavWrap} pointerEvents="box-none">
-      <LinearGradient colors={["rgba(17,21,28,0.92)", "rgba(17,21,28,0.98)"]} style={styles.bottomNav}>
+      <LinearGradient colors={["rgba(255,255,255,0.96)", "#FFFFFF"]} style={styles.bottomNav}>
         {items.map((item) => {
           const isActive = active === item.key;
           return (
@@ -267,6 +268,32 @@ export function BottomNav({ active, navigation }: BottomNavProps) {
               <AnyIonicon name={isActive ? item.activeIcon : item.icon} size={21} color={isActive ? colors.primary : colors.muted} />
               <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>{item.label}</Text>
               {isActive ? <View style={styles.navDot} /> : null}
+            </Pressable>
+          );
+        })}
+      </LinearGradient>
+    </View>
+  );
+}
+
+export function BarberBottomNav({ active, navigation }: BottomNavProps) {
+  const items = [
+    { key: "Dashboard", label: "Dashboard", icon: "grid-outline", activeIcon: "grid", route: "BarberDashboard" },
+    { key: "Requests", label: "Requests", icon: "calendar-outline", activeIcon: "calendar", route: "BarberBookings" },
+    { key: "Business", label: "Business", icon: "briefcase-outline", activeIcon: "briefcase", route: "BusinessHub" },
+    { key: "Profile", label: "Profile", icon: "person-outline", activeIcon: "person", route: "Profile" }
+  ];
+
+  return (
+    <View style={styles.bottomNavWrap} pointerEvents="box-none">
+      <LinearGradient colors={["rgba(255,255,255,0.96)", "#FFFFFF"]} style={styles.bottomNav}>
+        {items.map((item) => {
+          const isActive = active === item.key;
+          return (
+            <Pressable key={item.key} onPress={() => navigation.navigate(item.route)} style={({ pressed }) => [styles.navItem, pressed && styles.pressed]}>
+              <AnyIonicon name={isActive ? item.activeIcon : item.icon} size={21} color={isActive ? colors.primaryDark : colors.muted} />
+              <Text style={[styles.navLabel, isActive && styles.barberNavLabelActive]}>{item.label}</Text>
+              {isActive ? <View style={styles.barberNavDot} /> : null}
             </Pressable>
           );
         })}
@@ -334,7 +361,7 @@ const styles = StyleSheet.create({
   headerBackCircle: {
     alignItems: "center",
     borderRadius: 21,
-    backgroundColor: "rgba(255,255,255,0.05)"
+    backgroundColor: colors.elevated
   },
   headerTitle: {
     flex: 1,
@@ -355,9 +382,9 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.05)",
+    backgroundColor: colors.elevated,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)"
+    borderColor: colors.border
   },
   iconButtonActive: {
     backgroundColor: colors.primary
@@ -365,7 +392,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     minHeight: 56,
     borderRadius: radius.full,
-    backgroundColor: colors.cream,
+    backgroundColor: colors.black,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
@@ -374,7 +401,7 @@ const styles = StyleSheet.create({
     ...shadows.card
   },
   primaryButtonText: {
-    color: colors.background,
+    color: colors.white,
     fontFamily: fonts.bold,
     fontSize: 15
   },
@@ -388,13 +415,13 @@ const styles = StyleSheet.create({
     minHeight: 52,
     borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: "#4A5363",
+    borderColor: "#C8CAC5",
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
     gap: 8,
     paddingHorizontal: 20,
-    backgroundColor: "rgba(255,255,255,0.02)"
+    backgroundColor: colors.white
   },
   ghostButtonText: {
     color: colors.text,
@@ -402,8 +429,8 @@ const styles = StyleSheet.create({
     fontSize: 14
   },
   card: {
-    backgroundColor: "rgba(30,34,43,0.9)",
-    borderColor: "rgba(255,255,255,0.05)",
+    backgroundColor: colors.card,
+    borderColor: colors.border,
     borderWidth: 1,
     borderRadius: radius.sm,
     padding: 14,
@@ -469,7 +496,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
     borderTopWidth: 1,
-    borderColor: "rgba(255,255,255,0.07)",
+    borderColor: colors.border,
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
@@ -477,7 +504,8 @@ const styles = StyleSheet.create({
     ...shadows.floating
   },
   navItem: {
-    width: 82,
+    flex: 1,
+    minWidth: 0,
     height: 70,
     alignItems: "center",
     justifyContent: "center",
@@ -491,11 +519,22 @@ const styles = StyleSheet.create({
   navLabelActive: {
     color: colors.primary
   },
+  barberNavLabelActive: {
+    color: colors.primaryDark
+  },
   navDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
     backgroundColor: colors.primary,
+    position: "absolute",
+    bottom: 4
+  },
+  barberNavDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.primaryDark,
     position: "absolute",
     bottom: 4
   },

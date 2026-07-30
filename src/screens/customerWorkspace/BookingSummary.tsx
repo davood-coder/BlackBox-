@@ -1,9 +1,10 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { AppHeader, Card, PrimaryButton, Screen } from "../components/ui";
-import { paymentMethods, timeRanges } from "../data";
-import { useBooking } from "../state/BookingContext";
-import { colors, fonts, radius, spacing } from "../theme";
+import { AppHeader, Card, PrimaryButton, Screen } from "../../components/ui";
+import { paymentMethods, timeRanges } from "../../data";
+import { goBackOrNavigate } from "../../navigation/goBack";
+import { useBooking } from "../../state/BookingContext";
+import { colors, fonts, radius, spacing } from "../../theme";
 
 export default function BookingSummary({ navigation }) {
   const {
@@ -28,7 +29,7 @@ export default function BookingSummary({ navigation }) {
 
   return (
     <Screen scroll>
-      <AppHeader title="Booking Summary" onBack={() => navigation.goBack()} />
+      <AppHeader title="Booking Summary" onBack={() => goBackOrNavigate(navigation, "BookAppointment")} />
       <Card style={styles.shopCard}>
         <Image source={selectedShop.image} style={styles.shopImage} />
         <View style={styles.shopText}>
@@ -102,7 +103,7 @@ export default function BookingSummary({ navigation }) {
           })}
         </View>
       </SummarySection>
-      <PrimaryButton label="Confirm Booking" icon={null} onPress={handleConfirm} style={styles.confirm} />
+      <PrimaryButton label="Send Booking Request" icon={null} onPress={handleConfirm} style={styles.confirm} />
     </Screen>
   );
 }

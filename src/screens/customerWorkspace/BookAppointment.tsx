@@ -1,10 +1,11 @@
 import { useEffect, useRef } from "react";
 import { Animated, Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { AppHeader, Card, FadeInView, Field, Pill, PrimaryButton, Rating, Screen, SectionTitle } from "../components/ui";
-import { barbers, dates, groomingPreferences, serviceAddOns, services, times } from "../data";
-import { useBooking } from "../state/BookingContext";
-import { colors, fonts, radius, spacing } from "../theme";
+import { AppHeader, Card, FadeInView, Field, Pill, PrimaryButton, Rating, Screen, SectionTitle } from "../../components/ui";
+import { barbers, dates, groomingPreferences, serviceAddOns, services, times } from "../../data";
+import { goBackOrNavigate } from "../../navigation/goBack";
+import { useBooking } from "../../state/BookingContext";
+import { colors, fonts, radius, spacing } from "../../theme";
 
 export default function BookAppointment({ navigation }: any) {
   const { width } = useWindowDimensions();
@@ -48,7 +49,7 @@ export default function BookAppointment({ navigation }: any) {
 
   return (
     <Screen scroll>
-      <AppHeader title="Book Appointment" onBack={() => navigation.goBack()} />
+      <AppHeader title="Book Appointment" onBack={() => goBackOrNavigate(navigation, "Home")} />
       <Card style={styles.shopSummary}>
         <Text style={styles.shopTitle}>{selectedShop.name}</Text>
         <Text style={styles.shopAddress} numberOfLines={2}>{selectedShop.address}</Text>

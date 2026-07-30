@@ -73,14 +73,20 @@ export type Barbershop = {
   bestBarbers?: Barber[];
   openUntil?: string;
   queue?: string;
+  owner?: string;
+  status?: "Open" | "Busy" | "Closed";
+  averageWait?: string;
+  openingHours?: string;
 };
+
+export type BookingStatus = "Confirmed" | "Pending" | "Rejected" | "Cancelled" | "Completed";
 
 export type Booking = {
   id?: string;
   date: string;
   shop: string;
   service: string;
-  status: "Confirmed" | "Pending" | "Cancelled" | "Completed";
+  status: BookingStatus;
   barber?: string;
   addOns?: string[];
   preference?: string;
@@ -88,6 +94,85 @@ export type Booking = {
   note?: string;
   address?: string;
   total?: number;
+  shopId?: string;
+  customer?: string;
+  customerPhone?: string;
+  appointmentNumber?: string;
+  estimatedWait?: string;
+  paymentStatus?: "Paid" | "Pending" | "Pay at shop";
+};
+
+export type AppNotification = {
+  id: string;
+  title: string;
+  body: string;
+  time: string;
+  type: "booking" | "payment" | "offer" | "review" | "shop";
+  read: boolean;
+};
+
+export type Workspace = "Customer" | "Barber";
+
+export type ProfileDetail = {
+  label: string;
+  value: string;
+};
+
+export type TemporaryProfile = {
+  name: string;
+  email: string;
+  phone: string;
+  roleLabel: string;
+  badge: string;
+  headline: string;
+  note: string;
+  avatar: ImageSourcePropType;
+  rewardPoints?: number;
+  cadence?: string;
+  savedStyles?: number;
+  basePayout?: number;
+  queueOffset?: number;
+  repeatClients?: number;
+  details: ProfileDetail[];
+};
+
+export const temporaryProfiles: Record<Workspace, TemporaryProfile> = {
+  Customer: {
+    name: "Michael Johnson",
+    email: "michael@email.com",
+    phone: "+1 555 019 2834",
+    roleLabel: "Customer",
+    badge: "Member",
+    headline: "Keeps bookings, favorite shops, and grooming preferences together.",
+    note: "Booking preferences and saved styles are ready for faster rebooking.",
+    avatar: images.masterBarber,
+    rewardPoints: 420,
+    cadence: "Every 3 weeks",
+    savedStyles: 8,
+    details: [
+      { label: "Home shop", value: "Black Box Barbershop" },
+      { label: "Preferred service", value: "Haircut & Beard Trim" },
+      { label: "Default payment", value: "Visa **** 4242" }
+    ]
+  },
+  Barber: {
+    name: "Daniel Brooks",
+    email: "daniel@blackboxbarbershop.com",
+    phone: "+1 555 019 2201",
+    roleLabel: "Barber",
+    badge: "Pro",
+    headline: "Manages chair flow, booking requests, services, and shop profile.",
+    note: "Shop operations, chair flow, and business tools stay in one place.",
+    avatar: images.blackBoxMark,
+    basePayout: 680,
+    queueOffset: 2,
+    repeatClients: 68,
+    details: [
+      { label: "Shop", value: "Black Box Barbershop" },
+      { label: "Role", value: "Owner barber" },
+      { label: "Working hours", value: "9:00 AM - 9:00 PM" }
+    ]
+  }
 };
 
 export const services: Service[] = [
@@ -208,7 +293,8 @@ export const groomingPreferences: GroomingPreference[] = [
 
 export const paymentMethods: PaymentMethod[] = [
   { id: "card", label: "Card", detail: "Visa **** 4242", icon: "credit-card" },
-  { id: "wallet", label: "Wallet", detail: "Black Box balance", icon: "smartphone" },
+  { id: "upi", label: "UPI", detail: "michael@okbank", icon: "send" },
+  { id: "wallet", label: "Wallet", detail: "Cutzix balance", icon: "smartphone" },
   { id: "shop", label: "Pay at Shop", detail: "Cash or counter card", icon: "briefcase" }
 ];
 
@@ -221,10 +307,10 @@ export const barberHomeStats = [
 ];
 
 export const homeQuickActions = [
-  { label: "Nearby", icon: "map-pin", route: "SelectLocation", params: { nextScreen: "BookAppointment" } },
-  { label: "Styles", icon: "image", route: "Barbers" },
-  { label: "Rebook", icon: "refresh-cw", route: "MyBookings" },
-  { label: "Profile", icon: "user", route: "Profile" }
+  { label: "Scan QR", icon: "maximize", route: "QRScanner" },
+  { label: "Nearby", icon: "map-pin", route: "SelectLocation", params: { nextScreen: "ShopProfile" } },
+  { label: "Bookings", icon: "calendar", route: "MyBookings" },
+  { label: "Favorites", icon: "heart", route: "Favorites" }
 ];
 
 export const times = ["10:00 AM", "11:00 AM", "12:00 PM", "01:00 PM"];
@@ -314,7 +400,12 @@ export const barbershops: Barbershop[] = [
     services,
     bestBarbers: barbers.slice(0, 3),
     openUntil: "9:00 PM",
-    queue: "2 chairs free"
+    queue: "2 chairs free",
+    owner: "Daniel Brooks",
+    status: "Open",
+    averageWait: "12 min",
+    openingHours: "9:00 AM - 9:00 PM",
+    phone: "+1 555 019 2201"
   },
   {
     id: "the-barber-shop",
@@ -330,7 +421,12 @@ export const barbershops: Barbershop[] = [
     services,
     bestBarbers: [barbers[1], barbers[2], barbers[3]],
     openUntil: "8:30 PM",
-    queue: "Next slot soon"
+    queue: "Next slot soon",
+    owner: "Sophia Miller",
+    status: "Busy",
+    averageWait: "24 min",
+    openingHours: "10:00 AM - 8:30 PM",
+    phone: "+1 555 019 4482"
   },
   {
     id: "good-place",
@@ -346,12 +442,18 @@ export const barbershops: Barbershop[] = [
     services,
     bestBarbers: [barbers[2], barbers[0], barbers[3]],
     openUntil: "8:00 PM",
-    queue: "Walk-ins open"
+    queue: "Walk-ins open",
+    owner: "Aiden Carter",
+    status: "Open",
+    averageWait: "8 min",
+    openingHours: "9:30 AM - 8:00 PM",
+    phone: "+1 555 019 7730"
   }
 ];
 
 export const bookings: Booking[] = [
   {
+    id: "#CZX12345",
     date: "Jul 26, 2026 - 12:00 PM",
     shop: "Black Box Barbershop",
     service: "Haircut & Beard Trim",
@@ -360,9 +462,16 @@ export const bookings: Booking[] = [
     addOns: ["Hot Towel Finish"],
     preference: "Consult First",
     paymentMethod: "Visa **** 4242",
-    total: 53
+    total: 53,
+    shopId: "black-box-barbershop",
+    customer: "Michael Johnson",
+    customerPhone: "+1 555 019 2834",
+    appointmentNumber: "A-104",
+    estimatedWait: "12 min",
+    paymentStatus: "Paid"
   },
   {
+    id: "#CZX12346",
     date: "Jul 29, 2026 - 03:00 PM",
     shop: "The Barber Shop",
     service: "Hair Color",
@@ -371,9 +480,16 @@ export const bookings: Booking[] = [
     addOns: ["Style Match"],
     preference: "Occasion Ready",
     paymentMethod: "Pay at Shop",
-    total: 61
+    total: 61,
+    shopId: "the-barber-shop",
+    customer: "Noah Williams",
+    customerPhone: "+1 555 019 4820",
+    appointmentNumber: "P-018",
+    estimatedWait: "18 min",
+    paymentStatus: "Pay at shop"
   },
   {
+    id: "#CZX12344",
     date: "Jul 18, 2026 - 11:00 AM",
     shop: "Good Place",
     service: "Classic Shave",
@@ -382,8 +498,55 @@ export const bookings: Booking[] = [
     addOns: ["Hot Towel Finish"],
     preference: "Quiet Chair",
     paymentMethod: "Visa **** 4242",
-    total: 26
+    total: 26,
+    shopId: "good-place",
+    customer: "Ethan Brown",
+    customerPhone: "+1 555 019 6102",
+    appointmentNumber: "A-099",
+    estimatedWait: "Completed",
+    paymentStatus: "Paid"
   }
+];
+
+export const appNotifications: AppNotification[] = [
+  {
+    id: "notification-1",
+    title: "Booking accepted",
+    body: "Richard confirmed your haircut at Black Box Barbershop.",
+    time: "8 min ago",
+    type: "booking",
+    read: false
+  },
+  {
+    id: "notification-2",
+    title: "Appointment reminder",
+    body: "Your chair is reserved tomorrow at 12:00 PM.",
+    time: "2 hr ago",
+    type: "booking",
+    read: false
+  },
+  {
+    id: "notification-3",
+    title: "Weekend grooming offer",
+    body: "Save 15% on Deluxe Grooming at participating shops.",
+    time: "Yesterday",
+    type: "offer",
+    read: true
+  },
+  {
+    id: "notification-4",
+    title: "Payment received",
+    body: "Your $53 card payment was successful.",
+    time: "2 days ago",
+    type: "payment",
+    read: true
+  }
+];
+
+export const barberCustomers = [
+  { id: "customer-1", name: "Michael Johnson", visits: 14, lastService: "Haircut & Beard Trim", loyalty: "Gold" },
+  { id: "customer-2", name: "Noah Williams", visits: 8, lastService: "Hair Color", loyalty: "Regular" },
+  { id: "customer-3", name: "Ethan Brown", visits: 5, lastService: "Classic Shave", loyalty: "Regular" }
 ];
 
 export const reviews = [

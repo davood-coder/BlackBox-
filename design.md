@@ -1,5 +1,5 @@
 ---
-name: Premium Barber Booking
+name: Cutzix
 colors:
   surface: '#171A21'
   surface-dim: '#16130d'
@@ -111,7 +111,7 @@ spacing:
   margin-mobile: 20px
 ---
 
-# Barber Booking App Design System
+# Cutzix Design System
 Version: 1.0
 Theme: Luxury Dark UI
 Style: Premium Minimal • Modern • Elegant • Production Ready

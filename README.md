@@ -1,24 +1,35 @@
-# Black Box Barbers
+# Cutzix
 
-React Native / Expo implementation of the premium barber booking app. The UI is built with native React Native components, shared design tokens, local image assets, and Expo-friendly navigation.
+Cutzix is a React Native and Expo barber-booking platform with dedicated customer and barber workspaces.
 
-## Flow
+## Customer Workspace
 
-Splash -> Onboarding 1 -> Onboarding 2 -> Onboarding 3 -> Login -> OTP -> Select Location -> Home.
+- Discover nearby shops with device location, map data, search, and filters
+- Scan a shop QR code with `expo-camera`
+- View shop services, pricing, live queue, barbers, ratings, and opening hours
+- Save favorite shops and receive booking, payment, reminder, and offer notifications
+- Request a service, barber, date, time, add-ons, preferences, and payment method
+- Track pending, accepted, rejected, cancelled, and completed appointments
+- Open confirmed appointment tickets with QR-style check-in details
 
-From Home:
+## Barber Workspace
 
-- Book Appointment -> Nearby Barbers map/search -> Best Barbers -> Barber Profile -> Book Appointment -> Booking Summary -> Booking Confirmed
-- Explore Barbers -> selected shop barbers -> Barber Profile -> Reviews or Book Appointment
-- Bottom navigation moves between Home, My Bookings, Barbers, and Profile
+- Monitor revenue, requests, accepted bookings, live queue, ratings, and daily schedule
+- Accept, decline, cancel, and complete customer booking requests
+- Manage services and availability
+- Review payments, transactions, customers, loyalty, analytics, and demand trends
+- Control shop availability, holiday mode, working hours, employees, and the shop QR
 
-Selections are shared through `src/state/BookingContext.tsx`, so chosen nearby shop, service, barber, date, and time flow into Booking Summary, Booking Confirmed, and My Bookings.
+Booking selections, workspace mode, favorites, notifications, and status transitions are shared through `src/state/BookingContext.tsx`. Nearby shop discovery uses `expo-location` with OpenStreetMap data and local fallback shops when location or network access is unavailable.
 
-Nearby barber shops are fetched through device location using `expo-location` and OpenStreetMap Overpass data, with local fallback data when permission or network access is unavailable.
+## Screen Structure
 
-Each screen now lives as a single `.tsx` file directly inside `src/screens`, for example `src/screens/Home.tsx`.
-
-The booking flow includes barber-specific options such as service add-ons, visit preferences, barber availability, payment selection, booking status management, and lightweight client/barber profile modes.
+```text
+src/screens/
+  customerWorkspace/  Customer discovery, shops, barbers, and bookings
+  barberWorkspace/    Dashboard, requests, and business operations
+  shared/             Onboarding, authentication, profile, and notifications
+```
 
 ## Run
 
@@ -26,4 +37,16 @@ The booking flow includes barber-specific options such as service add-ons, visit
 npm start
 ```
 
-The local Expo server runs at `http://localhost:8081`.
+For the web workspace:
+
+```sh
+npm run web
+```
+
+Useful validation commands:
+
+```sh
+npm run typecheck
+npx expo-doctor
+npx expo export --platform web
+```

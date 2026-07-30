@@ -1,11 +1,12 @@
 import { ImageBackground, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { AppHeader, Card, FadeInView, PrimaryButton, Screen } from "../components/ui";
-import { MapPreview } from "../components/MapPreview";
-import { services } from "../data";
-import { useBooking } from "../state/BookingContext";
-import { colors, fonts, radius, spacing } from "../theme";
+import { AppHeader, Card, FadeInView, PrimaryButton, Screen } from "../../components/ui";
+import { MapPreview } from "../../components/MapPreview";
+import { services } from "../../data";
+import { goBackOrNavigate } from "../../navigation/goBack";
+import { useBooking } from "../../state/BookingContext";
+import { colors, fonts, radius, spacing } from "../../theme";
 
 export default function BarberProfile({ navigation }: any) {
   const { height } = useWindowDimensions();
@@ -18,7 +19,7 @@ export default function BarberProfile({ navigation }: any) {
       <ImageBackground source={selectedBarber.image} resizeMode="cover" style={[styles.hero, { height: isShort ? 282 : 332 }]}>
         <LinearGradient colors={["rgba(15,17,21,0.2)", "rgba(15,17,21,0.38)", colors.background]} style={styles.heroOverlay}>
           <View style={styles.headerWrap}>
-            <AppHeader title="Barber Profile" onBack={() => navigation.goBack()} />
+            <AppHeader title="Barber Profile" onBack={() => goBackOrNavigate(navigation, "Barbers")} />
           </View>
           <View style={styles.identity}>
             <Text style={styles.name}>{selectedBarber.name}</Text>
@@ -243,7 +244,7 @@ const styles = StyleSheet.create({
     lineHeight: 23
   },
   specialty: {
-    color: colors.cream,
+    color: colors.primaryDark,
     fontFamily: fonts.medium,
     fontSize: 13,
     lineHeight: 20,

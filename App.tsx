@@ -1,4 +1,4 @@
-import { NavigationContainer, DarkTheme } from "@react-navigation/native";
+import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
 import {
@@ -19,9 +19,9 @@ import { BookingProvider } from "./src/state/BookingContext";
 import { colors } from "./src/theme";
 
 const navigationTheme = {
-  ...DarkTheme,
+  ...DefaultTheme,
   colors: {
-    ...DarkTheme.colors,
+    ...DefaultTheme.colors,
     background: colors.background,
     card: colors.surface,
     primary: colors.primary,
@@ -67,7 +67,7 @@ export default function App() {
   return (
     <BookingProvider>
       <NavigationContainer theme={navigationTheme}>
-        <StatusBar style="light" />
+        <StatusBar style="auto" />
         <AppNavigator />
       </NavigationContainer>
     </BookingProvider>
