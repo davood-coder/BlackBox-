@@ -406,6 +406,13 @@ function ShopPanel({ navigation }: { navigation: any }) {
     { id: "alex-carter", name: "Alex Carter", role: "Beard Specialist", start: "11:00 AM", end: "08:00 PM", active: true, avatar: images.luxuryBarbershop }
   ]);
 
+  const [workerFormVisible, setWorkerFormVisible] = useState(false);
+  const [editingWorkerId, setEditingWorkerId] = useState<string | null>(null);
+  const [workerName, setWorkerName] = useState("");
+  const [workerRole, setWorkerRole] = useState("");
+  const [workerStart, setWorkerStart] = useState("");
+  const [workerEnd, setWorkerEnd] = useState("");
+
   const [savedLocations, setSavedLocations] = useState([
     {
       id: "loc-1",
@@ -421,6 +428,65 @@ function ShopPanel({ navigation }: { navigation: any }) {
   const [locAddress, setLocAddress] = useState("");
   const [locCoords, setLocCoords] = useState({ latitude: 14.91342, longitude: 79.9855 });
   const [resolvingLocation, setResolvingLocation] = useState(false);
+
+  function handleAddWorker() {
+    setEditingWorkerId(null);
+    setWorkerName("");
+    setWorkerRole("");
+    setWorkerStart("09:00 AM");
+    setWorkerEnd("06:00 PM");
+    setWorkerFormVisible(true);
+  }
+
+  function handleEditWorker(emp: typeof employeeHours[number]) {
+    setEditingWorkerId(emp.id);
+    setWorkerName(emp.name);
+    setWorkerRole(emp.role);
+    setWorkerStart(emp.start);
+    setWorkerEnd(emp.end);
+    setWorkerFormVisible(true);
+  }
+
+  function handleDeleteWorker(id: string) {
+    setEmployeeHours((current) => current.filter((item) => item.id !== id));
+  }
+
+  function handleSaveWorker() {
+    const nameVal = workerName.trim();
+    const roleVal = workerRole.trim();
+    
+    if (!nameVal) {
+      alert("Please enter the worker's name.");
+      return;
+    }
+    if (!roleVal) {
+      alert("Please enter the worker's role.");
+      return;
+    }
+
+    if (editingWorkerId) {
+      setEmployeeHours((current) =>
+        current.map((item) =>
+          item.id === editingWorkerId
+            ? { ...item, name: nameVal, role: roleVal, start: workerStart, end: workerEnd }
+            : item
+        )
+      );
+    } else {
+      const newWorker = {
+        id: `emp-${Date.now()}`,
+        name: nameVal,
+        role: roleVal,
+        start: workerStart,
+        end: workerEnd,
+        active: true,
+        avatar: images.masterBarber
+      };
+      setEmployeeHours((current) => [...current, newWorker]);
+    }
+
+    setWorkerFormVisible(false);
+  }
 
   function handleAddLocation() {
     setEditingLocId(null);
@@ -915,110 +981,173 @@ function ShopPanel({ navigation }: { navigation: any }) {
       </Modal>
 
       {/* Pop-up 3: Working Hours Floating Sheet */}
-      <Modal visible={hoursModalVisible} transparent animationType="slide" onRequestClose={() => setHoursModalVisible(false)}>
+      <Modal visible={hoursModalVisible} transparent animationType="slide" onRequestClose={() => {
+        setHoursModalVisible(false);
+        setWorkerFormVisible(false);
+      }}>
         <View style={styles.modalOverlayBottom}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setHoursModalVisible(false)} />
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => {
+            setHoursModalVisible(false);
+            setWorkerFormVisible(false);
+          }} />
           <View style={styles.floatingCardModal}>
             <View style={styles.modalHeaderRow}>
               <View style={styles.modalHeaderTitleBox}>
-                <Feather name="clock" size={18} color="#C89A43" />
-                <Text style={styles.modalTitleText}>Working Hours</Text>
+                <Feather name={workerFormVisible ? "arrow-left" : "clock"} size={18} color="#C89A43" />
+                <Text style={styles.modalTitleText}>
+                  {workerFormVisible ? (editingWorkerId ? "Edit Worker" : "Add Worker") : "Working Hours"}
+                </Text>
               </View>
-              <Pressable onPress={() => setHoursModalVisible(false)} style={styles.modalCloseCircleBtn}>
-                <Feather name="x" size={16} color={colors.text} />
+              <Pressable onPress={() => {
+                if (workerFormVisible) {
+                  setWorkerFormVisible(false);
+                } else {
+                  setHoursModalVisible(false);
+                }
+              }} style={styles.modalCloseCircleBtn}>
+                <Feather name={workerFormVisible ? "arrow-left" : "x"} size={16} color={colors.text} />
               </Pressable>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 10 }}>
-              <View style={styles.banner}>
-                <Feather name="clock" size={16} color="#946B22" style={styles.bannerIcon} />
-                <Text style={styles.bannerText}>
-                  Configure working hour schedules and availability for all shop employees.
-                </Text>
-              </View>
-
-              <Text style={styles.sectionHeading}>Employee Rosters</Text>
-
-              {employeeHours.map((emp) => (
-                <Card key={emp.id} style={styles.employeeCard}>
-                  <View style={styles.empRow}>
-                    <View style={styles.empAvatarWrapper}>
-                      <Image source={emp.avatar} style={styles.empAvatarImg} />
+              {workerFormVisible ? (
+                // Worker Form Content
+                <View>
+                  <Card style={styles.addressFormCard}>
+                    <Text style={styles.editInputLabel}>Worker Name</Text>
+                    <View style={styles.inputWithIconRow}>
+                      <View style={styles.inputIconBox}>
+                        <Feather name="user" size={18} color="#555" />
+                      </View>
+                      <TextInput
+                        value={workerName}
+                        onChangeText={setWorkerName}
+                        placeholder="e.g. Richard Anderson"
+                        placeholderTextColor={colors.muted}
+                        style={styles.editTextInputWithIcon}
+                      />
                     </View>
-                    <View style={styles.empDetails}>
-                      <Text style={styles.empNameText}>{emp.name}</Text>
-                      <Text style={styles.empRoleText}>{emp.role}</Text>
+
+                    <Text style={styles.editInputLabel}>Role / Specialty</Text>
+                    <View style={styles.inputWithIconRow}>
+                      <View style={styles.inputIconBox}>
+                        <Feather name="briefcase" size={18} color="#555" />
+                      </View>
+                      <TextInput
+                        value={workerRole}
+                        onChangeText={setWorkerRole}
+                        placeholder="e.g. Expert Barber"
+                        placeholderTextColor={colors.muted}
+                        style={styles.editTextInputWithIcon}
+                      />
                     </View>
-                    <Switch
-                      value={emp.active}
-                      onValueChange={(val) => {
-                        setEmployeeHours((current) =>
-                          current.map((item) => (item.id === emp.id ? { ...item, active: val } : item))
-                        );
-                      }}
-                      trackColor={{ false: "#DADCD7", true: "#E7CE9B" }}
-                      thumbColor={emp.active ? colors.primaryDark : colors.muted}
-                    />
+
+                    <Text style={styles.editInputLabel}>Shift Start Time</Text>
+                    <View style={styles.inputWithIconRow}>
+                      <View style={styles.inputIconBox}>
+                        <Feather name="clock" size={18} color="#555" />
+                      </View>
+                      <TextInput
+                        value={workerStart}
+                        onChangeText={setWorkerStart}
+                        placeholder="e.g. 09:00 AM"
+                        placeholderTextColor={colors.muted}
+                        style={styles.editTextInputWithIcon}
+                      />
+                    </View>
+
+                    <Text style={styles.editInputLabel}>Shift End Time</Text>
+                    <View style={styles.inputWithIconRow}>
+                      <View style={styles.inputIconBox}>
+                        <Feather name="clock" size={18} color="#555" />
+                      </View>
+                      <TextInput
+                        value={workerEnd}
+                        onChangeText={setWorkerEnd}
+                        placeholder="e.g. 06:00 PM"
+                        placeholderTextColor={colors.muted}
+                        style={styles.editTextInputWithIcon}
+                      />
+                    </View>
+                  </Card>
+
+                  <View style={styles.locSaveActionRow}>
+                    <Pressable onPress={() => setWorkerFormVisible(false)} style={({ pressed }) => [styles.locCancelBtn, pressed && styles.pressed]}>
+                      <Text style={styles.locCancelText}>Cancel</Text>
+                    </Pressable>
+                    
+                    <Pressable onPress={handleSaveWorker} style={({ pressed }) => [styles.locSaveBtn, pressed && styles.pressed]}>
+                      <Text style={styles.locSaveText}>Save Worker</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : (
+                // Worker List Content
+                <View>
+                  <View style={styles.banner}>
+                    <Feather name="clock" size={16} color="#946B22" style={styles.bannerIcon} />
+                    <Text style={styles.bannerText}>
+                      Configure working hour schedules and availability for all shop employees.
+                    </Text>
                   </View>
 
-                  {emp.active ? (
-                    <View style={styles.hoursEditorRow}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.hourInputLabel}>Start Time</Text>
-                        <View style={styles.inputWithIconRow}>
-                          <View style={styles.inputIconBox}>
-                            <Feather name="clock" size={16} color="#555" />
-                          </View>
-                          <TextInput
-                            value={emp.start}
-                            onChangeText={(val) => {
-                              setEmployeeHours((current) =>
-                                current.map((item) => (item.id === emp.id ? { ...item, start: val } : item))
-                              );
-                            }}
-                            placeholder="e.g. 09:00 AM"
-                            placeholderTextColor={colors.muted}
-                            style={styles.editTextInputWithIcon}
-                          />
+                  <Pressable onPress={handleAddWorker} style={({ pressed }) => [styles.addLocationCard, pressed && styles.pressed]}>
+                    <View style={styles.addLocationIconCircle}>
+                      <Feather name="plus" size={20} color="#946B22" />
+                    </View>
+                    <Text style={styles.addLocationCardText}>Add New Worker</Text>
+                  </Pressable>
+
+                  <Text style={styles.sectionHeading}>Employee Rosters</Text>
+
+                  {employeeHours.map((emp) => (
+                    <Card key={emp.id} style={styles.employeeCard}>
+                      <View style={styles.empRow}>
+                        <View style={styles.empAvatarWrapper}>
+                          <Image source={emp.avatar} style={styles.empAvatarImg} />
+                        </View>
+                        <View style={styles.empDetails}>
+                          <Text style={styles.empNameText}>{emp.name}</Text>
+                          <Text style={styles.empRoleText}>{emp.role}</Text>
+                        </View>
+                        <Switch
+                          value={emp.active}
+                          onValueChange={(val) => {
+                            setEmployeeHours((current) =>
+                              current.map((item) => (item.id === emp.id ? { ...item, active: val } : item))
+                            );
+                          }}
+                          trackColor={{ false: "#DADCD7", true: "#E7CE9B" }}
+                          thumbColor={emp.active ? colors.primaryDark : colors.muted}
+                        />
+                      </View>
+
+                      <View style={styles.locDivider} />
+                      <View style={styles.locActionsRow}>
+                        <View style={{ flexDirection: "row", alignItems: "center" }}>
+                          <Feather name="clock" size={14} color="#946B22" style={{ marginRight: 6 }} />
+                          <Text style={{ fontSize: 11, fontFamily: fonts.medium, color: colors.secondaryText }}>
+                            {emp.active ? `${emp.start} - ${emp.end}` : "Off-duty"}
+                          </Text>
+                        </View>
+                        <View style={styles.locActionButtons}>
+                          <Pressable onPress={() => handleEditWorker(emp)} style={styles.locRoundBtn}>
+                            <Feather name="edit-3" size={14} color={colors.secondaryText} />
+                          </Pressable>
+                          
+                          <Pressable onPress={() => handleDeleteWorker(emp.id)} style={[styles.locRoundBtn, { borderColor: "rgba(198,64,70,0.12)" }]}>
+                            <Feather name="trash-2" size={14} color={colors.error} />
+                          </Pressable>
                         </View>
                       </View>
+                    </Card>
+                  ))}
 
-                      <View style={styles.toSeparatorBox}>
-                        <Text style={styles.toSeparatorText}>to</Text>
-                      </View>
-
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.hourInputLabel}>End Time</Text>
-                        <View style={styles.inputWithIconRow}>
-                          <View style={styles.inputIconBox}>
-                            <Feather name="clock" size={16} color="#555" />
-                          </View>
-                          <TextInput
-                            value={emp.end}
-                            onChangeText={(val) => {
-                              setEmployeeHours((current) =>
-                                current.map((item) => (item.id === emp.id ? { ...item, end: val } : item))
-                              );
-                            }}
-                            placeholder="e.g. 06:00 PM"
-                            placeholderTextColor={colors.muted}
-                            style={styles.editTextInputWithIcon}
-                          />
-                        </View>
-                      </View>
-                    </View>
-                  ) : (
-                    <View style={styles.offDutyBannerBox}>
-                      <Feather name="slash" size={12} color={colors.muted} style={{ marginRight: 6 }} />
-                      <Text style={styles.offDutyText}>Employee is off-duty (Unavailable for bookings)</Text>
-                    </View>
-                  )}
-                </Card>
-              ))}
-
-              <Pressable onPress={() => setHoursModalVisible(false)} style={({ pressed }) => [styles.saveHoursBtn, pressed && styles.pressed]}>
-                <Text style={styles.saveHoursBtnText}>Save Schedule & Roster</Text>
-              </Pressable>
+                  <Pressable onPress={() => setHoursModalVisible(false)} style={({ pressed }) => [styles.saveHoursBtn, pressed && styles.pressed]}>
+                    <Text style={styles.saveHoursBtnText}>Save Schedule & Roster</Text>
+                  </Pressable>
+                </View>
+              )}
             </ScrollView>
           </View>
         </View>
