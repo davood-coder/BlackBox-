@@ -4,14 +4,18 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import { BarberBottomNav, Screen } from "../../components/ui";
 import { useBooking } from "../../state/BookingContext";
 import { colors, fonts, radius, shadows } from "../../theme";
+import { temporaryProfiles, getKolkataTimeInfo } from "../../data";
 
 export default function BarberDashboard({ navigation }: any) {
-  const { bookings, updateBookingStatus, setWorkspace, unreadNotificationCount } = useBooking();
+  const { bookings, updateBookingStatus, setWorkspace, unreadNotificationCount, currency } = useBooking();
   const [acceptingBookings, setAcceptingBookings] = useState(true);
   const pending = bookings.filter((booking) => booking.status === "Pending");
   const confirmed = bookings.filter((booking) => booking.status === "Confirmed");
   const completed = bookings.filter((booking) => booking.status === "Completed");
   const revenue = completed.reduce((total, booking) => total + (booking.total || 0), 0) + 680;
+
+  const barberName = temporaryProfiles["Barber"].name;
+  const { greeting, formattedDate } = getKolkataTimeInfo();
 
   useEffect(() => setWorkspace("Barber"), [setWorkspace]);
 
@@ -36,16 +40,16 @@ export default function BarberDashboard({ navigation }: any) {
               <Feather name="bell" size={19} color={colors.text} />
               {unreadNotificationCount ? <View style={styles.notificationDot}><Text style={styles.notificationCount}>{unreadNotificationCount}</Text></View> : null}
             </Pressable>
-            <Pressable accessibilityLabel="Customer workspace" onPress={switchToCustomer} style={styles.iconButton}>
-              <Feather name="repeat" size={19} color={colors.text} />
+            <Pressable accessibilityLabel="Profile" onPress={() => navigation.navigate("Profile")} style={styles.iconButton}>
+              <Feather name="user" size={19} color={colors.text} />
             </Pressable>
           </View>
         </View>
 
         <View style={styles.welcomeRow}>
           <View style={styles.welcomeCopy}>
-            <Text style={styles.eyebrow}>Monday, July 27</Text>
-            <Text style={styles.title}>Good afternoon, Daniel</Text>
+            <Text style={styles.eyebrow}>{formattedDate}</Text>
+            <Text style={styles.title}>{greeting}, {barberName}</Text>
             <Text style={styles.subtitle}>Your floor is moving smoothly today.</Text>
           </View>
           <View style={styles.availability}>
@@ -60,7 +64,7 @@ export default function BarberDashboard({ navigation }: any) {
         </View>
 
         <View style={styles.metrics}>
-          <MetricCard label="Today's revenue" value={`$${revenue}`} change="+12%" icon="trending-up" tone="gold" />
+          <MetricCard label="Today's revenue" value={`${currency.symbol}${revenue}`} change="+12%" icon="trending-up" tone="gold" />
           <MetricCard label="Bookings" value={String(pending.length + confirmed.length + completed.length)} change={`${pending.length} pending`} icon="calendar" tone="black" />
           <MetricCard label="Live queue" value={String(confirmed.length + 2)} change="18 min avg" icon="users" tone="blue" />
           <MetricCard label="Rating" value="4.9" change="179 reviews" icon="star" tone="green" />
@@ -87,7 +91,7 @@ export default function BarberDashboard({ navigation }: any) {
                     <Text style={styles.timeText}>{booking.date}</Text>
                   </View>
                 </View>
-                <Text style={styles.requestPrice}>${booking.total || 0}</Text>
+                <Text style={styles.requestPrice}>{currency.symbol}{booking.total || 0}</Text>
               </View>
               {booking.note ? <Text style={styles.note}>{booking.note}</Text> : null}
               <View style={styles.requestActions}>
@@ -187,7 +191,7 @@ const styles = StyleSheet.create({
   brand: { color: colors.text, fontFamily: fonts.headingHeavy, fontSize: 22 },
   proBadge: { borderRadius: 5, backgroundColor: colors.primary, paddingHorizontal: 6, paddingVertical: 3 },
   proText: { color: colors.black, fontFamily: fonts.bold, fontSize: 8 },
-  shop: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 10, marginTop: 2 },
+  shop: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, marginTop: 2 },
   headerActions: { flexDirection: "row", gap: 8 },
   iconButton: { width: 42, height: 42, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border },
   notificationDot: { position: "absolute", top: -3, right: -3, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.error, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 },
@@ -196,7 +200,7 @@ const styles = StyleSheet.create({
   welcomeCopy: { flex: 1, minWidth: 0 },
   eyebrow: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 10, textTransform: "uppercase" },
   title: { color: colors.text, fontFamily: fonts.headingHeavy, fontSize: 25, lineHeight: 32, marginTop: 6 },
-  subtitle: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 12, marginTop: 5 },
+  subtitle: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, marginTop: 5 },
   availability: { alignItems: "center" },
   availabilityText: { color: colors.success, fontFamily: fonts.semibold, fontSize: 9, marginTop: 2 },
   metrics: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
@@ -207,7 +211,7 @@ const styles = StyleSheet.create({
   metricBlue: { backgroundColor: "rgba(40,116,189,0.1)" },
   metricGreen: { backgroundColor: "rgba(30,141,91,0.1)" },
   metricValue: { color: colors.text, fontFamily: fonts.heading, fontSize: 24, marginTop: 12 },
-  metricLabel: { color: colors.secondaryText, fontFamily: fonts.medium, fontSize: 10, marginTop: 2 },
+  metricLabel: { color: colors.secondaryText, fontFamily: fonts.medium, fontSize: 16, marginTop: 2 },
   metricChange: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 9, marginTop: 7 },
   sectionHeader: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", marginTop: 28, marginBottom: 12 },
   sectionEyebrow: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 9, textTransform: "uppercase" },
@@ -220,11 +224,11 @@ const styles = StyleSheet.create({
   customerInitial: { color: colors.primaryDark, fontFamily: fonts.bold, fontSize: 16 },
   requestCopy: { flex: 1, minWidth: 0 },
   customerName: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14 },
-  requestMeta: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 10, marginTop: 4 },
+  requestMeta: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, marginTop: 4 },
   timeRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 8 },
   timeText: { color: colors.primaryDark, fontFamily: fonts.medium, fontSize: 9 },
   requestPrice: { color: colors.text, fontFamily: fonts.bold, fontSize: 14 },
-  note: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 10, lineHeight: 16, backgroundColor: colors.background, borderRadius: radius.sm, padding: 10, marginTop: 12 },
+  note: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, lineHeight: 22, backgroundColor: colors.background, borderRadius: radius.sm, padding: 10, marginTop: 12 },
   requestActions: { flexDirection: "row", gap: 8, marginTop: 14 },
   declineButton: { flex: 1, minHeight: 42, borderRadius: radius.full, borderWidth: 1, borderColor: "#E5BFC1", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
   declineText: { color: colors.error, fontFamily: fonts.semibold, fontSize: 11 },
@@ -233,7 +237,7 @@ const styles = StyleSheet.create({
   emptyRequests: { minHeight: 88, borderRadius: radius.md, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, padding: 14, flexDirection: "row", alignItems: "center", gap: 12 },
   emptyIcon: { width: 42, height: 42, borderRadius: 13, backgroundColor: "rgba(30,141,91,0.1)", alignItems: "center", justifyContent: "center" },
   emptyTitle: { color: colors.text, fontFamily: fonts.semibold, fontSize: 13 },
-  emptyCopy: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 10, marginTop: 3 },
+  emptyCopy: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, marginTop: 3 },
   schedule: { borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.border, paddingVertical: 4 },
   scheduleRow: { minHeight: 74, flexDirection: "row", alignItems: "flex-start", paddingTop: 14 },
   scheduleTime: { width: 46, color: colors.text, fontFamily: fonts.semibold, fontSize: 11 },
@@ -243,13 +247,13 @@ const styles = StyleSheet.create({
   scheduleLine: { width: 1, flex: 1, backgroundColor: colors.border, marginTop: 4 },
   scheduleCopy: { flex: 1, minWidth: 0 },
   scheduleName: { color: colors.text, fontFamily: fonts.semibold, fontSize: 12 },
-  scheduleService: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 10, marginTop: 4 },
-  scheduleStatus: { color: colors.secondaryText, fontFamily: fonts.medium, fontSize: 9 },
+  scheduleService: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, marginTop: 4 },
+  scheduleStatus: { color: colors.secondaryText, fontFamily: fonts.medium, fontSize: 16 },
   scheduleStatusActive: { color: colors.success },
   insight: { minHeight: 96, borderRadius: radius.md, backgroundColor: colors.primarySoft, padding: 14, flexDirection: "row", alignItems: "center", gap: 12, marginTop: 24 },
   insightIcon: { width: 42, height: 42, borderRadius: 14, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center" },
   insightCopy: { flex: 1 },
   insightTitle: { color: colors.text, fontFamily: fonts.semibold, fontSize: 13 },
-  insightBody: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 10, lineHeight: 16, marginTop: 4 },
+  insightBody: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, lineHeight: 22, marginTop: 4 },
   pressed: { opacity: 0.76, transform: [{ scale: 0.99 }] }
 });

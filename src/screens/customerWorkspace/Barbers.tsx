@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   shopAddress: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 16,
     marginTop: 4
   },
   shopStatus: {
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   filterText: {
     color: colors.secondaryText,
     fontFamily: fonts.medium,
-    fontSize: 12
+    fontSize: 16
   },
   filterTextActive: {
     color: colors.black,
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   role: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 12
+    fontSize: 16
   },
   specialty: {
     color: colors.muted,

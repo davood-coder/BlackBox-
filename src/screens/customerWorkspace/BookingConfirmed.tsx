@@ -103,8 +103,8 @@ const styles = StyleSheet.create({
   requestCopy: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 22,
     textAlign: "center",
     maxWidth: 290,
     marginTop: 8
@@ -135,8 +135,8 @@ const styles = StyleSheet.create({
   address: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 22,
     marginTop: 2
   },
   detailGrid: {
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   idLabel: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 12
+    fontSize: 16
   },
   id: {
     color: colors.text,

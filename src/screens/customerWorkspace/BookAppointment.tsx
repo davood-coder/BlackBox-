@@ -25,7 +25,8 @@ export default function BookAppointment({ navigation }: any) {
     setSelectedDate,
     selectedTime,
     setSelectedTime,
-    bookingTotal
+    bookingTotal,
+    currency
   } = useBooking();
   const shopBarbers = selectedShop.bestBarbers?.length ? selectedShop.bestBarbers : barbers;
   const compact = width < 360;
@@ -80,7 +81,7 @@ export default function BookAppointment({ navigation }: any) {
                     <View style={[styles.addOnIcon, selected && styles.addOnIconActive]}>
                       <Feather name={addOn.icon as any} size={15} color={selected ? colors.black : colors.primary} />
                     </View>
-                    <Text style={styles.addOnPrice}>+${addOn.price}</Text>
+                    <Text style={styles.addOnPrice}>+{currency.symbol}{addOn.price}</Text>
                   </View>
                   <Text style={styles.addOnTitle}>{addOn.label}</Text>
                   <Text style={styles.addOnDescription} numberOfLines={2}>{addOn.description}</Text>
@@ -160,7 +161,7 @@ export default function BookAppointment({ navigation }: any) {
             <Text style={styles.totalLabel}>Estimated total</Text>
             <Text style={styles.totalMeta}>{selectedService.duration} service{selectedAddOns.length ? ` + ${selectedAddOns.length} add-on${selectedAddOns.length > 1 ? "s" : ""}` : ""}</Text>
           </View>
-          <Text style={styles.totalPrice}>${bookingTotal}</Text>
+          <Text style={styles.totalPrice}>{currency.symbol}{bookingTotal}</Text>
         </Card>
       </Animated.View>
       <PrimaryButton label="Continue Booking" icon={null} onPress={() => navigation.navigate("BookingSummary")} style={styles.continueButton} />
@@ -187,8 +188,8 @@ const styles = StyleSheet.create({
   shopAddress: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 12,
-    lineHeight: 18
+    fontSize: 16,
+    lineHeight: 22
   },
   serviceRow: {
     flexDirection: "row",
@@ -243,8 +244,8 @@ const styles = StyleSheet.create({
   addOnDescription: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 16,
+    lineHeight: 22,
     marginTop: 6
   },
   list: {
@@ -337,8 +338,8 @@ const styles = StyleSheet.create({
   preferenceDescription: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 16,
+    lineHeight: 22,
     marginTop: 3
   },
   preferenceDescriptionActive: {
@@ -381,7 +382,7 @@ const styles = StyleSheet.create({
   dateMeta: {
     color: colors.secondaryText,
     fontFamily: fonts.medium,
-    fontSize: 10,
+    fontSize: 16,
     marginTop: 2
   },
   activeDateText: {
@@ -432,7 +433,7 @@ const styles = StyleSheet.create({
   totalMeta: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 11,
+    fontSize: 16,
     marginTop: 4
   },
   totalPrice: {

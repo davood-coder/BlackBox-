@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
   sectionAction: {
     color: colors.secondaryText,
     fontFamily: fonts.medium,
-    fontSize: 12
+    fontSize: 16
   },
   pressed: {
     opacity: 0.78,

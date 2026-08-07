@@ -343,3 +343,26 @@ function queueForSeed(seed: number) {
 function slugify(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
+
+export type IPGeolocationResult = {
+  latitude: number;
+  longitude: number;
+  label: string;
+};
+
+export async function fetchIPGeolocation(): Promise<IPGeolocationResult> {
+  const response = await fetch("https://ipapi.co/json/");
+  if (!response.ok) {
+    throw new Error(`IP Geolocation lookup failed: ${response.status}`);
+  }
+  const data = await response.json();
+  if (typeof data.latitude === "number" && typeof data.longitude === "number") {
+    const label = [data.city, data.region, data.country_name].filter(Boolean).join(", ");
+    return {
+      latitude: data.latitude,
+      longitude: data.longitude,
+      label: label || "IP Location"
+    };
+  }
+  throw new Error("Invalid IP Geolocation payload");
+}

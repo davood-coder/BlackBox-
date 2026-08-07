@@ -582,3 +582,35 @@ function buildBookingDates() {
     };
   });
 }
+
+export function getKolkataTimeInfo() {
+  const now = new Date();
+  
+  const hourFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    hour: "numeric",
+    hour12: false
+  });
+  
+  const dateFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  });
+
+  const hour = parseInt(hourFormatter.format(now), 10);
+  const formattedDate = dateFormatter.format(now);
+
+  let greeting = "Good morning";
+  if (hour >= 12 && hour < 17) {
+    greeting = "Good afternoon";
+  } else if (hour >= 17 && hour < 21) {
+    greeting = "Good evening";
+  } else if (hour >= 21 || hour < 5) {
+    greeting = "Good night";
+  }
+
+  return { greeting, formattedDate };
+}

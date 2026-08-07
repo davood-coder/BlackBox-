@@ -4,7 +4,7 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { BottomNav, Rating, Screen } from "../../components/ui";
 import { images } from "../../assets/images";
-import { homeQuickActions, services, type Barbershop } from "../../data";
+import { homeQuickActions, services, type Barbershop, temporaryProfiles, getKolkataTimeInfo } from "../../data";
 import { useBooking } from "../../state/BookingContext";
 import { colors, fonts, radius, shadows, spacing } from "../../theme";
 
@@ -18,11 +18,14 @@ export default function Home({ navigation }: any) {
     setSelectedService,
     bookings,
     unreadNotificationCount,
-    setWorkspace
+    setWorkspace,
+    currency
   } = useBooking();
   const cardWidth = Math.min(292, Math.max(250, width * 0.76));
   const visibleShops = availableShops.slice(0, 4);
   const activeBookings = bookings.filter((booking) => booking.status === "Confirmed" || booking.status === "Pending");
+  const customerName = temporaryProfiles["Customer"].name;
+  const { greeting } = getKolkataTimeInfo();
 
   useEffect(() => setWorkspace("Customer"), [setWorkspace]);
 
@@ -62,7 +65,7 @@ export default function Home({ navigation }: any) {
         </View>
 
         <View style={styles.welcome}>
-          <Text style={styles.eyebrow}>Good afternoon, Michael</Text>
+          <Text style={styles.eyebrow}>{greeting}, {customerName}</Text>
           <Text style={styles.title}>Find your next great cut</Text>
           <Text style={styles.subtitle}>{activeBookings.length ? `${activeBookings.length} active appointment${activeBookings.length > 1 ? "s" : ""} on your schedule.` : "Fresh chairs are available near you today."}</Text>
         </View>
@@ -122,7 +125,7 @@ export default function Home({ navigation }: any) {
                 <Text style={styles.serviceName} numberOfLines={1}>{service.shortLabel || service.label}</Text>
                 <Text style={styles.serviceDuration}>{service.duration}</Text>
               </View>
-              <Text style={styles.servicePrice}>${service.price}</Text>
+              <Text style={styles.servicePrice}>{currency.symbol}{service.price}</Text>
             </Pressable>
           ))}
         </View>
@@ -180,7 +183,7 @@ const styles = StyleSheet.create({
   brandMark: { width: 38, height: 38, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: colors.primary },
   brand: { color: colors.text, fontFamily: fonts.headingHeavy, fontSize: 20 },
   locationRow: { flexDirection: "row", alignItems: "center", gap: 3, marginTop: 2, maxWidth: 210 },
-  location: { flex: 1, color: colors.secondaryText, fontFamily: fonts.body, fontSize: 9 },
+  location: { flex: 1, color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16 },
   topActions: { flexDirection: "row", alignItems: "center", gap: 8 },
   iconButton: { width: 40, height: 40, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border },
   notificationDot: { position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.error, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 },
@@ -189,7 +192,7 @@ const styles = StyleSheet.create({
   welcome: { paddingTop: 22 },
   eyebrow: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 10, textTransform: "uppercase" },
   title: { color: colors.text, fontFamily: fonts.headingHeavy, fontSize: 29, lineHeight: 36, marginTop: 6, maxWidth: 340 },
-  subtitle: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 6 },
+  subtitle: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, lineHeight: 22, marginTop: 6 },
   search: { minHeight: 56, borderRadius: radius.md, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, flexDirection: "row", alignItems: "center", gap: 10, paddingLeft: 15, paddingRight: 7, marginTop: 22, ...shadows.card },
   searchText: { flex: 1, color: colors.muted, fontFamily: fonts.body, fontSize: 12 },
   searchFilter: { width: 42, height: 42, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: colors.elevated },
@@ -210,17 +213,17 @@ const styles = StyleSheet.create({
   busyBadge: { backgroundColor: "rgba(169,105,0,0.1)" },
   openText: { color: colors.success, fontFamily: fonts.semibold, fontSize: 8 },
   busyText: { color: colors.warning },
-  shopAddress: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 10, marginTop: 5 },
+  shopAddress: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, marginTop: 5 },
   shopMeta: { flexDirection: "row", alignItems: "center", gap: 7, marginTop: 9 },
   metaDivider: { color: colors.muted, fontFamily: fonts.body, fontSize: 10 },
-  distance: { color: colors.secondaryText, fontFamily: fonts.medium, fontSize: 10 },
+  distance: { color: colors.secondaryText, fontFamily: fonts.medium, fontSize: 16 },
   nextSlot: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 9, marginLeft: "auto" },
   serviceGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   serviceTile: { flexGrow: 1, flexBasis: "46%", minWidth: 140, minHeight: 86, borderRadius: radius.md, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, padding: 12, flexDirection: "row", alignItems: "center", gap: 9 },
   serviceTileIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: colors.primarySoft },
   serviceTileCopy: { flex: 1, minWidth: 0 },
   serviceName: { color: colors.text, fontFamily: fonts.semibold, fontSize: 11 },
-  serviceDuration: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 9, marginTop: 4 },
+  serviceDuration: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, marginTop: 4 },
   servicePrice: { color: colors.primaryDark, fontFamily: fonts.bold, fontSize: 11 },
   offer: { minHeight: 230, borderRadius: radius.lg, overflow: "hidden", marginTop: 28 },
   offerOverlay: { flex: 1, justifyContent: "flex-end", padding: 18 },
@@ -235,7 +238,7 @@ const styles = StyleSheet.create({
   ratedImage: { width: 58, height: 58, borderRadius: 13 },
   ratedCopy: { flex: 1, minWidth: 0 },
   ratedName: { color: colors.text, fontFamily: fonts.semibold, fontSize: 13 },
-  ratedAddress: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 9, marginTop: 4 },
+  ratedAddress: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, marginTop: 4 },
   ratedMeta: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 7 },
   ratedRating: { color: colors.text, fontFamily: fonts.bold, fontSize: 9 },
   ratedReviews: { color: colors.muted, fontFamily: fonts.body, fontSize: 8 },

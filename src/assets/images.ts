@@ -5,5 +5,6 @@ export const images = {
   blackBoxMark: require("./images/black-box-mark.png"),
   onboardingDiscover: require("./images/onboarding-discover.png"),
   onboardingBooking: require("./images/onboarding-booking.png"),
-  onboardingArrival: require("./images/onboarding-arrival.png")
+  onboardingArrival: require("./images/onboarding-arrival.png"),
+  shopQrCode: require("./images/shop-qr-code.png")
 };

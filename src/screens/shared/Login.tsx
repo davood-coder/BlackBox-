@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 23
   },
   roleSwitch: {
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
   roleText: {
     color: colors.secondaryText,
     fontFamily: fonts.semibold,
-    fontSize: 13
+    fontSize: 16
   },
   roleTextActive: {
     color: colors.white,
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
   signupText: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 14
+    fontSize: 16
   },
   pressed: {
     opacity: 0.72,
