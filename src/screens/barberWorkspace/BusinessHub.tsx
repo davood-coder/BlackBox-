@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ComponentProps } from "react";
-import { ActivityIndicator, Image, Linking, Modal, Pressable, StyleSheet, Switch, Text, TextInput, View, LayoutAnimation, Platform, UIManager } from "react-native";
+import { ActivityIndicator, Image, Linking, Modal, Pressable, StyleSheet, Switch, Text, TextInput, View, LayoutAnimation, Platform, UIManager, ScrollView } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import * as ExpoLocation from "expo-location";
 import { images } from "../../assets/images";
@@ -181,21 +181,110 @@ function ServicesPanel() {
         }}
         title="Service menu"
       />
-      {showForm ? (
-        <View style={styles.form}>
-          <Text style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.text, marginBottom: 4 }}>
-            {editingServiceId ? "Edit Service" : "New Service"}
-          </Text>
-          <TextInput value={name} onChangeText={setName} placeholder="Service name" placeholderTextColor={colors.muted} style={styles.input} />
-          <View style={styles.formRow}>
-            <TextInput value={price} onChangeText={setPrice} placeholder="Price" placeholderTextColor={colors.muted} keyboardType="numeric" style={[styles.input, styles.halfInput]} />
-            <TextInput value={duration} onChangeText={setDuration} placeholder="Duration" placeholderTextColor={colors.muted} style={[styles.input, styles.halfInput]} />
+      <Modal visible={showForm} transparent animationType="slide" onRequestClose={() => {
+        setEditingServiceId(null);
+        setName("");
+        setPrice("");
+        setDuration("");
+        setShowForm(false);
+      }}>
+        <View style={styles.modalOverlayBottom}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => {
+            setEditingServiceId(null);
+            setName("");
+            setPrice("");
+            setDuration("");
+            setShowForm(false);
+          }} />
+          <View style={styles.editContainer}>
+            <View style={styles.modalHandle} />
+            
+            <Pressable onPress={() => {
+              setEditingServiceId(null);
+              setName("");
+              setPrice("");
+              setDuration("");
+              setShowForm(false);
+            }} style={styles.modalCloseBtn}>
+              <Feather name="x" size={18} color="#111" />
+            </Pressable>
+
+            <Text style={styles.editTitle}>{editingServiceId ? "Edit Service" : "New Service"}</Text>
+            <View style={styles.goldDivider} />
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={styles.editScrollContent}>
+              <View style={styles.editForm}>
+                <Text style={styles.editInputLabel}>Service Name</Text>
+                <View style={styles.inputWithIconRow}>
+                  <View style={styles.inputIconBox}>
+                    <Feather name="tag" size={18} color="#555" />
+                  </View>
+                  <TextInput
+                    value={name}
+                    onChangeText={setName}
+                    style={styles.editTextInputWithIcon}
+                    placeholder="Enter service name"
+                    placeholderTextColor={colors.muted}
+                  />
+                </View>
+
+                <Text style={styles.editInputLabel}>Price</Text>
+                <View style={styles.inputWithIconRow}>
+                  <View style={styles.inputIconBox}>
+                    <Text style={{ color: "#555", fontSize: 16, fontFamily: fonts.bold }}>{currency.symbol}</Text>
+                  </View>
+                  <TextInput
+                    value={price}
+                    onChangeText={setPrice}
+                    style={styles.editTextInputWithIcon}
+                    placeholder="Enter price"
+                    placeholderTextColor={colors.muted}
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <Text style={styles.editInputLabel}>Duration</Text>
+                <View style={styles.inputWithIconRow}>
+                  <View style={styles.inputIconBox}>
+                    <Feather name="clock" size={18} color="#555" />
+                  </View>
+                  <TextInput
+                    value={duration}
+                    onChangeText={setDuration}
+                    style={styles.editTextInputWithIcon}
+                    placeholder="e.g. 30 min"
+                    placeholderTextColor={colors.muted}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.editActionRow}>
+                <Pressable
+                  onPress={() => {
+                    setEditingServiceId(null);
+                    setName("");
+                    setPrice("");
+                    setDuration("");
+                    setShowForm(false);
+                  }}
+                  style={({ pressed }) => [styles.editCancelBtn, pressed && styles.pressed]}
+                >
+                  <Text style={styles.editCancelText}>Cancel</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={handleAddOrEditService}
+                  style={({ pressed }) => [styles.editSaveBtn, pressed && styles.pressed]}
+                >
+                  <Text style={styles.editSaveText}>
+                    {editingServiceId ? "Save Changes" : "Save Service"}
+                  </Text>
+                </Pressable>
+              </View>
+            </ScrollView>
           </View>
-          <Pressable onPress={handleAddOrEditService} style={({ pressed }) => [styles.saveButton, pressed && styles.pressed]}>
-            <Text style={styles.saveText}>{editingServiceId ? "Save changes" : "Save service"}</Text>
-          </Pressable>
         </View>
-      ) : null}
+      </Modal>
       <View style={styles.serviceList}>
         {serviceList.map((service) => {
           const custom = service.id.startsWith("custom-");
@@ -970,5 +1059,125 @@ const styles = StyleSheet.create({
   offDutyBanner: { marginTop: 12, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 12 },
   offDutyText: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, fontStyle: "italic" },
   saveHoursBtn: { minHeight: 46, borderRadius: radius.full, backgroundColor: colors.primaryDark, justifyContent: "center", alignItems: "center", marginTop: 10 },
-  saveHoursBtnText: { color: colors.white, fontFamily: fonts.bold, fontSize: 12 }
+  saveHoursBtnText: { color: colors.white, fontFamily: fonts.bold, fontSize: 12 },
+  modalOverlayBottom: { flex: 1, backgroundColor: "rgba(15,17,21,0.5)", justifyContent: "flex-end" },
+  editContainer: {
+    width: "100%",
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    paddingTop: 16,
+    paddingHorizontal: 24,
+    paddingBottom: 30,
+    maxHeight: "92%",
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: -10 },
+    elevation: 10
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: "#ECECE6",
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 10
+  },
+  modalCloseBtn: {
+    position: "absolute",
+    top: 16,
+    left: 24,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#F5F5F5",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10
+  },
+  editTitle: {
+    color: colors.text,
+    fontFamily: fonts.heading,
+    fontSize: 20,
+    textAlign: "center",
+    marginVertical: 12
+  },
+  goldDivider: {
+    width: 36,
+    height: 3,
+    backgroundColor: "#C89A43",
+    borderRadius: 1.5,
+    alignSelf: "center",
+    marginBottom: 16
+  },
+  editScrollContent: {
+    paddingBottom: 24
+  },
+  editForm: {
+    gap: 14,
+    marginBottom: 20
+  },
+  editInputLabel: {
+    color: colors.text,
+    fontFamily: fonts.bold,
+    fontSize: 13,
+    marginTop: 8
+  },
+  inputWithIconRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10
+  },
+  inputIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#F8F8F8",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  editTextInputWithIcon: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#F8F8F8",
+    paddingHorizontal: 16,
+    color: colors.text,
+    fontFamily: fonts.medium,
+    fontSize: 14
+  },
+  editActionRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 20
+  },
+  editCancelBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#946B22",
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  editCancelText: {
+    color: "#946B22",
+    fontFamily: fonts.bold,
+    fontSize: 14
+  },
+  editSaveBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#946B22",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  editSaveText: {
+    color: colors.white,
+    fontFamily: fonts.bold,
+    fontSize: 14
+  }
 });
