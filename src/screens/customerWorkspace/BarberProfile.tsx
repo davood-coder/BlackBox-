@@ -10,7 +10,7 @@ import { colors, fonts, radius, spacing } from "../../theme";
 
 export default function BarberProfile({ navigation }: any) {
   const { height } = useWindowDimensions();
-  const { selectedBarber, selectedShop, selectedService, setSelectedService } = useBooking();
+  const { selectedBarber, selectedShop, selectedService, setSelectedService, currency } = useBooking();
   const isShort = height < 720;
   const shopServices = selectedShop.services?.length ? selectedShop.services : services;
 
@@ -108,7 +108,7 @@ export default function BarberProfile({ navigation }: any) {
                     <Text style={styles.serviceDescription}>{service.description}</Text>
                     <Text style={styles.serviceDuration}>{service.duration}</Text>
                   </View>
-                  <Text style={styles.price}>${service.price}</Text>
+                  <Text style={styles.price}>{currency.symbol}{service.price}</Text>
                 </Card>
               </Pressable>
             </FadeInView>
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   role: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 15,
+    fontSize: 16,
     marginTop: 4
   },
   stats: {
@@ -199,8 +199,8 @@ const styles = StyleSheet.create({
   shopAddress: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 13,
-    lineHeight: 19
+    fontSize: 16,
+    lineHeight: 22
   },
   shopMetaRow: {
     flexDirection: "row",
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   actionLabel: {
     color: colors.secondaryText,
     fontFamily: fonts.medium,
-    fontSize: 11
+    fontSize: 16
   },
   sectionTitle: {
     color: colors.text,
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   about: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 23
   },
   specialty: {
@@ -321,8 +321,8 @@ const styles = StyleSheet.create({
   serviceDescription: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 22,
     marginTop: 4
   },
   serviceDuration: {

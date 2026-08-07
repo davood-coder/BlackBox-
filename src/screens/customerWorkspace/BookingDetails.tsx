@@ -7,7 +7,7 @@ import { useBooking } from "../../state/BookingContext";
 import { colors, fonts, radius } from "../../theme";
 
 export default function BookingDetails({ navigation, route }: any) {
-  const { bookings, lastConfirmation, updateBookingStatus } = useBooking();
+  const { bookings, lastConfirmation, updateBookingStatus, currency } = useBooking();
   const bookingId = route?.params?.bookingId;
   const booking = bookings.find((item) => item.id === bookingId) || lastConfirmation || bookings[0];
 
@@ -73,7 +73,7 @@ export default function BookingDetails({ navigation, route }: any) {
 
       <View style={styles.totalRow}>
         <Text style={styles.totalLabel}>Total</Text>
-        <Text style={styles.totalValue}>${booking.total || 0}</Text>
+        <Text style={styles.totalValue}>{currency.symbol}{booking.total || 0}</Text>
       </View>
 
       <View style={styles.timeline}>
@@ -185,7 +185,7 @@ function buildQrPattern(seed: string) {
 const styles = StyleSheet.create({
   empty: { flex: 1, alignItems: "center", justifyContent: "center" },
   emptyTitle: { color: colors.text, fontFamily: fonts.headingSemi, fontSize: 18 },
-  emptyCopy: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 13, marginTop: 6 },
+  emptyCopy: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, marginTop: 6 },
   statusHeader: { flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 18 },
   statusIcon: { width: 48, height: 48, borderRadius: 15, alignItems: "center", justifyContent: "center" },
   confirmedIcon: { backgroundColor: "rgba(30,141,91,0.12)" },
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   cancelledIcon: { backgroundColor: "rgba(198,64,70,0.12)" },
   statusCopy: { flex: 1, minWidth: 0 },
   statusTitle: { color: colors.text, fontFamily: fonts.headingSemi, fontSize: 18 },
-  statusBody: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 4 },
+  statusBody: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, lineHeight: 22, marginTop: 4 },
   ticket: { borderRadius: radius.md, backgroundColor: colors.black, padding: 18, marginBottom: 18 },
   ticketTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   ticketEyebrow: { color: colors.primarySoft, fontFamily: fonts.semibold, fontSize: 10, textTransform: "uppercase" },
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   detailLabel: { color: colors.muted, fontFamily: fonts.body, fontSize: 10 },
   detailValue: { color: colors.text, fontFamily: fonts.semibold, fontSize: 13, lineHeight: 18, marginTop: 3 },
   totalRow: { minHeight: 64, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  totalLabel: { color: colors.secondaryText, fontFamily: fonts.medium, fontSize: 13 },
+  totalLabel: { color: colors.secondaryText, fontFamily: fonts.medium, fontSize: 16 },
   totalValue: { color: colors.text, fontFamily: fonts.heading, fontSize: 20 },
   timeline: { marginTop: 16 },
   sectionTitle: { color: colors.text, fontFamily: fonts.headingSemi, fontSize: 17, marginBottom: 14 },
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
   timelineLine: { width: 1, flex: 1, backgroundColor: colors.border },
   timelineCopy: { flex: 1, paddingBottom: 18 },
   timelineTitle: { color: colors.text, fontFamily: fonts.semibold, fontSize: 13 },
-  timelineBody: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 11, lineHeight: 17, marginTop: 4 },
+  timelineBody: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, lineHeight: 22, marginTop: 4 },
   actions: { gap: 10, paddingBottom: 28 },
   cancelButton: { minHeight: 50, borderRadius: radius.full, borderWidth: 1, borderColor: "#E1B7B9", alignItems: "center", justifyContent: "center", backgroundColor: "#FFF8F8" },
   cancelText: { color: colors.error, fontFamily: fonts.semibold, fontSize: 13 },

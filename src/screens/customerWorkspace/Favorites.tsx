@@ -59,11 +59,11 @@ export default function Favorites({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  intro: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 13, marginTop: 2, marginBottom: 18 },
+  intro: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, marginTop: 2, marginBottom: 18 },
   tabs: { height: 44, borderRadius: radius.full, backgroundColor: colors.elevated, padding: 4, flexDirection: "row", marginBottom: 18 },
   tab: { flex: 1, alignItems: "center", justifyContent: "center" },
   activeTab: { flex: 1, alignItems: "center", justifyContent: "center", borderRadius: radius.full, backgroundColor: colors.white },
-  tabText: { color: colors.secondaryText, fontFamily: fonts.medium, fontSize: 12 },
+  tabText: { color: colors.secondaryText, fontFamily: fonts.medium, fontSize: 16 },
   activeTabText: { color: colors.text, fontFamily: fonts.semibold, fontSize: 12 },
   list: { gap: 12 },
   shopRow: {
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   image: { width: 94, height: 98, borderRadius: 12 },
   shopCopy: { flex: 1, minWidth: 0 },
   name: { color: colors.text, fontFamily: fonts.semibold, fontSize: 15 },
-  address: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 10, marginTop: 5 },
+  address: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, marginTop: 5 },
   meta: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 9 },
   distance: { color: colors.muted, fontFamily: fonts.medium, fontSize: 10 },
   availability: { color: colors.success, fontFamily: fonts.semibold, fontSize: 10, marginTop: 8 },
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   empty: { minHeight: 350, alignItems: "center", justifyContent: "center", paddingHorizontal: 28 },
   emptyIcon: { width: 64, height: 64, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: colors.primarySoft },
   emptyTitle: { color: colors.text, fontFamily: fonts.headingSemi, fontSize: 19, marginTop: 18 },
-  emptyCopy: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 13, lineHeight: 20, textAlign: "center", marginTop: 7 },
+  emptyCopy: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, lineHeight: 22, textAlign: "center", marginTop: 7 },
   exploreButton: { minHeight: 46, borderRadius: radius.full, backgroundColor: colors.black, justifyContent: "center", paddingHorizontal: 18, marginTop: 20 },
   exploreText: { color: colors.white, fontFamily: fonts.semibold, fontSize: 12 },
   pressed: { opacity: 0.77, transform: [{ scale: 0.99 }] }

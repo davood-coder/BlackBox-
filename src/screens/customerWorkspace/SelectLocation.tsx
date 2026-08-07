@@ -9,7 +9,8 @@ import type { Barbershop, Coordinates } from "../../data";
 import { goBackOrNavigate } from "../../navigation/goBack";
 import { useBooking } from "../../state/BookingContext";
 import { colors, fonts, radius, spacing } from "../../theme";
-import { DEFAULT_COORDS, fallbackShops, fetchNearbyBarbershops, geocodeArea, reverseGeocodeAreaLabel, searchBarbershopsByAreaName } from "../../services/nearbyBarbers";
+import { DEFAULT_COORDS, fallbackShops, fetchNearbyBarbershops, geocodeArea, reverseGeocodeAreaLabel, searchBarbershopsByAreaName, fetchIPGeolocation } from "../../services/nearbyBarbers";
+import { getCurrencyFromAddress } from "../../utils/currency";
 
 type LookupState = "loading" | "ready" | "permission-denied" | "unavailable" | "empty" | "place-not-found" | "area-empty" | "error";
 
@@ -17,7 +18,7 @@ export default function SelectLocation({ navigation, route }: any) {
   const { height, width } = useWindowDimensions();
   const mounted = useRef(true);
   const searchRequestId = useRef(0);
-  const { availableShops, setAvailableShops, selectedShop, setSelectedShop, setSelectedBarber } = useBooking();
+  const { availableShops, setAvailableShops, selectedShop, setSelectedShop, setSelectedBarber, setCurrency } = useBooking();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [lookupState, setLookupState] = useState<LookupState>("loading");
@@ -60,22 +61,45 @@ export default function SelectLocation({ navigation, route }: any) {
     setLoading(true);
     setLookupState("loading");
 
-    try {
-      const permission = await Location.requestForegroundPermissionsAsync();
-      if (permission.status !== "granted") {
+    const handleIPFallback = async (originalErr?: string) => {
+      console.log(`Main geolocation failed: ${originalErr || "Access denied"}. Trying IP Geolocation fallback...`);
+      try {
+        const ipLoc = await fetchIPGeolocation();
+        const origin = { latitude: ipLoc.latitude, longitude: ipLoc.longitude };
+        const nearbyShops = await fetchNearbyBarbershops(origin).catch(() => []);
+        const widerNearbyShops = nearbyShops.length ? nearbyShops : await fetchNearbyBarbershops(origin, 25000).catch(() => []);
+        const shops = widerNearbyShops.length ? widerNearbyShops : fallbackShops(origin, true);
+        
+        commitLatest(requestId, () => {
+          setMapOrigin(origin);
+          setLocationLabel(ipLoc.label);
+          setAvailableShops(shops);
+          setCurrency(getCurrencyFromAddress(ipLoc.label));
+          setLookupState(widerNearbyShops.length ? "ready" : "empty");
+
+          const nextSelectedShop = shops.find((shop) => shop.id === selectedShop.id) || shops[0];
+          setSelectedShop(nextSelectedShop);
+          setSelectedBarber((current) => nextSelectedShop.bestBarbers?.[0] || current);
+        });
+      } catch (ipErr) {
+        console.log("IP Geolocation fallback also failed", ipErr);
         commitLatest(requestId, () => {
           setLookupState("permission-denied");
           useFallbackResults("Location off", DEFAULT_COORDS);
         });
+      }
+    };
+
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (permission.status !== "granted") {
+        await handleIPFallback("Permission not granted");
         return;
       }
 
       const position = await getCurrentPosition();
       if (!position) {
-        commitLatest(requestId, () => {
-          setLookupState("unavailable");
-          useFallbackResults("Current location", DEFAULT_COORDS);
-        });
+        await handleIPFallback("Position unavailable");
         return;
       }
 
@@ -94,6 +118,7 @@ export default function SelectLocation({ navigation, route }: any) {
       commitLatest(requestId, () => {
         setLocationLabel(resolvedLabel);
         setAvailableShops(shops);
+        setCurrency(getCurrencyFromAddress(resolvedLabel));
 
         if (!areaShops.length) {
           setLookupState("empty");
@@ -105,11 +130,8 @@ export default function SelectLocation({ navigation, route }: any) {
         setSelectedShop(nextSelectedShop);
         setSelectedBarber((current) => nextSelectedShop.bestBarbers?.[0] || current);
       });
-    } catch {
-      commitLatest(requestId, () => {
-        setLookupState("error");
-        useFallbackResults("Current location", DEFAULT_COORDS);
-      });
+    } catch (e: any) {
+      await handleIPFallback(e?.message);
     } finally {
       commitLatest(requestId, () => setLoading(false));
     }
@@ -145,6 +167,7 @@ export default function SelectLocation({ navigation, route }: any) {
         setLocationLabel(place.label);
         setMapOrigin(place.coordinates);
         setAvailableShops(shops);
+        setCurrency(getCurrencyFromAddress(place.label));
 
         if (!widerShops.length) {
           setLookupState("area-empty");
@@ -417,7 +440,7 @@ const styles = StyleSheet.create({
     flex: 1,
     color: colors.secondaryText,
     fontFamily: fonts.medium,
-    fontSize: 12
+    fontSize: 16
   },
   refreshButton: {
     width: 32,
@@ -453,7 +476,7 @@ const styles = StyleSheet.create({
   filterText: {
     color: colors.secondaryText,
     fontFamily: fonts.medium,
-    fontSize: 12
+    fontSize: 16
   },
   filterTextActive: {
     color: colors.black,
@@ -479,8 +502,8 @@ const styles = StyleSheet.create({
     flex: 1,
     color: colors.secondaryText,
     fontFamily: fonts.medium,
-    fontSize: 11,
-    lineHeight: 16
+    fontSize: 16,
+    lineHeight: 22
   },
   loadingOverlay: {
     position: "absolute",
@@ -547,7 +570,7 @@ const styles = StyleSheet.create({
   address: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 11,
+    fontSize: 16,
     marginTop: 3
   },
   metaRow: {
@@ -615,8 +638,8 @@ const styles = StyleSheet.create({
   emptyCopy: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 22,
     marginTop: 6,
     textAlign: "center"
   },

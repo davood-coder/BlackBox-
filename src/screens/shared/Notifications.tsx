@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   markAll: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 11 },
   summary: { paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: colors.border },
   summaryTitle: { color: colors.text, fontFamily: fonts.headingSemi, fontSize: 18 },
-  summaryCopy: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 12, lineHeight: 19, marginTop: 5, maxWidth: 330 },
+  summaryCopy: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, lineHeight: 22, marginTop: 5, maxWidth: 330 },
   list: { paddingTop: 8 },
   row: { minHeight: 96, borderBottomWidth: 1, borderBottomColor: colors.border, paddingVertical: 15, flexDirection: "row", gap: 12 },
   unreadRow: { backgroundColor: "#FFFBF3", marginHorizontal: -10, paddingHorizontal: 10, borderRadius: radius.sm },
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   title: { flex: 1, color: colors.text, fontFamily: fonts.semibold, fontSize: 14 },
   unreadDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.primary },
-  body: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 5 },
+  body: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, lineHeight: 22, marginTop: 5 },
   time: { color: colors.muted, fontFamily: fonts.medium, fontSize: 10, marginTop: 7 },
   pressed: { opacity: 0.76 }
 });

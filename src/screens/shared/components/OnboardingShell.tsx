@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     maxWidth: 430,
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 23,
     marginTop: 10
   },
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
   lineBody: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 10,
+    fontSize: 16,
     marginTop: 3
   },
   pressed: {

@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   addressIcon: { width: 42, height: 42, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: colors.primarySoft },
   addressCopy: { flex: 1, minWidth: 0 },
   address: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20 },
-  hours: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 12, marginTop: 4 },
+  hours: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, marginTop: 4 },
   actionRow: { flexDirection: "row", justifyContent: "space-between", gap: 8, marginTop: 22 },
   quickAction: { flex: 1, minWidth: 0, alignItems: "center", gap: 7 },
   quickIcon: {
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     ...shadows.card
   },
-  quickLabel: { color: colors.secondaryText, fontFamily: fonts.medium, fontSize: 10 },
+  quickLabel: { color: colors.secondaryText, fontFamily: fonts.medium, fontSize: 16 },
   queueBand: {
     minHeight: 92,
     borderRadius: radius.md,
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   serviceIconActive: { backgroundColor: colors.primary },
   serviceCopy: { flex: 1, minWidth: 0 },
   serviceName: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14 },
-  serviceDescription: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 11, marginTop: 3 },
+  serviceDescription: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, marginTop: 3 },
   serviceDuration: { color: colors.primaryDark, fontFamily: fonts.medium, fontSize: 10, marginTop: 4 },
   servicePrice: { color: colors.text, fontFamily: fonts.bold, fontSize: 15 },
   barberList: { gap: 10, paddingRight: spacing.screen },
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
   barberActive: { borderColor: colors.primary, backgroundColor: "#FFFBF3" },
   barberImage: { width: "100%", height: 104, borderRadius: 11 },
   barberName: { color: colors.text, fontFamily: fonts.semibold, fontSize: 13, marginTop: 10 },
-  barberRole: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 10, marginTop: 3 },
+  barberRole: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, marginTop: 3 },
   barberFooter: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 9 },
   barberRating: { color: colors.text, fontFamily: fonts.bold, fontSize: 10 },
   barberSlot: { color: colors.primaryDark, fontFamily: fonts.medium, fontSize: 9, marginLeft: "auto" },
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
   reviewIdentity: { flex: 1, marginLeft: 10 },
   reviewName: { color: colors.text, fontFamily: fonts.semibold, fontSize: 13 },
   reviewAge: { color: colors.muted, fontFamily: fonts.body, fontSize: 10, marginTop: 2 },
-  reviewText: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 13, lineHeight: 20, marginTop: 12 },
+  reviewText: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, lineHeight: 22, marginTop: 12 },
   bookButton: { marginTop: 26 },
   pressed: { opacity: 0.76, transform: [{ scale: 0.99 }] }
 });

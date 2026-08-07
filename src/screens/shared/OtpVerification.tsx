@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   resendText: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 15
+    fontSize: 16
   },
   timer: {
     color: colors.primary,

@@ -9,7 +9,7 @@ import { colors, fonts, radius } from "../../theme";
 
 export default function MyBookings({ navigation }) {
   const [tab, setTab] = useState("Upcoming");
-  const { bookings } = useBooking();
+  const { bookings, currency } = useBooking();
   const upcomingBookings = bookings.filter((booking) => booking.status === "Confirmed" || booking.status === "Pending");
   const pastBookings = bookings.filter((booking) => booking.status === "Completed");
   const cancelledBookings = bookings.filter((booking) => booking.status === "Cancelled" || booking.status === "Rejected");
@@ -52,7 +52,7 @@ export default function MyBookings({ navigation }) {
                   </View>
                 </View>
                 <View style={styles.bookingFooter}>
-                  <Text style={styles.totalText}>{booking.total ? `$${booking.total}` : "Total pending"}</Text>
+                  <Text style={styles.totalText}>{booking.total ? `${currency.symbol}${booking.total}` : "Total pending"}</Text>
                   <View style={styles.actionRow}>
                     <Pressable onPress={() => navigation.navigate("BookingDetails", { bookingId: booking.id })} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
                       <Text style={styles.actionText}>Details</Text>
@@ -125,8 +125,8 @@ const styles = StyleSheet.create({
   summaryMeta: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 22,
     marginTop: 4
   },
   summaryPill: {
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   segmentText: {
     color: colors.secondaryText,
     fontFamily: fonts.medium,
-    fontSize: 13
+    fontSize: 16
   },
   segmentTextActive: {
     color: colors.primary
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   date: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 12
+    fontSize: 16
   },
   shop: {
     color: colors.text,
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   service: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 13,
+    fontSize: 16,
     marginTop: 8
   },
   addOns: {
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   actionText: {
     color: colors.secondaryText,
     fontFamily: fonts.medium,
-    fontSize: 11
+    fontSize: 16
   },
   emptyState: {
     minHeight: 160,
@@ -289,8 +289,8 @@ const styles = StyleSheet.create({
   emptyCopy: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 22,
     marginTop: 6,
     textAlign: "center"
   },

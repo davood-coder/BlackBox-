@@ -1,4 +1,6 @@
-import { createContext, useContext, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { Platform } from "react-native";
+import * as Location from "expo-location";
 import {
   barbers,
   barbershops,
@@ -21,7 +23,8 @@ import {
   type AppNotification,
   type Workspace
 } from "../data";
-import { fallbackShops } from "../services/nearbyBarbers";
+import { fallbackShops, fetchNearbyBarbershops, reverseGeocodeAreaLabel, fetchIPGeolocation } from "../services/nearbyBarbers";
+import { getCurrencyFromAddress, type CurrencyConfig } from "../utils/currency";
 
 type DateOption = (typeof dates)[number];
 
@@ -60,6 +63,8 @@ type BookingContextValue = {
   markAllNotificationsRead: () => void;
   favoriteShopIds: string[];
   toggleFavoriteShop: (shopId: string) => void;
+  currency: CurrencyConfig;
+  setCurrency: Dispatch<SetStateAction<CurrencyConfig>>;
 };
 
 const initialShops = fallbackShops();
@@ -81,6 +86,83 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const [workspace, setWorkspace] = useState<Workspace>("Customer");
   const [notifications, setNotifications] = useState<AppNotification[]>(appNotifications);
   const [favoriteShopIds, setFavoriteShopIds] = useState<string[]>([barbershops[0].id]);
+  const [currency, setCurrency] = useState<CurrencyConfig>({ code: "USD", symbol: "$" });
+
+  useEffect(() => {
+    if (selectedShop?.address) {
+      setCurrency(getCurrencyFromAddress(selectedShop.address));
+    }
+  }, [selectedShop]);
+
+  useEffect(() => {
+    async function initializeLocation() {
+      try {
+        const handleIPFallback = async () => {
+          try {
+            const ipLoc = await fetchIPGeolocation();
+            const origin = { latitude: ipLoc.latitude, longitude: ipLoc.longitude };
+            const nearbyShops = await fetchNearbyBarbershops(origin).catch(() => []);
+            const shops = nearbyShops.length ? nearbyShops : fallbackShops(origin, true);
+            setAvailableShops(shops);
+            setCurrency(getCurrencyFromAddress(ipLoc.label));
+            if (shops.length) {
+              setSelectedShop(shops[0]);
+              setSelectedBarber(shops[0].bestBarbers?.[0] || barbers[0]);
+            }
+          } catch (e) {
+            console.log("Startup IP geolocation fallback failed:", e);
+          }
+        };
+
+        if (Platform.OS === "web") {
+          if (typeof navigator !== "undefined" && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              async (pos) => {
+                const origin = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+                const label = await reverseGeocodeAreaLabel(origin).catch(() => "Current location");
+                const nearbyShops = await fetchNearbyBarbershops(origin).catch(() => []);
+                const shops = nearbyShops.length ? nearbyShops : fallbackShops(origin, true);
+                setAvailableShops(shops);
+                setCurrency(getCurrencyFromAddress(label));
+                if (shops.length) {
+                  setSelectedShop(shops[0]);
+                  setSelectedBarber(shops[0].bestBarbers?.[0] || barbers[0]);
+                }
+              },
+              async () => {
+                await handleIPFallback();
+              },
+              { enableHighAccuracy: true, timeout: 5000, maximumAge: 10000 }
+            );
+          } else {
+            await handleIPFallback();
+          }
+        } else {
+          const { status } = await Location.getForegroundPermissionsAsync();
+          if (status === "granted") {
+            const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+            const origin = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+            const label = await Location.reverseGeocodeAsync(origin)
+              .then(([p]) => [p?.district, p?.city, p?.region].filter(Boolean).join(", ") || "Current location")
+              .catch(() => "Current location");
+            const nearbyShops = await fetchNearbyBarbershops(origin).catch(() => []);
+            const shops = nearbyShops.length ? nearbyShops : fallbackShops(origin, true);
+            setAvailableShops(shops);
+            setCurrency(getCurrencyFromAddress(label));
+            if (shops.length) {
+              setSelectedShop(shops[0]);
+              setSelectedBarber(shops[0].bestBarbers?.[0] || barbers[0]);
+            }
+          } else {
+            await handleIPFallback();
+          }
+        }
+      } catch (e) {
+        console.log("Error initializing location at startup:", e);
+      }
+    }
+    initializeLocation();
+  }, []);
 
   const bookingTotal = selectedService.price + selectedAddOns.reduce((total, addOn) => total + addOn.price, 0);
   const bookingId = useMemo(() => `#CZX${String(bookings.length + 12345).padStart(5, "0")}`, [bookings.length]);
@@ -215,7 +297,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     markNotificationRead,
     markAllNotificationsRead,
     favoriteShopIds,
-    toggleFavoriteShop
+    toggleFavoriteShop,
+    currency,
+    setCurrency
   };
 
   return <BookingContext.Provider value={value}>{children}</BookingContext.Provider>;

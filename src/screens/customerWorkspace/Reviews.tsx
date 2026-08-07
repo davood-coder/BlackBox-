@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   count: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 16,
     marginTop: 6
   },
   bars: {
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
   barLabel: {
     color: colors.secondaryText,
     fontFamily: fonts.medium,
-    fontSize: 12,
+    fontSize: 16,
     width: 10
   },
   barTrack: {
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   segmentText: {
     color: colors.secondaryText,
     fontFamily: fonts.medium,
-    fontSize: 13
+    fontSize: 16
   },
   segmentTextActive: {
     color: colors.text
@@ -172,13 +172,13 @@ const styles = StyleSheet.create({
   age: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 16,
     marginTop: 2
   },
   reviewText: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 14,
-    lineHeight: 21
+    fontSize: 16,
+    lineHeight: 22
   }
 });

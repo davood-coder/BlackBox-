@@ -15,7 +15,7 @@ const tabs: Array<{ label: string; status: BookingStatus[] }> = [
 
 export default function BarberBookings({ navigation }: any) {
   const [tab, setTab] = useState("Pending");
-  const { bookings, updateBookingStatus, setWorkspace } = useBooking();
+  const { bookings, updateBookingStatus, setWorkspace, currency } = useBooking();
   const activeTab = tabs.find((item) => item.label === tab) || tabs[0];
   const visibleBookings = useMemo(
     () => bookings.filter((booking) => activeTab.status.includes(booking.status)),
@@ -32,9 +32,6 @@ export default function BarberBookings({ navigation }: any) {
             <Text style={styles.eyebrow}>Operations</Text>
             <Text style={styles.title}>Booking management</Text>
           </View>
-          <Pressable accessibilityLabel="Calendar view" style={styles.iconButton}>
-            <Feather name="calendar" size={19} color={colors.text} />
-          </Pressable>
         </View>
 
         <View style={styles.summaryBand}>
@@ -80,6 +77,7 @@ export default function BarberBookings({ navigation }: any) {
 }
 
 function BookingRequest({ booking, onUpdate }: { booking: Booking; onUpdate: (bookingId: string, status: BookingStatus) => void }) {
+  const { currency } = useBooking();
   const canAccept = booking.status === "Pending";
   const canComplete = booking.status === "Confirmed";
 
@@ -88,7 +86,7 @@ function BookingRequest({ booking, onUpdate }: { booking: Booking; onUpdate: (bo
   }
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { borderLeftWidth: 4, borderLeftColor: statusColor(booking.status) }]}>
       <View style={styles.cardTop}>
         <View style={styles.avatar}><Text style={styles.avatarText}>{(booking.customer || "C").charAt(0)}</Text></View>
         <View style={styles.customerCopy}>
@@ -106,7 +104,7 @@ function BookingRequest({ booking, onUpdate }: { booking: Booking; onUpdate: (bo
           <Text style={styles.service}>{booking.service}</Text>
           <Text style={styles.barber}>{booking.barber || "Any barber"} · {booking.date}</Text>
         </View>
-        <Text style={styles.price}>${booking.total || 0}</Text>
+        <Text style={styles.price}>{currency.symbol}{booking.total || 0}</Text>
       </View>
 
       {booking.note ? (
@@ -182,23 +180,23 @@ const styles = StyleSheet.create({
   iconButton: { width: 42, height: 42, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border },
   summaryBand: { minHeight: 82, borderRadius: radius.md, backgroundColor: colors.black, padding: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-around", marginBottom: 18 },
   summaryLabel: { color: "#BFC1BD", fontFamily: fonts.medium, fontSize: 9, textTransform: "uppercase" },
-  summaryValue: { color: colors.white, fontFamily: fonts.headingSemi, fontSize: 16, marginTop: 5 },
+  summaryValue: { color: colors.white, fontFamily: fonts.headingSemi, fontSize: 24, marginTop: 5 },
   summaryDivider: { width: 1, height: 40, backgroundColor: "rgba(255,255,255,0.18)" },
   tabs: { minHeight: 48, flexDirection: "row", backgroundColor: colors.elevated, borderRadius: radius.sm, padding: 4, marginBottom: 18 },
   tab: { flex: 1, minWidth: 0, borderRadius: 8, alignItems: "center", justifyContent: "center" },
   tabActive: { backgroundColor: colors.white },
-  tabText: { color: colors.secondaryText, fontFamily: fonts.medium, fontSize: 10 },
+  tabText: { color: colors.secondaryText, fontFamily: fonts.medium, fontSize: 16 },
   tabTextActive: { color: colors.text, fontFamily: fonts.semibold },
-  tabCount: { color: colors.muted, fontFamily: fonts.bold, fontSize: 8, marginTop: 2 },
+  tabCount: { color: colors.muted, fontFamily: fonts.bold, fontSize: 14, marginTop: 2 },
   tabCountActive: { color: colors.primaryDark },
   list: { gap: 12 },
-  card: { borderRadius: radius.md, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, padding: 14 },
+  card: { borderRadius: radius.md, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, padding: 14, overflow: "hidden" },
   cardTop: { flexDirection: "row", alignItems: "center", gap: 10 },
   avatar: { width: 42, height: 42, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: colors.primarySoft },
   avatarText: { color: colors.primaryDark, fontFamily: fonts.bold, fontSize: 16 },
   customerCopy: { flex: 1, minWidth: 0 },
-  customer: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14 },
-  phone: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 10, marginTop: 3 },
+  customer: { color: colors.text, fontFamily: fonts.headingSemi, fontSize: 16 },
+  phone: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 12, marginTop: 3 },
   statusBadge: { borderRadius: radius.full, paddingHorizontal: 9, paddingVertical: 6 },
   pendingBadge: { backgroundColor: "rgba(169,105,0,0.1)" },
   confirmedBadge: { backgroundColor: "rgba(30,141,91,0.1)" },
@@ -208,15 +206,15 @@ const styles = StyleSheet.create({
   serviceBlock: { minHeight: 68, borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.border, flexDirection: "row", alignItems: "center", gap: 10, marginTop: 14 },
   serviceIcon: { width: 36, height: 36, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: colors.primarySoft },
   serviceCopy: { flex: 1, minWidth: 0 },
-  service: { color: colors.text, fontFamily: fonts.semibold, fontSize: 12 },
-  barber: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 9, marginTop: 4 },
-  price: { color: colors.text, fontFamily: fonts.bold, fontSize: 14 },
+  service: { color: colors.text, fontFamily: fonts.semibold, fontSize: 14 },
+  barber: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 12, marginTop: 4 },
+  price: { color: colors.text, fontFamily: fonts.bold, fontSize: 18 },
   notes: { borderRadius: radius.sm, backgroundColor: colors.background, padding: 10, marginTop: 12 },
   notesLabel: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 9, textTransform: "uppercase" },
-  notesText: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 10, lineHeight: 15, marginTop: 4 },
+  notesText: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 4 },
   metaRow: { flexDirection: "row", gap: 6, marginTop: 12 },
   metaItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4 },
-  metaText: { flex: 1, color: colors.muted, fontFamily: fonts.medium, fontSize: 8 },
+  metaText: { flex: 1, color: colors.muted, fontFamily: fonts.medium, fontSize: 12 },
   actions: { flexDirection: "row", gap: 8, marginTop: 14 },
   iconAction: { width: 42, height: 42, borderRadius: 12, borderWidth: 1, borderColor: colors.border, alignItems: "center", justifyContent: "center" },
   secondaryAction: { flex: 1, minHeight: 42, borderRadius: radius.full, borderWidth: 1, borderColor: "#E5BFC1", alignItems: "center", justifyContent: "center" },
@@ -226,6 +224,6 @@ const styles = StyleSheet.create({
   empty: { minHeight: 310, alignItems: "center", justifyContent: "center", paddingHorizontal: 28 },
   emptyIcon: { width: 58, height: 58, borderRadius: 19, alignItems: "center", justifyContent: "center", backgroundColor: colors.primarySoft },
   emptyTitle: { color: colors.text, fontFamily: fonts.headingSemi, fontSize: 17, marginTop: 16 },
-  emptyCopy: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 12, textAlign: "center", marginTop: 6 },
+  emptyCopy: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 13, textAlign: "center", marginTop: 6 },
   pressed: { opacity: 0.76, transform: [{ scale: 0.99 }] }
 });

@@ -19,7 +19,8 @@ export default function BookingSummary({ navigation }) {
     selectedDate,
     selectedTime,
     bookingTotal,
-    confirmBooking
+    confirmBooking,
+    currency
   } = useBooking();
 
   function handleConfirm() {
@@ -39,14 +40,14 @@ export default function BookingSummary({ navigation }) {
       </Card>
 
       <SummarySection title="Selected Service">
-        <RowCard icon={selectedService.icon} title={selectedService.label} subtitle={selectedService.duration} price={`$${selectedService.price}`} />
+        <RowCard icon={selectedService.icon} title={selectedService.label} subtitle={selectedService.duration} price={`${currency.symbol}${selectedService.price}`} />
       </SummarySection>
 
       {selectedAddOns.length ? (
         <SummarySection title="Add-ons">
           <View style={styles.stackedRows}>
             {selectedAddOns.map((addOn) => (
-              <RowCard key={addOn.id} icon={addOn.icon} title={addOn.label} subtitle={addOn.duration} price={`$${addOn.price}`} />
+              <RowCard key={addOn.id} icon={addOn.icon} title={addOn.label} subtitle={addOn.duration} price={`${currency.symbol}${addOn.price}`} />
             ))}
           </View>
         </SummarySection>
@@ -79,7 +80,7 @@ export default function BookingSummary({ navigation }) {
 
       <Card style={styles.totalCard}>
         <Text style={styles.totalLabel}>Total Amount</Text>
-        <Text style={styles.totalPrice}>${bookingTotal}</Text>
+        <Text style={styles.totalPrice}>{currency.symbol}{bookingTotal}</Text>
       </Card>
 
       <SummarySection title="Payment Method">
@@ -156,8 +157,8 @@ const styles = StyleSheet.create({
   meta: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 22,
     marginTop: 2
   },
   section: {
@@ -222,7 +223,7 @@ const styles = StyleSheet.create({
   totalLabel: {
     color: colors.secondaryText,
     fontFamily: fonts.medium,
-    fontSize: 14
+    fontSize: 16
   },
   totalPrice: {
     color: colors.text,
@@ -265,7 +266,7 @@ const styles = StyleSheet.create({
   paymentText: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 11
+    fontSize: 16
   },
   confirm: {
     marginTop: spacing.sm,
