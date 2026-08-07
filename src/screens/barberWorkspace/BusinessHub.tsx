@@ -10,7 +10,7 @@ import { MapPreview } from "../../components/MapPreview";
 import { geocodeArea, reverseGeocodeAreaLabel, fetchIPGeolocation } from "../../services/nearbyBarbers";
 import { useBooking } from "../../state/BookingContext";
 import { colors, fonts, radius } from "../../theme";
-import { getCurrencyFromAddress } from "../../utils/currency";
+import { getCurrencyFromAddress, convertCurrencyAmount } from "../../utils/currency";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -362,14 +362,32 @@ function ServicesPanel() {
 function PaymentsPanel() {
   const { currency } = useBooking();
   const [message, setMessage] = useState("");
+
+  // Base amounts in USD
+  const baseBalance = 120;
+  const baseToday = 15;
+  const baseWeek = 75;
+  const baseAvgTicket = 40;
+  const baseAvgTicketChange = 4;
+
+  const displayBalance = convertCurrencyAmount(baseBalance, currency.code);
+  const displayToday = convertCurrencyAmount(baseToday, currency.code);
+  const displayWeek = convertCurrencyAmount(baseWeek, currency.code);
+  const displayAvgTicket = convertCurrencyAmount(baseAvgTicket, currency.code);
+  const displayAvgTicketChange = convertCurrencyAmount(baseAvgTicketChange, currency.code);
+
+  const formatValue = (val: number) => {
+    return val.toLocaleString();
+  };
+
   return (
     <View>
       <PanelHeader title="Payments" copy="Payouts and collected revenue" />
       <View style={styles.payoutHero}>
         <View style={styles.payoutCopy}>
           <Text style={styles.payoutLabel}>Available balance</Text>
-          <Text style={styles.payoutValue}>{currency.symbol}9,420</Text>
-          <Text style={styles.payoutMeta}>Today collected {currency.symbol}680</Text>
+          <Text style={styles.payoutValue}>{currency.symbol}{formatValue(displayBalance)}</Text>
+          <Text style={styles.payoutMeta}>Today collected {currency.symbol}{formatValue(displayToday)}</Text>
         </View>
         <View style={styles.readyBadge}>
           <Feather name="check-circle" size={14} color={colors.success} />
@@ -377,8 +395,8 @@ function PaymentsPanel() {
         </View>
       </View>
       <View style={styles.metricGrid}>
-        <BusinessMetric label="This week" value={`${currency.symbol}4,240`} change="+8%" />
-        <BusinessMetric label="Avg ticket" value={`${currency.symbol}48`} change={`+${currency.symbol}4`} />
+        <BusinessMetric label="This week" value={`${currency.symbol}${formatValue(displayWeek)}`} change="+8%" />
+        <BusinessMetric label="Avg ticket" value={`${currency.symbol}${formatValue(displayAvgTicket)}`} change={`+${currency.symbol}${formatValue(displayAvgTicketChange)}`} />
       </View>
       <Pressable onPress={() => setMessage("Withdrawal request sent to your verified account.")} style={({ pressed }) => [styles.withdrawButton, pressed && styles.pressed]}>
         <Feather name="arrow-down-circle" size={18} color={colors.black} />
