@@ -166,7 +166,8 @@ export async function geocodeArea(query: string): Promise<AreaSearchResult | nul
     q: term,
     format: "jsonv2",
     addressdetails: "1",
-    limit: "1"
+    limit: "1",
+    "accept-language": "en"
   });
 
   const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
@@ -195,7 +196,8 @@ export async function reverseGeocodeAreaLabel(origin: Coordinates) {
     format: "jsonv2",
     addressdetails: "1",
     lat: String(origin.latitude),
-    lon: String(origin.longitude)
+    lon: String(origin.longitude),
+    "accept-language": "en"
   });
 
   const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params.toString()}`, {
@@ -245,7 +247,8 @@ async function searchNominatimPlaces(query: string, limit: number) {
     q: query,
     format: "jsonv2",
     addressdetails: "1",
-    limit: String(limit)
+    limit: String(limit),
+    "accept-language": "en"
   });
 
   const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {

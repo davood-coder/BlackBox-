@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { colors, fonts, radius } from "../theme";
@@ -11,23 +12,53 @@ type MapPreviewProps = {
   compact?: boolean;
   onMarkerPress?: (shop: Barbershop) => void;
   originLabel?: string;
+  onMapPress?: (coords: Coordinates) => void;
 };
 
-export function MapPreview({ shops, selectedShop, origin, height = 300, compact = false, onMarkerPress, originLabel }: MapPreviewProps) {
+export function MapPreview({ shops, selectedShop, origin, height = 300, compact = false, onMarkerPress, originLabel, onMapPress }: MapPreviewProps) {
   const visibleShops = shops.slice(0, 6);
   const markerPositions = buildMarkerPositions(visibleShops, origin);
   const originPosition = origin ? buildPointPosition(origin, [...visibleShops.map((shop) => shop.coordinates), origin]) : null;
 
+  const [layoutWidth, setLayoutWidth] = useState(0);
+  const [layoutHeight, setLayoutHeight] = useState(0);
+
+  const handleMapPress = (event: any) => {
+    if (!onMapPress || !origin || !layoutWidth || !layoutHeight) return;
+    const { locationX, locationY } = event.nativeEvent;
+    const xPercent = (locationX / layoutWidth) * 100;
+    const yPercent = (locationY / layoutHeight) * 100;
+
+    // Center is 50%, 50%. Top-right is positive offset from center.
+    // 1% of the layout matches roughly 0.00015 degrees of latitude/longitude.
+    const deltaLat = (50 - yPercent) * 0.00015;
+    const deltaLon = (xPercent - 50) * 0.00015;
+
+    const newCoords = {
+      latitude: origin.latitude + deltaLat,
+      longitude: origin.longitude + deltaLon
+    };
+    onMapPress(newCoords);
+  };
+
   return (
-    <View style={[styles.map, { height }, compact && styles.compactMap]}>
-      <View style={styles.mapShade} />
+    <Pressable 
+      onLayout={(e) => {
+        const { width, height } = e.nativeEvent.layout;
+        setLayoutWidth(width);
+        setLayoutHeight(height);
+      }}
+      onPress={handleMapPress}
+      style={[styles.map, { height }, compact && styles.compactMap]}
+    >
+      <View style={styles.mapShade} pointerEvents="none" />
       {[0, 1, 2, 3].map((line) => (
-        <View key={`v-${line}`} style={[styles.mapLine, styles.verticalLine, { left: `${18 + line * 22}%` }]} />
+        <View key={`v-${line}`} style={[styles.mapLine, styles.verticalLine, { left: `${18 + line * 22}%` }]} pointerEvents="none" />
       ))}
       {[0, 1, 2, 3, 4].map((line) => (
-        <View key={`h-${line}`} style={[styles.mapLine, styles.horizontalLine, { top: `${15 + line * 18}%` }]} />
+        <View key={`h-${line}`} style={[styles.mapLine, styles.horizontalLine, { top: `${15 + line * 18}%` }]} pointerEvents="none" />
       ))}
-      <View style={styles.routeLine} />
+      <View style={styles.routeLine} pointerEvents="none" />
       {visibleShops.map((shop, index) => {
         const active = selectedShop?.id === shop.id;
         const position = markerPositions[index];
@@ -42,24 +73,24 @@ export function MapPreview({ shops, selectedShop, origin, height = 300, compact 
         );
       })}
       {originPosition && (!compact || visibleShops.length === 0) ? (
-        <View style={[styles.originPin, originPosition]}>
+        <View style={[styles.originPin, originPosition]} pointerEvents="none">
           <View style={styles.originPulse} />
           <View style={styles.originDot} />
         </View>
       ) : null}
       {selectedShop ? (
-        <View style={styles.mapBadge}>
+        <View style={styles.mapBadge} pointerEvents="none">
           <Text style={styles.mapBadgeText} numberOfLines={1}>{selectedShop.name}</Text>
           <Text style={styles.mapBadgeMeta}>{selectedShop.distance} - {selectedShop.queue || "Walk-ins open"}</Text>
         </View>
       ) : null}
       {!selectedShop && originLabel ? (
-        <View style={styles.mapBadge}>
+        <View style={styles.mapBadge} pointerEvents="none">
           <Text style={styles.mapBadgeText} numberOfLines={1}>{originLabel}</Text>
           <Text style={styles.mapBadgeMeta}>Detected Live Area</Text>
         </View>
       ) : null}
-    </View>
+    </Pressable>
   );
 }
 

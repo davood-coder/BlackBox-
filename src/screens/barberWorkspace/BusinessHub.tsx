@@ -841,7 +841,27 @@ function ShopPanel({ navigation }: { navigation: any }) {
               {locFormVisible ? (
                 <View>
                   <Card style={styles.mapCard}>
-                    <MapPreview shops={[]} origin={locCoords} height={200} originLabel={locAddress} />
+                    <MapPreview 
+                      shops={[]} 
+                      origin={locCoords} 
+                      height={200} 
+                      originLabel={locAddress}
+                      onMapPress={async (coords) => {
+                        setLocCoords(coords);
+                        setResolvingLocation(true);
+                        try {
+                          const label = await reverseGeocodeAreaLabel(coords);
+                          setLocAddress(label);
+                          if (label) {
+                            const autoName = label.split(",")[0]?.trim();
+                            if (autoName) setLocName(autoName);
+                          }
+                        } catch (err) {
+                          setLocAddress(`${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}`);
+                        }
+                        setResolvingLocation(false);
+                      }}
+                    />
                     <View style={styles.mapPinOverlay}>
                       <Text style={styles.mapPinText}>Pinpoint your service area</Text>
                     </View>
