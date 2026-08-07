@@ -196,21 +196,22 @@ function ServicesPanel() {
             setDuration("");
             setShowForm(false);
           }} />
-          <View style={styles.editContainer}>
-            <View style={styles.modalHandle} />
-            
-            <Pressable onPress={() => {
-              setEditingServiceId(null);
-              setName("");
-              setPrice("");
-              setDuration("");
-              setShowForm(false);
-            }} style={styles.modalCloseBtn}>
-              <Feather name="x" size={18} color="#111" />
-            </Pressable>
-
-            <Text style={styles.editTitle}>{editingServiceId ? "Edit Service" : "New Service"}</Text>
-            <View style={styles.goldDivider} />
+          <View style={styles.floatingCardModal}>
+            <View style={styles.modalHeaderRow}>
+              <View style={styles.modalHeaderTitleBox}>
+                <Feather name="scissors" size={18} color="#C89A43" />
+                <Text style={styles.modalTitleText}>{editingServiceId ? "Edit Service" : "New Service"}</Text>
+              </View>
+              <Pressable onPress={() => {
+                setEditingServiceId(null);
+                setName("");
+                setPrice("");
+                setDuration("");
+                setShowForm(false);
+              }} style={styles.modalCloseCircleBtn}>
+                <Feather name="x" size={16} color={colors.text} />
+              </Pressable>
+            </View>
 
             <ScrollView showsVerticalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={styles.editScrollContent}>
               <View style={styles.editForm}>
