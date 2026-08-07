@@ -560,13 +560,13 @@ export default function Profile({ navigation }: any) {
       </Modal>
 
       <Modal visible={privacyModalVisible} transparent animationType="slide" onRequestClose={() => setPrivacyModalVisible(false)}>
-        <View style={styles.modalOverlay}>
+        <View style={styles.privacyOverlay}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setPrivacyModalVisible(false)} />
           <View style={styles.privacyContainer}>
             <View style={styles.privacyHeader}>
               <Text style={styles.privacyTitle}>Privacy Settings</Text>
               <Pressable onPress={() => setPrivacyModalVisible(false)} style={styles.privacyCloseBtn}>
-                <Feather name="x" size={20} color={colors.text} />
+                <Feather name="x" size={16} color={colors.text} />
               </Pressable>
             </View>
 
@@ -1123,12 +1123,26 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderStyle: "dashed"
   },
+  privacyOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15,17,21,0.65)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16
+  },
   privacyContainer: {
-    width: "100%",
-    maxWidth: 340,
+    width: "95%",
+    maxWidth: 360,
     backgroundColor: colors.white,
-    borderRadius: radius.lg,
-    padding: 24
+    borderRadius: 32,
+    borderWidth: 1.5,
+    borderColor: "#C89A43",
+    padding: 24,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10
   },
   privacyHeader: {
     flexDirection: "row",
@@ -1144,6 +1158,10 @@ const styles = StyleSheet.create({
   privacyCloseBtn: {
     width: 32,
     height: 32,
+    borderRadius: 16,
+    backgroundColor: "#FDF7EC",
+    borderWidth: 1,
+    borderColor: "#F3E2C3",
     alignItems: "center",
     justifyContent: "center"
   },
