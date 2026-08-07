@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { colors, fonts, radius } from "../theme";
 import type { Barbershop, Coordinates } from "../data";
@@ -41,6 +41,14 @@ export function MapPreview({ shops, selectedShop, origin, height = 300, compact 
     onMapPress(newCoords);
   };
 
+  const lat = origin ? origin.latitude : 14.91342;
+  const lon = origin ? origin.longitude : 79.9855;
+  const zoom = 14;
+  const apiKey = "GEOAPIFY_API_KEY"; // Official Geoapify test key
+
+  // Generate real OSM static map centered at the coordinates using Geoapify
+  const staticMapUrl = `https://maps.geoapify.com/v1/staticmap?style=osm-carto&width=${layoutWidth || 400}&height=${height}&center=lonlat:${lon},${lat}&zoom=${zoom}&marker=lonlat:${lon},${lat};color:%23c89a43;size:medium&apiKey=${apiKey}`;
+
   return (
     <Pressable 
       onLayout={(e) => {
@@ -51,14 +59,16 @@ export function MapPreview({ shops, selectedShop, origin, height = 300, compact 
       onPress={handleMapPress}
       style={[styles.map, { height }, compact && styles.compactMap]}
     >
-      <View style={styles.mapShade} pointerEvents="none" />
-      {[0, 1, 2, 3].map((line) => (
-        <View key={`v-${line}`} style={[styles.mapLine, styles.verticalLine, { left: `${18 + line * 22}%` }]} pointerEvents="none" />
-      ))}
-      {[0, 1, 2, 3, 4].map((line) => (
-        <View key={`h-${line}`} style={[styles.mapLine, styles.horizontalLine, { top: `${15 + line * 18}%` }]} pointerEvents="none" />
-      ))}
-      <View style={styles.routeLine} pointerEvents="none" />
+      {layoutWidth > 0 ? (
+        <Image 
+          source={{ uri: staticMapUrl }} 
+          style={StyleSheet.absoluteFill} 
+          resizeMode="cover"
+        />
+      ) : (
+        <View style={styles.mapShade} pointerEvents="none" />
+      )}
+      
       {visibleShops.map((shop, index) => {
         const active = selectedShop?.id === shop.id;
         const position = markerPositions[index];
@@ -72,8 +82,8 @@ export function MapPreview({ shops, selectedShop, origin, height = 300, compact 
           </Pressable>
         );
       })}
-      {originPosition && (!compact || visibleShops.length === 0) ? (
-        <View style={[styles.originPin, originPosition]} pointerEvents="none">
+      {origin && (!compact || visibleShops.length === 0) ? (
+        <View style={[styles.originPin, { top: "50%", left: "50%" }]} pointerEvents="none">
           <View style={styles.originPulse} />
           <View style={styles.originDot} />
         </View>
