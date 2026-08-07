@@ -821,20 +821,28 @@ function ShopPanel({ navigation }: { navigation: any }) {
           <View style={styles.floatingCardModal}>
             <View style={styles.modalHeaderRow}>
               <View style={styles.modalHeaderTitleBox}>
-                <Feather name={locFormVisible ? "arrow-left" : "map-pin"} size={18} color="#C89A43" />
+                {locFormVisible ? (
+                  <Pressable 
+                    onPress={() => setLocFormVisible(false)} 
+                    style={{ marginRight: 8, padding: 4 }}
+                  >
+                    <Feather name="arrow-left" size={20} color={colors.text} />
+                  </Pressable>
+                ) : (
+                  <Feather name="map-pin" size={18} color="#C89A43" style={{ marginRight: 8 }} />
+                )}
                 <Text style={styles.modalTitleText}>
                   {locFormVisible ? (editingLocId ? "Edit Location" : "Add Location") : "Shop Locations"}
                 </Text>
               </View>
-              <Pressable onPress={() => {
-                if (locFormVisible) {
-                  setLocFormVisible(false);
-                } else {
-                  setLocationsModalVisible(false);
-                }
-              }} style={styles.modalCloseCircleBtn}>
-                <Feather name={locFormVisible ? "arrow-left" : "x"} size={16} color={colors.text} />
-              </Pressable>
+              
+              {!locFormVisible ? (
+                <Pressable onPress={() => setLocationsModalVisible(false)} style={styles.modalCloseCircleBtn}>
+                  <Feather name="x" size={16} color={colors.text} />
+                </Pressable>
+              ) : (
+                <View style={{ width: 32 }} />
+              )}
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 10 }}>
@@ -1013,20 +1021,28 @@ function ShopPanel({ navigation }: { navigation: any }) {
           <View style={styles.floatingCardModal}>
             <View style={styles.modalHeaderRow}>
               <View style={styles.modalHeaderTitleBox}>
-                <Feather name={workerFormVisible ? "arrow-left" : "clock"} size={18} color="#C89A43" />
+                {workerFormVisible ? (
+                  <Pressable 
+                    onPress={() => setWorkerFormVisible(false)} 
+                    style={{ marginRight: 8, padding: 4 }}
+                  >
+                    <Feather name="arrow-left" size={20} color={colors.text} />
+                  </Pressable>
+                ) : (
+                  <Feather name="clock" size={18} color="#C89A43" style={{ marginRight: 8 }} />
+                )}
                 <Text style={styles.modalTitleText}>
                   {workerFormVisible ? (editingWorkerId ? "Edit Worker" : "Add Worker") : "Working Hours"}
                 </Text>
               </View>
-              <Pressable onPress={() => {
-                if (workerFormVisible) {
-                  setWorkerFormVisible(false);
-                } else {
-                  setHoursModalVisible(false);
-                }
-              }} style={styles.modalCloseCircleBtn}>
-                <Feather name={workerFormVisible ? "arrow-left" : "x"} size={16} color={colors.text} />
-              </Pressable>
+              
+              {!workerFormVisible ? (
+                <Pressable onPress={() => setHoursModalVisible(false)} style={styles.modalCloseCircleBtn}>
+                  <Feather name="x" size={16} color={colors.text} />
+                </Pressable>
+              ) : (
+                <View style={{ width: 32 }} />
+              )}
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 10 }}>
