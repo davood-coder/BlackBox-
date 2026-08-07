@@ -10,9 +10,10 @@ type MapPreviewProps = {
   height?: number;
   compact?: boolean;
   onMarkerPress?: (shop: Barbershop) => void;
+  originLabel?: string;
 };
 
-export function MapPreview({ shops, selectedShop, origin, height = 300, compact = false, onMarkerPress }: MapPreviewProps) {
+export function MapPreview({ shops, selectedShop, origin, height = 300, compact = false, onMarkerPress, originLabel }: MapPreviewProps) {
   const visibleShops = shops.slice(0, 6);
   const markerPositions = buildMarkerPositions(visibleShops, origin);
   const originPosition = origin ? buildPointPosition(origin, [...visibleShops.map((shop) => shop.coordinates), origin]) : null;
@@ -40,7 +41,7 @@ export function MapPreview({ shops, selectedShop, origin, height = 300, compact 
           </Pressable>
         );
       })}
-      {originPosition && !compact ? (
+      {originPosition && (!compact || visibleShops.length === 0) ? (
         <View style={[styles.originPin, originPosition]}>
           <View style={styles.originPulse} />
           <View style={styles.originDot} />
@@ -50,6 +51,12 @@ export function MapPreview({ shops, selectedShop, origin, height = 300, compact 
         <View style={styles.mapBadge}>
           <Text style={styles.mapBadgeText} numberOfLines={1}>{selectedShop.name}</Text>
           <Text style={styles.mapBadgeMeta}>{selectedShop.distance} - {selectedShop.queue || "Walk-ins open"}</Text>
+        </View>
+      ) : null}
+      {!selectedShop && originLabel ? (
+        <View style={styles.mapBadge}>
+          <Text style={styles.mapBadgeText} numberOfLines={1}>{originLabel}</Text>
+          <Text style={styles.mapBadgeMeta}>Detected Live Area</Text>
         </View>
       ) : null}
     </View>
@@ -68,6 +75,12 @@ function buildMarkerPositions(shops: Barbershop[], origin?: Coordinates) {
 }
 
 function buildPointPosition(point: Coordinates, points: Coordinates[]) {
+  if (points.length <= 1) {
+    return {
+      top: "50%" as const,
+      left: "50%" as const
+    };
+  }
   const latitudes = points.map((item) => item.latitude);
   const longitudes = points.map((item) => item.longitude);
   const minLat = Math.min(...latitudes);

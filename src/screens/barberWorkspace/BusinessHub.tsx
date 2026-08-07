@@ -696,7 +696,7 @@ function ShopPanel({ navigation }: { navigation: any }) {
           style={({ pressed }) => [styles.bentoMapTile, pressed && styles.pressed]}
         >
           <View style={styles.tileMapBackground}>
-            <MapPreview shops={[]} origin={locCoords} height={140} />
+            <MapPreview shops={[]} origin={locCoords} height={140} originLabel={locAddress} compact={true} />
           </View>
           <View style={styles.tileGlassOverlay} />
           <View style={styles.tileContent}>
@@ -841,7 +841,7 @@ function ShopPanel({ navigation }: { navigation: any }) {
               {locFormVisible ? (
                 <View>
                   <Card style={styles.mapCard}>
-                    <MapPreview shops={[]} origin={locCoords} height={200} />
+                    <MapPreview shops={[]} origin={locCoords} height={200} originLabel={locAddress} />
                     <View style={styles.mapPinOverlay}>
                       <Text style={styles.mapPinText}>Pinpoint your service area</Text>
                     </View>
