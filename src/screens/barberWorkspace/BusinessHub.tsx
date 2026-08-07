@@ -725,8 +725,8 @@ function ShopPanel({ navigation }: { navigation: any }) {
               <View style={styles.liveIndicatorCircle} />
             </View>
             <View>
-              <Text style={styles.tileTitle}>Address & Maps</Text>
-              <Text style={styles.tileSubtitle} numberOfLines={1}>{locAddress || "Configure primary shop address"}</Text>
+              <Text style={styles.tileTitleLight}>Address & Maps</Text>
+              <Text style={styles.tileSubtitleLight} numberOfLines={1}>{locAddress || "Configure primary shop address"}</Text>
             </View>
           </View>
         </Pressable>
@@ -2046,6 +2046,23 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 11,
     marginTop: 2
+  },
+  tileTitleLight: {
+    color: colors.white,
+    fontFamily: fonts.headingSemi,
+    fontSize: 16,
+    textShadowColor: "rgba(0,0,0,0.6)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3
+  },
+  tileSubtitleLight: {
+    color: "#E2E5E0",
+    fontFamily: fonts.body,
+    fontSize: 11,
+    marginTop: 2,
+    textShadowColor: "rgba(0,0,0,0.6)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3
   },
   activeRosterBadge: {
     backgroundColor: "#946B22",

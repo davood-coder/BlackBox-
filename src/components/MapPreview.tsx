@@ -94,7 +94,7 @@ export function MapPreview({ shops, selectedShop, origin, height = 300, compact 
           <Text style={styles.mapBadgeMeta}>{selectedShop.distance} - {selectedShop.queue || "Walk-ins open"}</Text>
         </View>
       ) : null}
-      {!selectedShop && originLabel ? (
+      {!selectedShop && originLabel && !compact ? (
         <View style={styles.mapBadge} pointerEvents="none">
           <Text style={styles.mapBadgeText} numberOfLines={1}>{originLabel}</Text>
           <Text style={styles.mapBadgeMeta}>Detected Live Area</Text>
