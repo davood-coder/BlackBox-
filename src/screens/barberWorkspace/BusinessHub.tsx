@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import type { ComponentProps } from "react";
 import { ActivityIndicator, Image, Linking, Modal, Pressable, StyleSheet, Switch, Text, TextInput, View, LayoutAnimation, Platform, UIManager, ScrollView } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import * as ExpoLocation from "expo-location";
 import { images } from "../../assets/images";
-import { BarberBottomNav, Screen } from "../../components/ui";
+import { BarberBottomNav, Card, Screen } from "../../components/ui";
 import { services } from "../../data";
 import { MapPreview } from "../../components/MapPreview";
 import { geocodeArea, reverseGeocodeAreaLabel, fetchIPGeolocation } from "../../services/nearbyBarbers";
@@ -388,13 +388,12 @@ function PaymentsPanel() {
   );
 }
 
-type ShopSubView = "main" | "manage-locations" | "add-address" | "working-hours";
+type ShopSubView = "main" | "manage-locations" | "add-address" | "working-hours" | "qr-code";
 
 function ShopPanel({ navigation }: { navigation: any }) {
-  const { setCurrency } = useBooking();
+  const { setCurrency, currency } = useBooking();
   const [subView, setSubView] = useState<ShopSubView>("main");
   const [open, setOpen] = useState(true);
-  const [qrVisible, setQrVisible] = useState(false);
   const [showBanner, setShowBanner] = useState(true);
   const [employeeHours, setEmployeeHours] = useState([
     { id: "richard-anderson", name: "Richard Anderson", role: "Expert Barber", start: "09:00 AM", end: "06:00 PM", active: true, avatar: images.masterBarber },
@@ -595,11 +594,54 @@ function ShopPanel({ navigation }: { navigation: any }) {
     Linking.openURL(url);
   }
 
+  if (subView === "qr-code") {
+    return (
+      <View style={styles.pageContainer}>
+        <View style={styles.subviewHeader}>
+          <Pressable onPress={() => setSubView("main")} style={styles.backButtonCircle}>
+            <Feather name="arrow-left" size={20} color={colors.text} />
+          </Pressable>
+          <Text style={styles.subviewTitle}>Shop QR Code</Text>
+        </View>
+
+        <Card style={styles.qrCard}>
+          <View style={styles.cardPatternDark} />
+          <View style={styles.cardPatternGold} />
+          
+          <View style={styles.qrCardHeader}>
+            <Text style={styles.qrShopName}>Black Box Barbershop</Text>
+            <Text style={styles.qrShopAddress}>123 Main Street, New York</Text>
+          </View>
+
+          <View style={styles.qrFrame}>
+            <Image source={images.shopQrCode} style={styles.qrCodeImage} />
+          </View>
+
+          <Text style={styles.qrDescription}>
+            Scan this code for quick checkout, profile view & payments at Black Box Barbershop.
+          </Text>
+        </Card>
+
+        <View style={styles.qrActions}>
+          <Pressable onPress={() => alert("QR Code shared successfully!")} style={({ pressed }) => [styles.shareQrBtn, pressed && styles.pressed]}>
+            <Feather name="share-2" size={16} color={colors.white} style={{ marginRight: 8 }} />
+            <Text style={styles.shareQrText}>Share QR Code</Text>
+          </Pressable>
+          
+          <Pressable onPress={() => alert("QR Code saved to gallery!")} style={({ pressed }) => [styles.downloadQrBtn, pressed && styles.pressed]}>
+            <Feather name="download" size={16} color="#946B22" style={{ marginRight: 8 }} />
+            <Text style={styles.downloadQrText}>Download QR</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+
   if (subView === "manage-locations") {
     return (
-      <View>
+      <View style={styles.pageContainer}>
         <View style={styles.subviewHeader}>
-          <Pressable onPress={() => setSubView("main")} style={styles.backButton}>
+          <Pressable onPress={() => setSubView("main")} style={styles.backButtonCircle}>
             <Feather name="arrow-left" size={20} color={colors.text} />
           </Pressable>
           <Text style={styles.subviewTitle}>Manage Locations</Text>
@@ -607,7 +649,7 @@ function ShopPanel({ navigation }: { navigation: any }) {
 
         {showBanner ? (
           <View style={styles.banner}>
-            <Feather name="info" size={16} color={colors.primaryDark} style={styles.bannerIcon} />
+            <Feather name="info" size={16} color="#946B22" style={styles.bannerIcon} />
             <Text style={styles.bannerText}>
               Nearby bookings and job opportunities are prioritized based on your Default Location.
             </Text>
@@ -617,64 +659,72 @@ function ShopPanel({ navigation }: { navigation: any }) {
           </View>
         ) : null}
 
-        <Pressable onPress={handleAddLocation} style={({ pressed }) => [styles.addLocButton, pressed && styles.pressed]}>
-          <Feather name="plus" size={16} color={colors.white} />
-          <Text style={styles.addLocButtonText}>Add New Location</Text>
+        <Pressable onPress={handleAddLocation} style={({ pressed }) => [styles.addLocationCard, pressed && styles.pressed]}>
+          <View style={styles.addLocationIconCircle}>
+            <Feather name="plus" size={20} color="#946B22" />
+          </View>
+          <Text style={styles.addLocationCardText}>Add New Location</Text>
         </Pressable>
 
         <Text style={styles.sectionHeading}>Saved Locations</Text>
 
         {savedLocations.map((loc) => (
-          <View key={loc.id} style={styles.locCard}>
-            <View style={styles.locCardHeader}>
-              <Text style={styles.locCardTitle}>{loc.name}</Text>
-              {loc.isDefault ? (
-                <View style={styles.defaultBadge}>
-                  <Text style={styles.defaultBadgeText}>DEFAULT</Text>
+          <Card key={loc.id} style={styles.locationCard}>
+            <View style={styles.locHeaderRow}>
+              <View style={styles.locIconBox}>
+                <Feather name="map-pin" size={18} color="#946B22" />
+              </View>
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Text style={styles.locTitleText}>{loc.name}</Text>
+                  {loc.isDefault && (
+                    <View style={styles.defaultBadgeGold}>
+                      <Feather name="star" size={8} color="#FFF" style={{ marginRight: 2 }} />
+                      <Text style={styles.defaultBadgeText}>DEFAULT</Text>
+                    </View>
+                  )}
                 </View>
-              ) : null}
+                <Text style={styles.locAddressText}>{loc.address}</Text>
+              </View>
             </View>
-            <View style={styles.locCardAddressRow}>
-              <Text style={styles.locCardAddressLabel}>ADDRESS</Text>
-              <Text style={styles.locCardAddress}>{loc.address}</Text>
-            </View>
-            <View style={styles.locCardActions}>
-              <Pressable onPress={() => handleSetDefault(loc.id)} style={styles.locActionBtn}>
-                <Feather name="star" size={14} color={loc.isDefault ? colors.primary : colors.muted} />
-                <Text style={[styles.locActionBtnText, loc.isDefault && { color: colors.primaryDark }]}>
-                  Default Location
+
+            <View style={styles.locDivider} />
+
+            <View style={styles.locActionsRow}>
+              <Pressable onPress={() => handleSetDefault(loc.id)} style={styles.setDefaultPressable}>
+                <Feather name="star" size={16} color={loc.isDefault ? "#946B22" : colors.muted} style={{ marginRight: 6 }} />
+                <Text style={[styles.setDefaultText, loc.isDefault && { color: "#946B22", fontFamily: fonts.bold }]}>
+                  {loc.isDefault ? "Default Location" : "Set as Default"}
                 </Text>
               </Pressable>
 
-              <View style={styles.locActionRight}>
-                <Pressable onPress={() => handleEditLocation(loc)} style={styles.locEditBtn}>
+              <View style={styles.locActionButtons}>
+                <Pressable onPress={() => handleEditLocation(loc)} style={styles.locRoundBtn}>
                   <Feather name="edit-3" size={14} color={colors.secondaryText} />
-                  <Text style={styles.locEditBtnText}>Edit</Text>
                 </Pressable>
-                <Pressable onPress={() => handleDeleteLocation(loc.id)} style={styles.locDeleteBtn}>
+                
+                <Pressable onPress={() => handleDeleteLocation(loc.id)} style={[styles.locRoundBtn, { borderColor: "rgba(198,64,70,0.12)" }]}>
                   <Feather name="trash-2" size={14} color={colors.error} />
                 </Pressable>
               </View>
             </View>
-          </View>
+          </Card>
         ))}
-
-
       </View>
     );
   }
 
   if (subView === "add-address") {
     return (
-      <View>
+      <View style={styles.pageContainer}>
         <View style={styles.subviewHeader}>
-          <Pressable onPress={() => setSubView("manage-locations")} style={styles.backButton}>
+          <Pressable onPress={() => setSubView("manage-locations")} style={styles.backButtonCircle}>
             <Feather name="arrow-left" size={20} color={colors.text} />
           </Pressable>
-          <Text style={styles.subviewTitle}>Add Address</Text>
+          <Text style={styles.subviewTitle}>{editingLocId ? "Edit Location" : "Add Location"}</Text>
         </View>
 
-        <View style={styles.mapContainer}>
+        <Card style={styles.mapCard}>
           <MapPreview shops={[]} origin={locCoords} height={200} />
           <View style={styles.mapPinOverlay}>
             <Text style={styles.mapPinText}>Pinpoint your service area</Text>
@@ -683,37 +733,45 @@ function ShopPanel({ navigation }: { navigation: any }) {
             <Pressable style={styles.zoomBtn}><Text style={styles.zoomBtnText}>+</Text></Pressable>
             <Pressable style={styles.zoomBtn}><Text style={styles.zoomBtnText}>-</Text></Pressable>
           </View>
-        </View>
+        </Card>
 
-        <Pressable onPress={handleUseLiveLocation} style={({ pressed }) => [styles.liveLocationBtn, pressed && styles.pressed]}>
-          <Feather name="navigation" size={14} color={colors.primaryDark} />
-          <Text style={styles.liveLocationText}>Use live location</Text>
+        <Pressable onPress={handleUseLiveLocation} style={({ pressed }) => [styles.useLiveLocationBtn, pressed && styles.pressed]}>
+          <Feather name="navigation" size={16} color="#946B22" style={{ marginRight: 8 }} />
+          <Text style={styles.useLiveLocationText}>Use Current Live Location</Text>
         </Pressable>
 
-        <View style={styles.addressForm}>
-          <Text style={styles.inputLabel}>Location Name</Text>
-          <TextInput
-            value={locName}
-            onChangeText={setLocName}
-            placeholder="e.g. Current Base"
-            placeholderTextColor={colors.muted}
-            style={styles.formInput}
-          />
+        <Card style={styles.addressFormCard}>
+          <Text style={styles.editInputLabel}>Location Name</Text>
+          <View style={styles.inputWithIconRow}>
+            <View style={styles.inputIconBox}>
+              <Feather name="bookmark" size={18} color="#555" />
+            </View>
+            <TextInput
+              value={locName}
+              onChangeText={setLocName}
+              placeholder="e.g. Current Base"
+              placeholderTextColor={colors.muted}
+              style={styles.editTextInputWithIcon}
+            />
+          </View>
 
-          <Text style={styles.inputLabel}>Address</Text>
-          <View style={styles.addressInputRow}>
+          <Text style={styles.editInputLabel}>Address</Text>
+          <View style={styles.inputWithIconRow}>
+            <View style={styles.inputIconBox}>
+              <Feather name="map-pin" size={18} color="#555" />
+            </View>
             <TextInput
               value={locAddress}
               onChangeText={setLocAddress}
               placeholder="Search address or location"
               placeholderTextColor={colors.muted}
-              style={[styles.formInput, { flex: 1, marginBottom: 0 }]}
+              style={[styles.editTextInputWithIcon, { flex: 1 }]}
             />
-            <Pressable onPress={handleGeocodeSearch} style={styles.searchAddrBtn}>
+            <Pressable onPress={handleGeocodeSearch} style={styles.searchLocationBtnInner}>
               {resolvingLocation ? (
-                <ActivityIndicator size="small" color={colors.primaryDark} />
+                <ActivityIndicator size="small" color="#946B22" />
               ) : (
-                <Feather name="search" size={16} color={colors.primaryDark} />
+                <Feather name="search" size={18} color="#946B22" />
               )}
             </Pressable>
           </View>
@@ -724,27 +782,33 @@ function ShopPanel({ navigation }: { navigation: any }) {
           </Pressable>
 
           <Text style={styles.helperText}>Pick a suggestion for a cleaner saved location.</Text>
-        </View>
+        </Card>
 
-        <Pressable onPress={handleSaveLocation} style={({ pressed }) => [styles.saveLocationBtn, pressed && styles.pressed]}>
-          <Text style={styles.saveLocationBtnText}>Save Location</Text>
-        </Pressable>
+        <View style={styles.locSaveActionRow}>
+          <Pressable onPress={() => setSubView("manage-locations")} style={({ pressed }) => [styles.locCancelBtn, pressed && styles.pressed]}>
+            <Text style={styles.locCancelText}>Cancel</Text>
+          </Pressable>
+          
+          <Pressable onPress={handleSaveLocation} style={({ pressed }) => [styles.locSaveBtn, pressed && styles.pressed]}>
+            <Text style={styles.locSaveText}>Save Location</Text>
+          </Pressable>
+        </View>
       </View>
     );
   }
 
   if (subView === "working-hours") {
     return (
-      <View>
+      <View style={styles.pageContainer}>
         <View style={styles.subviewHeader}>
-          <Pressable onPress={() => setSubView("main")} style={styles.backButton}>
+          <Pressable onPress={() => setSubView("main")} style={styles.backButtonCircle}>
             <Feather name="arrow-left" size={20} color={colors.text} />
           </Pressable>
           <Text style={styles.subviewTitle}>Working Hours</Text>
         </View>
 
         <View style={styles.banner}>
-          <Feather name="clock" size={16} color={colors.primaryDark} style={styles.bannerIcon} />
+          <Feather name="clock" size={16} color="#946B22" style={styles.bannerIcon} />
           <Text style={styles.bannerText}>
             Configure working hour schedules and availability for all shop employees.
           </Text>
@@ -752,73 +816,88 @@ function ShopPanel({ navigation }: { navigation: any }) {
 
         <Text style={styles.sectionHeading}>Employee Rosters</Text>
 
-        {employeeHours.map((emp) => (
-          <View key={emp.id} style={styles.empCard}>
-            <View style={styles.empRow}>
-              <Image source={emp.avatar} style={styles.empAvatar} />
-              <View style={styles.empDetails}>
-                <Text style={styles.empName}>{emp.name}</Text>
-                <Text style={styles.empRole}>{emp.role}</Text>
-              </View>
-              <Switch
-                value={emp.active}
-                onValueChange={(val) => {
-                  setEmployeeHours((current) =>
-                    current.map((item) => (item.id === emp.id ? { ...item, active: val } : item))
-                  );
-                }}
-                trackColor={{ false: "#DADCD7", true: "#E7CE9B" }}
-                thumbColor={emp.active ? colors.primaryDark : colors.muted}
-              />
-            </View>
-
-            {emp.active ? (
-              <View style={styles.hoursEditor}>
-                <View style={styles.hourInputGroup}>
-                  <Text style={styles.hourInputLabel}>Start Time</Text>
-                  <TextInput
-                    value={emp.start}
-                    onChangeText={(val) => {
-                      setEmployeeHours((current) =>
-                        current.map((item) => (item.id === emp.id ? { ...item, start: val } : item))
-                      );
-                    }}
-                    placeholder="e.g. 09:00 AM"
-                    placeholderTextColor={colors.muted}
-                    style={styles.hourInput}
-                  />
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+          {employeeHours.map((emp) => (
+            <Card key={emp.id} style={styles.employeeCard}>
+              <View style={styles.empRow}>
+                <View style={styles.empAvatarWrapper}>
+                  <Image source={emp.avatar} style={styles.empAvatarImg} />
                 </View>
-
-                <View style={styles.hourSeparator}>
-                  <Text style={styles.hourSeparatorText}>to</Text>
+                <View style={styles.empDetails}>
+                  <Text style={styles.empNameText}>{emp.name}</Text>
+                  <Text style={styles.empRoleText}>{emp.role}</Text>
                 </View>
+                <Switch
+                  value={emp.active}
+                  onValueChange={(val) => {
+                    setEmployeeHours((current) =>
+                      current.map((item) => (item.id === emp.id ? { ...item, active: val } : item))
+                    );
+                  }}
+                  trackColor={{ false: "#DADCD7", true: "#E7CE9B" }}
+                  thumbColor={emp.active ? colors.primaryDark : colors.muted}
+                />
+              </View>
 
-                <View style={styles.hourInputGroup}>
-                  <Text style={styles.hourInputLabel}>End Time</Text>
-                  <TextInput
-                    value={emp.end}
-                    onChangeText={(val) => {
-                      setEmployeeHours((current) =>
-                        current.map((item) => (item.id === emp.id ? { ...item, end: val } : item))
-                      );
-                    }}
-                    placeholder="e.g. 06:00 PM"
-                    placeholderTextColor={colors.muted}
-                    style={styles.hourInput}
-                  />
+              {emp.active ? (
+                <View style={styles.hoursEditorRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.hourInputLabel}>Start Time</Text>
+                    <View style={styles.inputWithIconRow}>
+                      <View style={styles.inputIconBox}>
+                        <Feather name="clock" size={16} color="#555" />
+                      </View>
+                      <TextInput
+                        value={emp.start}
+                        onChangeText={(val) => {
+                          setEmployeeHours((current) =>
+                            current.map((item) => (item.id === emp.id ? { ...item, start: val } : item))
+                          );
+                        }}
+                        placeholder="e.g. 09:00 AM"
+                        placeholderTextColor={colors.muted}
+                        style={styles.editTextInputWithIcon}
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.toSeparatorBox}>
+                    <Text style={styles.toSeparatorText}>to</Text>
+                  </View>
+
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.hourInputLabel}>End Time</Text>
+                    <View style={styles.inputWithIconRow}>
+                      <View style={styles.inputIconBox}>
+                        <Feather name="clock" size={16} color="#555" />
+                      </View>
+                      <TextInput
+                        value={emp.end}
+                        onChangeText={(val) => {
+                          setEmployeeHours((current) =>
+                            current.map((item) => (item.id === emp.id ? { ...item, end: val } : item))
+                          );
+                        }}
+                        placeholder="e.g. 06:00 PM"
+                        placeholderTextColor={colors.muted}
+                        style={styles.editTextInputWithIcon}
+                      />
+                    </View>
+                  </View>
                 </View>
-              </View>
-            ) : (
-              <View style={styles.offDutyBanner}>
-                <Text style={styles.offDutyText}>Employee is off-duty (Unavailable for bookings)</Text>
-              </View>
-            )}
-          </View>
-        ))}
+              ) : (
+                <View style={styles.offDutyBannerBox}>
+                  <Feather name="slash" size={12} color={colors.muted} style={{ marginRight: 6 }} />
+                  <Text style={styles.offDutyText}>Employee is off-duty (Unavailable for bookings)</Text>
+                </View>
+              )}
+            </Card>
+          ))}
 
-        <Pressable onPress={() => setSubView("main")} style={({ pressed }) => [styles.saveHoursBtn, pressed && styles.pressed]}>
-          <Text style={styles.saveHoursBtnText}>Save Schedule</Text>
-        </Pressable>
+          <Pressable onPress={() => setSubView("main")} style={({ pressed }) => [styles.saveHoursBtn, pressed && styles.pressed]}>
+            <Text style={styles.saveHoursBtnText}>Save Schedule & Roster</Text>
+          </Pressable>
+        </ScrollView>
       </View>
     );
   }
@@ -826,51 +905,48 @@ function ShopPanel({ navigation }: { navigation: any }) {
   return (
     <View>
       <PanelHeader title="Shop profile" copy="Availability and public details" />
-      <View style={styles.shopHero}>
-        <View style={styles.shopHeroCopy}>
-          <Text style={styles.shopEyebrow}>Public profile</Text>
-          <Text style={styles.shopName} numberOfLines={1}>Black Box Barbershop</Text>
-          <Text style={styles.shopAddress} numberOfLines={1}>123 Main Street, New York</Text>
-        </View>
-        <View style={[styles.shopStatus, !open && styles.shopStatusClosed]}>
-          <Text style={[styles.shopStatusText, !open && styles.shopStatusTextClosed]}>{open ? "Open" : "Closed"}</Text>
-        </View>
-      </View>
-      <SettingRow icon="power" title="Accepting bookings" copy="Customers can request open slots" value={open} onChange={setOpen} />
-      <View style={styles.shopActions}>
-        <Pressable onPress={() => setQrVisible(true)} style={({ pressed }) => [styles.shopAction, pressed && styles.pressed]}>
-          <Feather name="maximize" size={19} color={colors.primaryDark} />
-          <Text style={styles.shopActionText}>Shop QR code</Text>
-          <Feather name="chevron-right" size={18} color={colors.muted} />
-        </Pressable>
-
-        <Pressable onPress={() => setSubView("manage-locations")} style={({ pressed }) => [styles.shopAction, pressed && styles.pressed]}>
-          <Feather name="map-pin" size={19} color={colors.primaryDark} />
-          <Text style={styles.shopActionText}>Address & map</Text>
-          <Feather name="chevron-right" size={18} color={colors.muted} />
-        </Pressable>
-
-        <Pressable onPress={() => setSubView("working-hours")} style={({ pressed }) => [styles.shopAction, pressed && styles.pressed]}>
-          <Feather name="clock" size={19} color={colors.primaryDark} />
-          <Text style={styles.shopActionText}>Working hours</Text>
-          <Feather name="chevron-right" size={18} color={colors.muted} />
-        </Pressable>
-      </View>
-
-      <Modal visible={qrVisible} transparent animationType="fade" onRequestClose={() => setQrVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setQrVisible(false)} />
-          <View style={styles.qrContainer}>
-            <Text style={styles.qrTitle}>Shop QR Code</Text>
-            <Text style={styles.qrSubtitle}>Share this code for quick profile checkout & payments</Text>
-            <Image source={images.shopQrCode} style={styles.qrImage} />
-            <Text style={styles.qrShopName}>Black Box Barbershop</Text>
-            <Pressable onPress={() => setQrVisible(false)} style={({ pressed }) => [styles.qrCloseButton, pressed && styles.pressed]}>
-              <Text style={styles.qrCloseText}>Close</Text>
-            </Pressable>
+      <Card style={styles.shopHeroCard}>
+        <View style={styles.cardPatternDark} />
+        <View style={styles.cardPatternGold} />
+        <View style={styles.shopHeroInner}>
+          <View style={styles.shopHeroCopy}>
+            <Text style={styles.shopEyebrow}>PUBLIC PROFILE</Text>
+            <Text style={styles.shopName} numberOfLines={1}>Black Box Barbershop</Text>
+            <Text style={styles.shopAddress} numberOfLines={1}>123 Main Street, New York</Text>
+          </View>
+          <View style={[styles.shopStatus, !open && styles.shopStatusClosed]}>
+            <Text style={[styles.shopStatusText, !open && styles.shopStatusTextClosed]}>{open ? "Open" : "Closed"}</Text>
           </View>
         </View>
-      </Modal>
+      </Card>
+      
+      <SettingRow icon="power" title="Accepting bookings" copy="Customers can request open slots" value={open} onChange={setOpen} />
+      
+      <Card style={styles.shopActionsCard}>
+        <Pressable onPress={() => setSubView("qr-code")} style={({ pressed }) => [styles.shopActionRow, pressed && styles.pressed]}>
+          <View style={styles.shopActionIconBox}>
+            <Feather name="maximize" size={16} color="#946B22" />
+          </View>
+          <Text style={styles.shopActionLabel}>Shop QR Code</Text>
+          <Ionicons name="chevron-forward" size={16} color={colors.secondaryText} />
+        </Pressable>
+
+        <Pressable onPress={() => setSubView("manage-locations")} style={({ pressed }) => [styles.shopActionRow, pressed && styles.pressed]}>
+          <View style={styles.shopActionIconBox}>
+            <Feather name="map-pin" size={16} color="#946B22" />
+          </View>
+          <Text style={styles.shopActionLabel}>Address & Maps</Text>
+          <Ionicons name="chevron-forward" size={16} color={colors.secondaryText} />
+        </Pressable>
+
+        <Pressable onPress={() => setSubView("working-hours")} style={({ pressed }) => [styles.shopActionRow, styles.lastRow, pressed && styles.pressed]}>
+          <View style={styles.shopActionIconBox}>
+            <Feather name="clock" size={16} color="#946B22" />
+          </View>
+          <Text style={styles.shopActionLabel}>Working Hours</Text>
+          <Ionicons name="chevron-forward" size={16} color={colors.secondaryText} />
+        </Pressable>
+      </Card>
     </View>
   );
 }
@@ -1179,5 +1255,423 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontFamily: fonts.bold,
     fontSize: 14
+  },
+  pageContainer: {
+    paddingBottom: 20
+  },
+  backButtonCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2
+  },
+  shopHeroCard: {
+    marginTop: 6,
+    marginBottom: 14,
+    borderRadius: 24,
+    overflow: "hidden",
+    padding: 20,
+    backgroundColor: colors.black,
+    position: "relative"
+  },
+  shopHeroInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    zIndex: 2
+  },
+  shopActionsCard: {
+    padding: 0,
+    borderRadius: 20,
+    overflow: "hidden",
+    backgroundColor: colors.white,
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: colors.border
+  },
+  shopActionRow: {
+    height: 56,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border
+  },
+  shopActionIconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    backgroundColor: "#FDF7EC",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12
+  },
+  shopActionLabel: {
+    flex: 1,
+    color: colors.text,
+    fontFamily: fonts.medium,
+    fontSize: 14
+  },
+  qrCard: {
+    marginTop: 10,
+    marginBottom: 20,
+    borderRadius: 24,
+    overflow: "hidden",
+    padding: 24,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    position: "relative",
+    borderWidth: 1,
+    borderColor: colors.border
+  },
+  qrCardHeader: {
+    alignItems: "center",
+    marginBottom: 20,
+    zIndex: 2
+  },
+  qrShopAddress: {
+    color: colors.secondaryText,
+    fontFamily: fonts.body,
+    fontSize: 13,
+    marginTop: 4
+  },
+  qrFrame: {
+    width: 220,
+    height: 220,
+    borderRadius: 16,
+    borderWidth: 3,
+    borderColor: "#C89A43",
+    padding: 8,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4
+  },
+  qrCodeImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 8
+  },
+  qrDescription: {
+    color: colors.secondaryText,
+    fontFamily: fonts.body,
+    fontSize: 13,
+    textAlign: "center",
+    marginTop: 20,
+    lineHeight: 18,
+    zIndex: 2,
+    paddingHorizontal: 10
+  },
+  qrActions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 10
+  },
+  shareQrBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#946B22",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  shareQrText: {
+    color: colors.white,
+    fontFamily: fonts.bold,
+    fontSize: 14
+  },
+  downloadQrBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#946B22",
+    backgroundColor: colors.white,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  downloadQrText: {
+    color: "#946B22",
+    fontFamily: fonts.bold,
+    fontSize: 14
+  },
+  addLocationCard: {
+    height: 64,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: "#F3E2C3",
+    borderStyle: "dashed",
+    backgroundColor: "#FDF7EC",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    marginBottom: 20,
+    marginTop: 10
+  },
+  addLocationIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#F3E2C3"
+  },
+  addLocationCardText: {
+    color: "#946B22",
+    fontFamily: fonts.bold,
+    fontSize: 14
+  },
+  locationCard: {
+    borderRadius: 20,
+    padding: 16,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 12
+  },
+  locHeaderRow: {
+    flexDirection: "row",
+    alignItems: "flex-start"
+  },
+  locIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: "#FDF7EC",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2
+  },
+  locTitleText: {
+    color: colors.text,
+    fontFamily: fonts.headingSemi,
+    fontSize: 15
+  },
+  locAddressText: {
+    color: colors.secondaryText,
+    fontFamily: fonts.body,
+    fontSize: 13,
+    marginTop: 4,
+    lineHeight: 18
+  },
+  locDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 14
+  },
+  locActionsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  setDefaultPressable: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  setDefaultText: {
+    color: colors.secondaryText,
+    fontFamily: fonts.semibold,
+    fontSize: 12
+  },
+  locActionButtons: {
+    flexDirection: "row",
+    gap: 8
+  },
+  locRoundBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  defaultBadgeGold: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#946B22",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6
+  },
+  mapCard: {
+    borderRadius: 20,
+    overflow: "hidden",
+    marginBottom: 16,
+    height: 200,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 0
+  },
+  useLiveLocationBtn: {
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#FDF7EC",
+    borderWidth: 1,
+    borderColor: "#F3E2C3",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16
+  },
+  useLiveLocationText: {
+    color: "#946B22",
+    fontFamily: fonts.bold,
+    fontSize: 14
+  },
+  addressFormCard: {
+    borderRadius: 20,
+    padding: 18,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 20
+  },
+  searchLocationBtnInner: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#FDF7EC",
+    borderWidth: 1,
+    borderColor: "#F3E2C3",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  locSaveActionRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 4
+  },
+  locCancelBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#946B22",
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  locCancelText: {
+    color: "#946B22",
+    fontFamily: fonts.bold,
+    fontSize: 14
+  },
+  locSaveBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#946B22",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  locSaveText: {
+    color: colors.white,
+    fontFamily: fonts.bold,
+    fontSize: 14
+  },
+  employeeCard: {
+    borderRadius: 20,
+    padding: 16,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 12
+  },
+  empAvatarWrapper: {
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderColor: "#C89A43",
+    padding: 2,
+    backgroundColor: colors.white
+  },
+  empAvatarImg: {
+    width: 38,
+    height: 38,
+    borderRadius: 19
+  },
+  empNameText: {
+    color: colors.text,
+    fontFamily: fonts.headingSemi,
+    fontSize: 14
+  },
+  empRoleText: {
+    color: colors.secondaryText,
+    fontFamily: fonts.body,
+    fontSize: 11,
+    marginTop: 2
+  },
+  hoursEditorRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    marginTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: 14,
+    gap: 8
+  },
+  toSeparatorBox: {
+    height: 48,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4
+  },
+  toSeparatorText: {
+    color: colors.muted,
+    fontFamily: fonts.bold,
+    fontSize: 14
+  },
+  offDutyBannerBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: 14
+  },
+  cardPatternDark: {
+    position: 'absolute',
+    top: -120,
+    left: -120,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: '#28231E',
+    opacity: 0.95
+  },
+  cardPatternGold: {
+    position: 'absolute',
+    top: -120,
+    left: -120,
+    width: 242,
+    height: 242,
+    borderRadius: 121,
+    borderWidth: 2,
+    borderColor: '#C89A43',
+    backgroundColor: 'transparent'
+  },
+  lastRow: {
+    borderBottomWidth: 0
   }
 });
