@@ -1212,7 +1212,7 @@ const styles = StyleSheet.create({
   offDutyText: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, fontStyle: "italic" },
   saveHoursBtn: { minHeight: 46, borderRadius: radius.full, backgroundColor: colors.primaryDark, justifyContent: "center", alignItems: "center", marginTop: 10 },
   saveHoursBtnText: { color: colors.white, fontFamily: fonts.bold, fontSize: 12 },
-  modalOverlayBottom: { flex: 1, backgroundColor: "rgba(15,17,21,0.5)", justifyContent: "flex-end" },
+  modalOverlayBottom: { flex: 1, backgroundColor: "rgba(15,17,21,0.65)", justifyContent: "center", alignItems: "center", padding: 16 },
   editContainer: {
     width: "100%",
     backgroundColor: colors.white,
@@ -1913,7 +1913,8 @@ const styles = StyleSheet.create({
     paddingBottom: 40
   },
   floatingCardModal: {
-    marginHorizontal: 16,
+    width: "95%",
+    maxWidth: 420,
     borderRadius: 32,
     borderWidth: 1.5,
     borderColor: "#C89A43",
