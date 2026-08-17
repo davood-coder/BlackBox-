@@ -166,7 +166,8 @@ export async function geocodeArea(query: string): Promise<AreaSearchResult | nul
     q: term,
     format: "jsonv2",
     addressdetails: "1",
-    limit: "1"
+    limit: "1",
+    "accept-language": "en"
   });
 
   const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
@@ -191,22 +192,49 @@ export async function geocodeArea(query: string): Promise<AreaSearchResult | nul
 }
 
 export async function reverseGeocodeAreaLabel(origin: Coordinates) {
-  const params = new URLSearchParams({
-    format: "jsonv2",
-    addressdetails: "1",
-    lat: String(origin.latitude),
-    lon: String(origin.longitude)
-  });
+  try {
+    const params = new URLSearchParams({
+      format: "jsonv2",
+      addressdetails: "1",
+      lat: String(origin.latitude),
+      lon: String(origin.longitude),
+      "accept-language": "en"
+    });
 
-  const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params.toString()}`, {
-    headers: buildMapHeaders()
-  });
+    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params.toString()}`, {
+      headers: buildMapHeaders()
+    });
 
-  if (!response.ok) return "Current location";
+    if (response.ok) {
+      const place = (await response.json()) as NominatimPlace;
+      const label = formatPlaceLabel(place, "");
+      if (label) return label;
+    }
+  } catch (e) {
+    console.log("Nominatim reverse geocode error:", e);
+  }
 
-  const place = (await response.json()) as NominatimPlace;
-  return formatPlaceLabel(place, "Current location");
+  // Fallback to BigDataCloud client API (free, fast, no CORS restriction)
+  try {
+    const bdcRes = await fetch(
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${origin.latitude}&longitude=${origin.longitude}&localityLanguage=en`
+    );
+    if (bdcRes.ok) {
+      const data = await bdcRes.json();
+      const parts = [
+        data.locality || data.city,
+        data.principalSubdivision,
+        data.countryName
+      ].filter(Boolean);
+      if (parts.length) return parts.join(", ");
+    }
+  } catch (bdcErr) {
+    console.log("BigDataCloud reverse geocode error:", bdcErr);
+  }
+
+  return `${origin.latitude.toFixed(4)}, ${origin.longitude.toFixed(4)}`;
 }
+
 
 export function buildBestBarbersForShop(shopName: string, offset = 0): Barber[] {
   return [0, 1, 2, 3].map((_, index) => {
@@ -245,7 +273,8 @@ async function searchNominatimPlaces(query: string, limit: number) {
     q: query,
     format: "jsonv2",
     addressdetails: "1",
-    limit: String(limit)
+    limit: String(limit),
+    "accept-language": "en"
   });
 
   const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {

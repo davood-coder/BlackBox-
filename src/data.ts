@@ -156,11 +156,11 @@ export const temporaryProfiles: Record<Workspace, TemporaryProfile> = {
     ]
   },
   Barber: {
-    name: "Daniel Brooks",
-    email: "daniel@blackboxbarbershop.com",
-    phone: "+1 555 019 2201",
+    name: "nithin",
+    email: "nithinreddy6181@gmail.com",
+    phone: "6303695181",
     roleLabel: "Barber",
-    badge: "Pro",
+    badge: "Premium Member",
     headline: "Manages chair flow, booking requests, services, and shop profile.",
     note: "Shop operations, chair flow, and business tools stay in one place.",
     avatar: images.blackBoxMark,

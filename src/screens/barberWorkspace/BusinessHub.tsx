@@ -1,16 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { ComponentProps } from "react";
-import { ActivityIndicator, Image, Linking, Modal, Pressable, StyleSheet, Switch, Text, TextInput, View, LayoutAnimation, Platform, UIManager } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { ActivityIndicator, Image, Linking, Modal, Pressable, StyleSheet, Switch, Text, TextInput, View, LayoutAnimation, Platform, UIManager, ScrollView } from "react-native";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import * as ExpoLocation from "expo-location";
 import { images } from "../../assets/images";
-import { BarberBottomNav, Screen } from "../../components/ui";
+import { BarberBottomNav, Card, Screen } from "../../components/ui";
 import { services } from "../../data";
 import { MapPreview } from "../../components/MapPreview";
 import { geocodeArea, reverseGeocodeAreaLabel, fetchIPGeolocation } from "../../services/nearbyBarbers";
 import { useBooking } from "../../state/BookingContext";
 import { colors, fonts, radius } from "../../theme";
-import { getCurrencyFromAddress } from "../../utils/currency";
+import { getCurrencyFromAddress, convertCurrencyAmount } from "../../utils/currency";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -181,21 +181,111 @@ function ServicesPanel() {
         }}
         title="Service menu"
       />
-      {showForm ? (
-        <View style={styles.form}>
-          <Text style={{ fontFamily: fonts.headingSemi, fontSize: 16, color: colors.text, marginBottom: 4 }}>
-            {editingServiceId ? "Edit Service" : "New Service"}
-          </Text>
-          <TextInput value={name} onChangeText={setName} placeholder="Service name" placeholderTextColor={colors.muted} style={styles.input} />
-          <View style={styles.formRow}>
-            <TextInput value={price} onChangeText={setPrice} placeholder="Price" placeholderTextColor={colors.muted} keyboardType="numeric" style={[styles.input, styles.halfInput]} />
-            <TextInput value={duration} onChangeText={setDuration} placeholder="Duration" placeholderTextColor={colors.muted} style={[styles.input, styles.halfInput]} />
+      <Modal visible={showForm} transparent animationType="slide" onRequestClose={() => {
+        setEditingServiceId(null);
+        setName("");
+        setPrice("");
+        setDuration("");
+        setShowForm(false);
+      }}>
+        <View style={styles.modalOverlayBottom}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => {
+            setEditingServiceId(null);
+            setName("");
+            setPrice("");
+            setDuration("");
+            setShowForm(false);
+          }} />
+          <View style={styles.floatingCardModal}>
+            <View style={styles.modalHeaderRow}>
+              <View style={styles.modalHeaderTitleBox}>
+                <Feather name="scissors" size={18} color="#C89A43" />
+                <Text style={styles.modalTitleText}>{editingServiceId ? "Edit Service" : "New Service"}</Text>
+              </View>
+              <Pressable onPress={() => {
+                setEditingServiceId(null);
+                setName("");
+                setPrice("");
+                setDuration("");
+                setShowForm(false);
+              }} style={styles.modalCloseCircleBtn}>
+                <Feather name="x" size={16} color={colors.text} />
+              </Pressable>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={styles.editScrollContent}>
+              <View style={styles.editForm}>
+                <Text style={styles.editInputLabel}>Service Name</Text>
+                <View style={styles.inputWithIconRow}>
+                  <View style={styles.inputIconBox}>
+                    <Feather name="tag" size={18} color="#555" />
+                  </View>
+                  <TextInput
+                    value={name}
+                    onChangeText={setName}
+                    style={styles.editTextInputWithIcon}
+                    placeholder="Enter service name"
+                    placeholderTextColor={colors.muted}
+                  />
+                </View>
+
+                <Text style={styles.editInputLabel}>Price</Text>
+                <View style={styles.inputWithIconRow}>
+                  <View style={styles.inputIconBox}>
+                    <Text style={{ color: "#555", fontSize: 16, fontFamily: fonts.bold }}>{currency.symbol}</Text>
+                  </View>
+                  <TextInput
+                    value={price}
+                    onChangeText={setPrice}
+                    style={styles.editTextInputWithIcon}
+                    placeholder="Enter price"
+                    placeholderTextColor={colors.muted}
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <Text style={styles.editInputLabel}>Duration</Text>
+                <View style={styles.inputWithIconRow}>
+                  <View style={styles.inputIconBox}>
+                    <Feather name="clock" size={18} color="#555" />
+                  </View>
+                  <TextInput
+                    value={duration}
+                    onChangeText={setDuration}
+                    style={styles.editTextInputWithIcon}
+                    placeholder="e.g. 30 min"
+                    placeholderTextColor={colors.muted}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.editActionRow}>
+                <Pressable
+                  onPress={() => {
+                    setEditingServiceId(null);
+                    setName("");
+                    setPrice("");
+                    setDuration("");
+                    setShowForm(false);
+                  }}
+                  style={({ pressed }) => [styles.editCancelBtn, pressed && styles.pressed]}
+                >
+                  <Text style={styles.editCancelText}>Cancel</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={handleAddOrEditService}
+                  style={({ pressed }) => [styles.editSaveBtn, pressed && styles.pressed]}
+                >
+                  <Text style={styles.editSaveText}>
+                    {editingServiceId ? "Save Changes" : "Save Service"}
+                  </Text>
+                </Pressable>
+              </View>
+            </ScrollView>
           </View>
-          <Pressable onPress={handleAddOrEditService} style={({ pressed }) => [styles.saveButton, pressed && styles.pressed]}>
-            <Text style={styles.saveText}>{editingServiceId ? "Save changes" : "Save service"}</Text>
-          </Pressable>
         </View>
-      ) : null}
+      </Modal>
       <View style={styles.serviceList}>
         {serviceList.map((service) => {
           const custom = service.id.startsWith("custom-");
@@ -272,14 +362,32 @@ function ServicesPanel() {
 function PaymentsPanel() {
   const { currency } = useBooking();
   const [message, setMessage] = useState("");
+
+  // Base amounts in USD
+  const baseBalance = 120;
+  const baseToday = 15;
+  const baseWeek = 75;
+  const baseAvgTicket = 40;
+  const baseAvgTicketChange = 4;
+
+  const displayBalance = convertCurrencyAmount(baseBalance, currency.code);
+  const displayToday = convertCurrencyAmount(baseToday, currency.code);
+  const displayWeek = convertCurrencyAmount(baseWeek, currency.code);
+  const displayAvgTicket = convertCurrencyAmount(baseAvgTicket, currency.code);
+  const displayAvgTicketChange = convertCurrencyAmount(baseAvgTicketChange, currency.code);
+
+  const formatValue = (val: number) => {
+    return val.toLocaleString();
+  };
+
   return (
     <View>
       <PanelHeader title="Payments" copy="Payouts and collected revenue" />
       <View style={styles.payoutHero}>
         <View style={styles.payoutCopy}>
           <Text style={styles.payoutLabel}>Available balance</Text>
-          <Text style={styles.payoutValue}>{currency.symbol}9,420</Text>
-          <Text style={styles.payoutMeta}>Today collected {currency.symbol}680</Text>
+          <Text style={styles.payoutValue}>{currency.symbol}{formatValue(displayBalance)}</Text>
+          <Text style={styles.payoutMeta}>Today collected {currency.symbol}{formatValue(displayToday)}</Text>
         </View>
         <View style={styles.readyBadge}>
           <Feather name="check-circle" size={14} color={colors.success} />
@@ -287,8 +395,8 @@ function PaymentsPanel() {
         </View>
       </View>
       <View style={styles.metricGrid}>
-        <BusinessMetric label="This week" value={`${currency.symbol}4,240`} change="+8%" />
-        <BusinessMetric label="Avg ticket" value={`${currency.symbol}48`} change={`+${currency.symbol}4`} />
+        <BusinessMetric label="This week" value={`${currency.symbol}${formatValue(displayWeek)}`} change="+8%" />
+        <BusinessMetric label="Avg ticket" value={`${currency.symbol}${formatValue(displayAvgTicket)}`} change={`+${currency.symbol}${formatValue(displayAvgTicketChange)}`} />
       </View>
       <Pressable onPress={() => setMessage("Withdrawal request sent to your verified account.")} style={({ pressed }) => [styles.withdrawButton, pressed && styles.pressed]}>
         <Feather name="arrow-down-circle" size={18} color={colors.black} />
@@ -299,20 +407,29 @@ function PaymentsPanel() {
   );
 }
 
-type ShopSubView = "main" | "manage-locations" | "add-address" | "working-hours";
+type ShopSubView = "main" | "manage-locations" | "add-address" | "working-hours" | "qr-code";
 
 function ShopPanel({ navigation }: { navigation: any }) {
-  const { setCurrency } = useBooking();
-  const [subView, setSubView] = useState<ShopSubView>("main");
+  const { setCurrency, currency } = useBooking();
   const [open, setOpen] = useState(true);
-  const [qrVisible, setQrVisible] = useState(false);
   const [showBanner, setShowBanner] = useState(true);
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [locationsModalVisible, setLocationsModalVisible] = useState(false);
+  const [hoursModalVisible, setHoursModalVisible] = useState(false);
+  const [locFormVisible, setLocFormVisible] = useState(false);
   const [employeeHours, setEmployeeHours] = useState([
     { id: "richard-anderson", name: "Richard Anderson", role: "Expert Barber", start: "09:00 AM", end: "06:00 PM", active: true, avatar: images.masterBarber },
     { id: "marco-rossi", name: "Marco Rossi", role: "Fade Specialist", start: "10:00 AM", end: "07:00 PM", active: true, avatar: images.luxuryBarbershop },
     { id: "jayden-malik", name: "Jayden Malik", role: "Styling Expert", start: "09:00 AM", end: "05:00 PM", active: false, avatar: images.masterBarber },
     { id: "alex-carter", name: "Alex Carter", role: "Beard Specialist", start: "11:00 AM", end: "08:00 PM", active: true, avatar: images.luxuryBarbershop }
   ]);
+
+  const [workerFormVisible, setWorkerFormVisible] = useState(false);
+  const [editingWorkerId, setEditingWorkerId] = useState<string | null>(null);
+  const [workerName, setWorkerName] = useState("");
+  const [workerRole, setWorkerRole] = useState("");
+  const [workerStart, setWorkerStart] = useState("");
+  const [workerEnd, setWorkerEnd] = useState("");
 
   const [savedLocations, setSavedLocations] = useState([
     {
@@ -328,14 +445,118 @@ function ShopPanel({ navigation }: { navigation: any }) {
   const [locName, setLocName] = useState("");
   const [locAddress, setLocAddress] = useState("");
   const [locCoords, setLocCoords] = useState({ latitude: 14.91342, longitude: 79.9855 });
+  const [locZoom, setLocZoom] = useState(14);
   const [resolvingLocation, setResolvingLocation] = useState(false);
+  const [autoDetectedBadge, setAutoDetectedBadge] = useState(false);
+  const locNameDebounceRef = useRef<any>(null);
+
+  async function handleAutoDetectAddressFromName(nameText: string) {
+    const term = nameText.trim();
+    if (term.length < 3) return;
+
+    setResolvingLocation(true);
+    try {
+      let res = await geocodeArea(term);
+      if (!res) {
+        const cleanedTerm = term.replace(/\b(shop|salon|barber|branch|base|store|parlor|studio|primary|secondary|home|my)\b/gi, "").trim();
+        if (cleanedTerm.length >= 3) {
+          res = await geocodeArea(cleanedTerm);
+        }
+      }
+
+      if (res) {
+        setLocAddress(res.label);
+        setLocCoords(res.coordinates);
+        setAutoDetectedBadge(true);
+      }
+    } catch (e) {
+      console.log("Auto detect address error:", e);
+    } finally {
+      setResolvingLocation(false);
+    }
+  }
+
+  function handleLocNameChange(text: string) {
+    setLocName(text);
+    setAutoDetectedBadge(false);
+
+    if (locNameDebounceRef.current) {
+      clearTimeout(locNameDebounceRef.current);
+    }
+
+    if (text.trim().length >= 3) {
+      locNameDebounceRef.current = setTimeout(() => {
+        handleAutoDetectAddressFromName(text);
+      }, 500);
+    }
+  }
+
+  function handleAddWorker() {
+    setEditingWorkerId(null);
+    setWorkerName("");
+    setWorkerRole("");
+    setWorkerStart("09:00 AM");
+    setWorkerEnd("06:00 PM");
+    setWorkerFormVisible(true);
+  }
+
+  function handleEditWorker(emp: typeof employeeHours[number]) {
+    setEditingWorkerId(emp.id);
+    setWorkerName(emp.name);
+    setWorkerRole(emp.role);
+    setWorkerStart(emp.start);
+    setWorkerEnd(emp.end);
+    setWorkerFormVisible(true);
+  }
+
+  function handleDeleteWorker(id: string) {
+    setEmployeeHours((current) => current.filter((item) => item.id !== id));
+  }
+
+  function handleSaveWorker() {
+    const nameVal = workerName.trim();
+    const roleVal = workerRole.trim();
+    
+    if (!nameVal) {
+      alert("Please enter the worker's name.");
+      return;
+    }
+    if (!roleVal) {
+      alert("Please enter the worker's role.");
+      return;
+    }
+
+    if (editingWorkerId) {
+      setEmployeeHours((current) =>
+        current.map((item) =>
+          item.id === editingWorkerId
+            ? { ...item, name: nameVal, role: roleVal, start: workerStart, end: workerEnd }
+            : item
+        )
+      );
+    } else {
+      const newWorker = {
+        id: `emp-${Date.now()}`,
+        name: nameVal,
+        role: roleVal,
+        start: workerStart,
+        end: workerEnd,
+        active: true,
+        avatar: images.masterBarber
+      };
+      setEmployeeHours((current) => [...current, newWorker]);
+    }
+
+    setWorkerFormVisible(false);
+  }
 
   function handleAddLocation() {
     setEditingLocId(null);
     setLocName("");
     setLocAddress("");
     setLocCoords({ latitude: 14.91342, longitude: 79.9855 });
-    setSubView("add-address");
+    setAutoDetectedBadge(false);
+    setLocFormVisible(true);
   }
 
   function handleEditLocation(loc: typeof savedLocations[number]) {
@@ -343,7 +564,8 @@ function ShopPanel({ navigation }: { navigation: any }) {
     setLocName(loc.name);
     setLocAddress(loc.address);
     setLocCoords(loc.coordinates);
-    setSubView("add-address");
+    setAutoDetectedBadge(false);
+    setLocFormVisible(true);
   }
 
   function handleDeleteLocation(id: string) {
@@ -498,7 +720,7 @@ function ShopPanel({ navigation }: { navigation: any }) {
       });
     }
 
-    setSubView("manage-locations");
+    setLocFormVisible(false);
   }
 
   function handleOpenInGoogleMaps() {
@@ -506,279 +728,547 @@ function ShopPanel({ navigation }: { navigation: any }) {
     Linking.openURL(url);
   }
 
-  if (subView === "manage-locations") {
-    return (
-      <View>
-        <View style={styles.subviewHeader}>
-          <Pressable onPress={() => setSubView("main")} style={styles.backButton}>
-            <Feather name="arrow-left" size={20} color={colors.text} />
-          </Pressable>
-          <Text style={styles.subviewTitle}>Manage Locations</Text>
-        </View>
-
-        {showBanner ? (
-          <View style={styles.banner}>
-            <Feather name="info" size={16} color={colors.primaryDark} style={styles.bannerIcon} />
-            <Text style={styles.bannerText}>
-              Nearby bookings and job opportunities are prioritized based on your Default Location.
-            </Text>
-            <Pressable onPress={() => setShowBanner(false)} style={styles.bannerClose}>
-              <Feather name="x" size={16} color={colors.muted} />
-            </Pressable>
-          </View>
-        ) : null}
-
-        <Pressable onPress={handleAddLocation} style={({ pressed }) => [styles.addLocButton, pressed && styles.pressed]}>
-          <Feather name="plus" size={16} color={colors.white} />
-          <Text style={styles.addLocButtonText}>Add New Location</Text>
-        </Pressable>
-
-        <Text style={styles.sectionHeading}>Saved Locations</Text>
-
-        {savedLocations.map((loc) => (
-          <View key={loc.id} style={styles.locCard}>
-            <View style={styles.locCardHeader}>
-              <Text style={styles.locCardTitle}>{loc.name}</Text>
-              {loc.isDefault ? (
-                <View style={styles.defaultBadge}>
-                  <Text style={styles.defaultBadgeText}>DEFAULT</Text>
-                </View>
-              ) : null}
-            </View>
-            <View style={styles.locCardAddressRow}>
-              <Text style={styles.locCardAddressLabel}>ADDRESS</Text>
-              <Text style={styles.locCardAddress}>{loc.address}</Text>
-            </View>
-            <View style={styles.locCardActions}>
-              <Pressable onPress={() => handleSetDefault(loc.id)} style={styles.locActionBtn}>
-                <Feather name="star" size={14} color={loc.isDefault ? colors.primary : colors.muted} />
-                <Text style={[styles.locActionBtnText, loc.isDefault && { color: colors.primaryDark }]}>
-                  Default Location
-                </Text>
-              </Pressable>
-
-              <View style={styles.locActionRight}>
-                <Pressable onPress={() => handleEditLocation(loc)} style={styles.locEditBtn}>
-                  <Feather name="edit-3" size={14} color={colors.secondaryText} />
-                  <Text style={styles.locEditBtnText}>Edit</Text>
-                </Pressable>
-                <Pressable onPress={() => handleDeleteLocation(loc.id)} style={styles.locDeleteBtn}>
-                  <Feather name="trash-2" size={14} color={colors.error} />
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        ))}
-
-
-      </View>
-    );
-  }
-
-  if (subView === "add-address") {
-    return (
-      <View>
-        <View style={styles.subviewHeader}>
-          <Pressable onPress={() => setSubView("manage-locations")} style={styles.backButton}>
-            <Feather name="arrow-left" size={20} color={colors.text} />
-          </Pressable>
-          <Text style={styles.subviewTitle}>Add Address</Text>
-        </View>
-
-        <View style={styles.mapContainer}>
-          <MapPreview shops={[]} origin={locCoords} height={200} />
-          <View style={styles.mapPinOverlay}>
-            <Text style={styles.mapPinText}>Pinpoint your service area</Text>
-          </View>
-          <View style={styles.mapZoomControls}>
-            <Pressable style={styles.zoomBtn}><Text style={styles.zoomBtnText}>+</Text></Pressable>
-            <Pressable style={styles.zoomBtn}><Text style={styles.zoomBtnText}>-</Text></Pressable>
-          </View>
-        </View>
-
-        <Pressable onPress={handleUseLiveLocation} style={({ pressed }) => [styles.liveLocationBtn, pressed && styles.pressed]}>
-          <Feather name="navigation" size={14} color={colors.primaryDark} />
-          <Text style={styles.liveLocationText}>Use live location</Text>
-        </Pressable>
-
-        <View style={styles.addressForm}>
-          <Text style={styles.inputLabel}>Location Name</Text>
-          <TextInput
-            value={locName}
-            onChangeText={setLocName}
-            placeholder="e.g. Current Base"
-            placeholderTextColor={colors.muted}
-            style={styles.formInput}
-          />
-
-          <Text style={styles.inputLabel}>Address</Text>
-          <View style={styles.addressInputRow}>
-            <TextInput
-              value={locAddress}
-              onChangeText={setLocAddress}
-              placeholder="Search address or location"
-              placeholderTextColor={colors.muted}
-              style={[styles.formInput, { flex: 1, marginBottom: 0 }]}
-            />
-            <Pressable onPress={handleGeocodeSearch} style={styles.searchAddrBtn}>
-              {resolvingLocation ? (
-                <ActivityIndicator size="small" color={colors.primaryDark} />
-              ) : (
-                <Feather name="search" size={16} color={colors.primaryDark} />
-              )}
-            </Pressable>
-          </View>
-
-          <Pressable onPress={handleOpenInGoogleMaps} style={styles.googleMapsBtn}>
-            <Feather name="map" size={14} color={colors.info} />
-            <Text style={styles.googleMapsBtnText}>Open / Search in Google Maps</Text>
-          </Pressable>
-
-          <Text style={styles.helperText}>Pick a suggestion for a cleaner saved location.</Text>
-        </View>
-
-        <Pressable onPress={handleSaveLocation} style={({ pressed }) => [styles.saveLocationBtn, pressed && styles.pressed]}>
-          <Text style={styles.saveLocationBtnText}>Save Location</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
-  if (subView === "working-hours") {
-    return (
-      <View>
-        <View style={styles.subviewHeader}>
-          <Pressable onPress={() => setSubView("main")} style={styles.backButton}>
-            <Feather name="arrow-left" size={20} color={colors.text} />
-          </Pressable>
-          <Text style={styles.subviewTitle}>Working Hours</Text>
-        </View>
-
-        <View style={styles.banner}>
-          <Feather name="clock" size={16} color={colors.primaryDark} style={styles.bannerIcon} />
-          <Text style={styles.bannerText}>
-            Configure working hour schedules and availability for all shop employees.
-          </Text>
-        </View>
-
-        <Text style={styles.sectionHeading}>Employee Rosters</Text>
-
-        {employeeHours.map((emp) => (
-          <View key={emp.id} style={styles.empCard}>
-            <View style={styles.empRow}>
-              <Image source={emp.avatar} style={styles.empAvatar} />
-              <View style={styles.empDetails}>
-                <Text style={styles.empName}>{emp.name}</Text>
-                <Text style={styles.empRole}>{emp.role}</Text>
-              </View>
-              <Switch
-                value={emp.active}
-                onValueChange={(val) => {
-                  setEmployeeHours((current) =>
-                    current.map((item) => (item.id === emp.id ? { ...item, active: val } : item))
-                  );
-                }}
-                trackColor={{ false: "#DADCD7", true: "#E7CE9B" }}
-                thumbColor={emp.active ? colors.primaryDark : colors.muted}
-              />
-            </View>
-
-            {emp.active ? (
-              <View style={styles.hoursEditor}>
-                <View style={styles.hourInputGroup}>
-                  <Text style={styles.hourInputLabel}>Start Time</Text>
-                  <TextInput
-                    value={emp.start}
-                    onChangeText={(val) => {
-                      setEmployeeHours((current) =>
-                        current.map((item) => (item.id === emp.id ? { ...item, start: val } : item))
-                      );
-                    }}
-                    placeholder="e.g. 09:00 AM"
-                    placeholderTextColor={colors.muted}
-                    style={styles.hourInput}
-                  />
-                </View>
-
-                <View style={styles.hourSeparator}>
-                  <Text style={styles.hourSeparatorText}>to</Text>
-                </View>
-
-                <View style={styles.hourInputGroup}>
-                  <Text style={styles.hourInputLabel}>End Time</Text>
-                  <TextInput
-                    value={emp.end}
-                    onChangeText={(val) => {
-                      setEmployeeHours((current) =>
-                        current.map((item) => (item.id === emp.id ? { ...item, end: val } : item))
-                      );
-                    }}
-                    placeholder="e.g. 06:00 PM"
-                    placeholderTextColor={colors.muted}
-                    style={styles.hourInput}
-                  />
-                </View>
-              </View>
-            ) : (
-              <View style={styles.offDutyBanner}>
-                <Text style={styles.offDutyText}>Employee is off-duty (Unavailable for bookings)</Text>
-              </View>
-            )}
-          </View>
-        ))}
-
-        <Pressable onPress={() => setSubView("main")} style={({ pressed }) => [styles.saveHoursBtn, pressed && styles.pressed]}>
-          <Text style={styles.saveHoursBtnText}>Save Schedule</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
   return (
     <View>
       <PanelHeader title="Shop profile" copy="Availability and public details" />
-      <View style={styles.shopHero}>
-        <View style={styles.shopHeroCopy}>
-          <Text style={styles.shopEyebrow}>Public profile</Text>
-          <Text style={styles.shopName} numberOfLines={1}>Black Box Barbershop</Text>
-          <Text style={styles.shopAddress} numberOfLines={1}>123 Main Street, New York</Text>
+      
+      <Card style={styles.shopHeroCard}>
+        <View style={styles.cardPatternDark} />
+        <View style={styles.cardPatternGold} />
+        <View style={styles.shopHeroInner}>
+          <View style={styles.shopHeroCopy}>
+            <Text style={styles.shopEyebrow}>PUBLIC PROFILE</Text>
+            <Text style={styles.shopName} numberOfLines={1}>Black Box Barbershop</Text>
+            <Text style={styles.shopAddress} numberOfLines={1}>123 Main Street, New York</Text>
+          </View>
+          <View style={[styles.shopStatus, !open && styles.shopStatusClosed]}>
+            <Text style={[styles.shopStatusText, !open && styles.shopStatusTextClosed]}>{open ? "Open" : "Closed"}</Text>
+          </View>
         </View>
-        <View style={[styles.shopStatus, !open && styles.shopStatusClosed]}>
-          <Text style={[styles.shopStatusText, !open && styles.shopStatusTextClosed]}>{open ? "Open" : "Closed"}</Text>
-        </View>
-      </View>
+      </Card>
+      
       <SettingRow icon="power" title="Accepting bookings" copy="Customers can request open slots" value={open} onChange={setOpen} />
-      <View style={styles.shopActions}>
-        <Pressable onPress={() => setQrVisible(true)} style={({ pressed }) => [styles.shopAction, pressed && styles.pressed]}>
-          <Feather name="maximize" size={19} color={colors.primaryDark} />
-          <Text style={styles.shopActionText}>Shop QR code</Text>
-          <Feather name="chevron-right" size={18} color={colors.muted} />
+      
+      <Text style={styles.sectionHeadingBento}>SHOP MANAGEMENT</Text>
+
+      <View style={styles.bentoGridContainer}>
+        {/* Row 1: Map Tile (Full Width) */}
+        <Pressable 
+          onPress={() => {
+            setLocationsModalVisible(true);
+          }} 
+          style={({ pressed }) => [styles.bentoMapTile, pressed && styles.pressed]}
+        >
+          <View style={styles.tileMapBackground}>
+            <MapPreview shops={[]} origin={locCoords} height={140} originLabel={locAddress} compact={true} />
+          </View>
+          <View style={styles.tileGlassOverlay} />
+          <View style={styles.tileContent}>
+            <View style={styles.tileHeaderRow}>
+              <View style={styles.tileIconContainer}>
+                <Feather name="map-pin" size={18} color="#C89A43" />
+              </View>
+              <View style={styles.liveIndicatorCircle} />
+            </View>
+            <View>
+              <Text style={styles.tileTitleLight}>Address & Maps</Text>
+              <Text style={styles.tileSubtitleLight} numberOfLines={1}>{locAddress || "Configure primary shop address"}</Text>
+            </View>
+          </View>
         </Pressable>
 
-        <Pressable onPress={() => setSubView("manage-locations")} style={({ pressed }) => [styles.shopAction, pressed && styles.pressed]}>
-          <Feather name="map-pin" size={19} color={colors.primaryDark} />
-          <Text style={styles.shopActionText}>Address & map</Text>
-          <Feather name="chevron-right" size={18} color={colors.muted} />
-        </Pressable>
+        {/* Row 2: QR Code & Working Hours (50/50 Split) */}
+        <View style={styles.bentoRow}>
+          <Pressable 
+            onPress={() => {
+              setQrModalVisible(true);
+            }} 
+            style={({ pressed }) => [styles.bentoHalfTile, styles.bentoQrTile, pressed && styles.pressed]}
+          >
+            <View style={styles.cardPatternDark} />
+            <View style={styles.cardPatternGold} />
+            <View style={styles.tileContentHalf}>
+              <View style={styles.tileIconContainer}>
+                <Feather name="maximize" size={18} color="#C89A43" />
+              </View>
+              <View>
+                <Text style={styles.tileTitleHalfLight}>Shop QR Code</Text>
+                <Text style={styles.tileDescriptionHalfLight}>Tap to scan</Text>
+              </View>
+            </View>
+          </Pressable>
 
-        <Pressable onPress={() => setSubView("working-hours")} style={({ pressed }) => [styles.shopAction, pressed && styles.pressed]}>
-          <Feather name="clock" size={19} color={colors.primaryDark} />
-          <Text style={styles.shopActionText}>Working hours</Text>
-          <Feather name="chevron-right" size={18} color={colors.muted} />
-        </Pressable>
+          <Pressable 
+            onPress={() => {
+              setHoursModalVisible(true);
+            }} 
+            style={({ pressed }) => [styles.bentoHalfTile, styles.bentoHoursTile, pressed && styles.pressed]}
+          >
+            <View style={styles.tileContentHalf}>
+              <View style={styles.tileHeaderRow}>
+                <View style={styles.tileIconContainer}>
+                  <Feather name="clock" size={18} color="#946B22" />
+                </View>
+                <View style={styles.activeRosterBadge}>
+                  <Text style={styles.activeRosterBadgeText}>4 STAFF</Text>
+                </View>
+              </View>
+              <View>
+                <Text style={styles.tileTitleHalf}>Working Hours</Text>
+                <Text style={styles.tileDescriptionHalf}>Configure shifts</Text>
+              </View>
+            </View>
+          </Pressable>
+        </View>
       </View>
 
-      <Modal visible={qrVisible} transparent animationType="fade" onRequestClose={() => setQrVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setQrVisible(false)} />
-          <View style={styles.qrContainer}>
-            <Text style={styles.qrTitle}>Shop QR Code</Text>
-            <Text style={styles.qrSubtitle}>Share this code for quick profile checkout & payments</Text>
-            <Image source={images.shopQrCode} style={styles.qrImage} />
-            <Text style={styles.qrShopName}>Black Box Barbershop</Text>
-            <Pressable onPress={() => setQrVisible(false)} style={({ pressed }) => [styles.qrCloseButton, pressed && styles.pressed]}>
-              <Text style={styles.qrCloseText}>Close</Text>
-            </Pressable>
+      {/* Pop-up 1: Shop QR Code Floating Sheet */}
+      <Modal visible={qrModalVisible} transparent animationType="slide" onRequestClose={() => setQrModalVisible(false)}>
+        <View style={styles.modalOverlayBottom}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setQrModalVisible(false)} />
+          <View style={styles.floatingCardModal}>
+            <View style={styles.modalHeaderRow}>
+              <View style={styles.modalHeaderTitleBox}>
+                <Feather name="maximize" size={18} color="#C89A43" />
+                <Text style={styles.modalTitleText}>Shop QR Code</Text>
+              </View>
+              <Pressable onPress={() => setQrModalVisible(false)} style={styles.modalCloseCircleBtn}>
+                <Feather name="x" size={16} color={colors.text} />
+              </Pressable>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 10 }}>
+              <Card style={styles.qrCard}>
+                <View style={styles.cardPatternDark} />
+                <View style={styles.cardPatternGold} />
+                
+                <View style={styles.qrCardHeader}>
+                  <Text style={styles.qrShopName}>Black Box Barbershop</Text>
+                  <Text style={styles.qrShopAddress}>123 Main Street, New York</Text>
+                </View>
+
+                <View style={styles.qrFrame}>
+                  <Image source={images.shopQrCode} style={styles.qrCodeImage} />
+                </View>
+
+                <Text style={styles.qrDescription}>
+                  Scan this code for quick checkout, profile view & payments at Black Box Barbershop.
+                </Text>
+              </Card>
+
+              <View style={styles.qrActions}>
+                <Pressable onPress={() => alert("QR Code shared successfully!")} style={({ pressed }) => [styles.shareQrBtn, pressed && styles.pressed]}>
+                  <Feather name="share-2" size={16} color={colors.white} style={{ marginRight: 8 }} />
+                  <Text style={styles.shareQrText}>Share QR Code</Text>
+                </Pressable>
+                
+                <Pressable onPress={() => alert("QR Code saved to gallery!")} style={({ pressed }) => [styles.downloadQrBtn, pressed && styles.pressed]}>
+                  <Feather name="download" size={16} color="#946B22" style={{ marginRight: 8 }} />
+                  <Text style={styles.downloadQrText}>Download QR</Text>
+                </Pressable>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Pop-up 2: Shop Locations Floating Sheet */}
+      <Modal visible={locationsModalVisible} transparent animationType="slide" onRequestClose={() => {
+        setLocationsModalVisible(false);
+        setLocFormVisible(false);
+      }}>
+        <View style={styles.modalOverlayBottom}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => {
+            setLocationsModalVisible(false);
+            setLocFormVisible(false);
+          }} />
+          <View style={styles.floatingCardModal}>
+            <View style={styles.modalHeaderRow}>
+              <View style={styles.modalHeaderTitleBox}>
+                {locFormVisible ? (
+                  <Pressable 
+                    onPress={() => setLocFormVisible(false)} 
+                    style={{ marginRight: 8, padding: 4 }}
+                  >
+                    <Feather name="arrow-left" size={20} color={colors.text} />
+                  </Pressable>
+                ) : (
+                  <Feather name="map-pin" size={18} color="#C89A43" style={{ marginRight: 8 }} />
+                )}
+                <Text style={styles.modalTitleText}>
+                  {locFormVisible ? (editingLocId ? "Edit Location" : "Add Location") : "Shop Locations"}
+                </Text>
+              </View>
+              
+              {!locFormVisible ? (
+                <Pressable onPress={() => setLocationsModalVisible(false)} style={styles.modalCloseCircleBtn}>
+                  <Feather name="x" size={16} color={colors.text} />
+                </Pressable>
+              ) : (
+                <View style={{ width: 32 }} />
+              )}
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 10 }}>
+              {locFormVisible ? (
+                <View>
+                  <Card style={styles.mapCard}>
+                    <MapPreview 
+                      shops={[]} 
+                      origin={locCoords} 
+                      height={200} 
+                      originLabel={locAddress}
+                      zoom={locZoom}
+                      onZoomChange={setLocZoom}
+                      onMapPress={async (coords) => {
+                        setLocCoords(coords);
+                        setResolvingLocation(true);
+                        try {
+                          const label = await reverseGeocodeAreaLabel(coords);
+                          setLocAddress(label);
+                          if (label) {
+                            const autoName = label.split(",")[0]?.trim();
+                            if (autoName) setLocName(autoName);
+                          }
+                        } catch (err) {
+                          setLocAddress(`${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}`);
+                        }
+                        setResolvingLocation(false);
+                      }}
+                    />
+                    <View style={styles.mapPinOverlay}>
+                      <Text style={styles.mapPinText}>Pinpoint your service area</Text>
+                    </View>
+                    <View style={styles.mapZoomControls}>
+                      <Pressable onPress={() => setLocZoom((z) => Math.min(18, z + 1))} style={styles.zoomBtn}>
+                        <Text style={styles.zoomBtnText}>+</Text>
+                      </Pressable>
+                      <Pressable onPress={() => setLocZoom((z) => Math.max(3, z - 1))} style={styles.zoomBtn}>
+                        <Text style={styles.zoomBtnText}>-</Text>
+                      </Pressable>
+                    </View>
+                  </Card>
+
+                  <Pressable onPress={handleUseLiveLocation} style={({ pressed }) => [styles.useLiveLocationBtn, pressed && styles.pressed]}>
+                    <Feather name="navigation" size={16} color="#946B22" style={{ marginRight: 8 }} />
+                    <Text style={styles.useLiveLocationText}>Use Current Live Location</Text>
+                  </Pressable>
+
+                  <Card style={styles.addressFormCard}>
+                    <Text style={styles.editInputLabel}>Location Name</Text>
+                    <View style={styles.inputWithIconRow}>
+                      <View style={styles.inputIconBox}>
+                        <Feather name="bookmark" size={18} color="#555" />
+                      </View>
+                      <TextInput
+                        value={locName}
+                        onChangeText={handleLocNameChange}
+                        onSubmitEditing={() => handleAutoDetectAddressFromName(locName)}
+                        onBlur={() => handleAutoDetectAddressFromName(locName)}
+                        placeholder="e.g. Nellore / Primary Base"
+                        placeholderTextColor={colors.muted}
+                        style={styles.editTextInputWithIcon}
+                      />
+                    </View>
+
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12, marginBottom: 4 }}>
+                      <Text style={[styles.editInputLabel, { marginBottom: 0 }]}>Address</Text>
+                      {autoDetectedBadge ? (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "rgba(30,141,91,0.12)", paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.full }}>
+                          <Feather name="check-circle" size={12} color={colors.success} />
+                          <Text style={{ color: colors.success, fontFamily: fonts.medium, fontSize: 10 }}>Auto-Detected</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                    <View style={styles.inputWithIconRow}>
+                      <View style={styles.inputIconBox}>
+                        <Feather name="map-pin" size={18} color="#555" />
+                      </View>
+                      <TextInput
+                        value={locAddress}
+                        onChangeText={(text) => {
+                          setLocAddress(text);
+                          setAutoDetectedBadge(false);
+                        }}
+                        onSubmitEditing={handleGeocodeSearch}
+                        placeholder="Search address or location"
+                        placeholderTextColor={colors.muted}
+                        style={[styles.editTextInputWithIcon, { flex: 1 }]}
+                      />
+                      <Pressable onPress={handleGeocodeSearch} style={styles.searchLocationBtnInner}>
+                        {resolvingLocation ? (
+                          <ActivityIndicator size="small" color="#946B22" />
+                        ) : (
+                          <Feather name="search" size={18} color="#946B22" />
+                        )}
+                      </Pressable>
+                    </View>
+
+                    <Pressable onPress={handleOpenInGoogleMaps} style={styles.googleMapsBtn}>
+                      <Feather name="map" size={14} color={colors.info} />
+                      <Text style={styles.googleMapsBtnText}>Open / Search in Google Maps</Text>
+                    </Pressable>
+                  </Card>
+
+                  <View style={styles.locSaveActionRow}>
+                    <Pressable onPress={() => setLocFormVisible(false)} style={({ pressed }) => [styles.locCancelBtn, pressed && styles.pressed]}>
+                      <Text style={styles.locCancelText}>Cancel</Text>
+                    </Pressable>
+                    
+                    <Pressable onPress={handleSaveLocation} style={({ pressed }) => [styles.locSaveBtn, pressed && styles.pressed]}>
+                      <Text style={styles.locSaveText}>Save Location</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : (
+                <View>
+                  {showBanner ? (
+                    <View style={styles.banner}>
+                      <Feather name="info" size={16} color="#946B22" style={styles.bannerIcon} />
+                      <Text style={styles.bannerText}>
+                        Nearby bookings and job opportunities are prioritized based on your Default Location.
+                      </Text>
+                      <Pressable onPress={() => setShowBanner(false)} style={styles.bannerClose}>
+                        <Feather name="x" size={16} color={colors.muted} />
+                      </Pressable>
+                    </View>
+                  ) : null}
+
+                  <Pressable onPress={handleAddLocation} style={({ pressed }) => [styles.addLocationCard, pressed && styles.pressed]}>
+                    <View style={styles.addLocationIconCircle}>
+                      <Feather name="plus" size={20} color="#946B22" />
+                    </View>
+                    <Text style={styles.addLocationCardText}>Add New Location</Text>
+                  </Pressable>
+
+                  <Text style={styles.sectionHeading}>Saved Locations</Text>
+
+                  {savedLocations.map((loc) => (
+                    <Card key={loc.id} style={styles.locationCard}>
+                      <View style={styles.locHeaderRow}>
+                        <View style={styles.locIconBox}>
+                          <Feather name="map-pin" size={18} color="#946B22" />
+                        </View>
+                        <View style={{ flex: 1, marginLeft: 12 }}>
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                            <Text style={styles.locTitleText}>{loc.name}</Text>
+                            {loc.isDefault && (
+                              <View style={styles.defaultBadgeGold}>
+                                <Feather name="star" size={8} color="#FFF" style={{ marginRight: 2 }} />
+                                <Text style={styles.defaultBadgeText}>DEFAULT</Text>
+                              </View>
+                            )}
+                          </View>
+                          <Text style={styles.locAddressText}>{loc.address}</Text>
+                        </View>
+                      </View>
+
+                      <View style={styles.locDivider} />
+
+                      <View style={styles.locActionsRow}>
+                        <Pressable onPress={() => handleSetDefault(loc.id)} style={styles.setDefaultPressable}>
+                          <Feather name="star" size={16} color={loc.isDefault ? "#946B22" : colors.muted} style={{ marginRight: 6 }} />
+                          <Text style={[styles.setDefaultText, loc.isDefault && { color: "#946B22", fontFamily: fonts.bold }]}>
+                            {loc.isDefault ? "Default Location" : "Set as Default"}
+                          </Text>
+                        </Pressable>
+
+                        <View style={styles.locActionButtons}>
+                          <Pressable onPress={() => handleEditLocation(loc)} style={styles.locRoundBtn}>
+                            <Feather name="edit-3" size={14} color={colors.secondaryText} />
+                          </Pressable>
+                          
+                          <Pressable onPress={() => handleDeleteLocation(loc.id)} style={[styles.locRoundBtn, { borderColor: "rgba(198,64,70,0.12)" }]}>
+                            <Feather name="trash-2" size={14} color={colors.error} />
+                          </Pressable>
+                        </View>
+                      </View>
+                    </Card>
+                  ))}
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Pop-up 3: Working Hours Floating Sheet */}
+      <Modal visible={hoursModalVisible} transparent animationType="slide" onRequestClose={() => {
+        setHoursModalVisible(false);
+        setWorkerFormVisible(false);
+      }}>
+        <View style={styles.modalOverlayBottom}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => {
+            setHoursModalVisible(false);
+            setWorkerFormVisible(false);
+          }} />
+          <View style={styles.floatingCardModal}>
+            <View style={styles.modalHeaderRow}>
+              <View style={styles.modalHeaderTitleBox}>
+                {workerFormVisible ? (
+                  <Pressable 
+                    onPress={() => setWorkerFormVisible(false)} 
+                    style={{ marginRight: 8, padding: 4 }}
+                  >
+                    <Feather name="arrow-left" size={20} color={colors.text} />
+                  </Pressable>
+                ) : (
+                  <Feather name="clock" size={18} color="#C89A43" style={{ marginRight: 8 }} />
+                )}
+                <Text style={styles.modalTitleText}>
+                  {workerFormVisible ? (editingWorkerId ? "Edit Worker" : "Add Worker") : "Working Hours"}
+                </Text>
+              </View>
+              
+              {!workerFormVisible ? (
+                <Pressable onPress={() => setHoursModalVisible(false)} style={styles.modalCloseCircleBtn}>
+                  <Feather name="x" size={16} color={colors.text} />
+                </Pressable>
+              ) : (
+                <View style={{ width: 32 }} />
+              )}
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 10 }}>
+              {workerFormVisible ? (
+                // Worker Form Content
+                <View>
+                  <Card style={styles.addressFormCard}>
+                    <Text style={styles.editInputLabel}>Worker Name</Text>
+                    <View style={styles.inputWithIconRow}>
+                      <View style={styles.inputIconBox}>
+                        <Feather name="user" size={18} color="#555" />
+                      </View>
+                      <TextInput
+                        value={workerName}
+                        onChangeText={setWorkerName}
+                        placeholder="e.g. Richard Anderson"
+                        placeholderTextColor={colors.muted}
+                        style={styles.editTextInputWithIcon}
+                      />
+                    </View>
+
+                    <Text style={styles.editInputLabel}>Role / Specialty</Text>
+                    <View style={styles.inputWithIconRow}>
+                      <View style={styles.inputIconBox}>
+                        <Feather name="briefcase" size={18} color="#555" />
+                      </View>
+                      <TextInput
+                        value={workerRole}
+                        onChangeText={setWorkerRole}
+                        placeholder="e.g. Expert Barber"
+                        placeholderTextColor={colors.muted}
+                        style={styles.editTextInputWithIcon}
+                      />
+                    </View>
+
+                    <Text style={styles.editInputLabel}>Shift Start Time</Text>
+                    <View style={styles.inputWithIconRow}>
+                      <View style={styles.inputIconBox}>
+                        <Feather name="clock" size={18} color="#555" />
+                      </View>
+                      <TextInput
+                        value={workerStart}
+                        onChangeText={setWorkerStart}
+                        placeholder="e.g. 09:00 AM"
+                        placeholderTextColor={colors.muted}
+                        style={styles.editTextInputWithIcon}
+                      />
+                    </View>
+
+                    <Text style={styles.editInputLabel}>Shift End Time</Text>
+                    <View style={styles.inputWithIconRow}>
+                      <View style={styles.inputIconBox}>
+                        <Feather name="clock" size={18} color="#555" />
+                      </View>
+                      <TextInput
+                        value={workerEnd}
+                        onChangeText={setWorkerEnd}
+                        placeholder="e.g. 06:00 PM"
+                        placeholderTextColor={colors.muted}
+                        style={styles.editTextInputWithIcon}
+                      />
+                    </View>
+                  </Card>
+
+                  <View style={styles.locSaveActionRow}>
+                    <Pressable onPress={() => setWorkerFormVisible(false)} style={({ pressed }) => [styles.locCancelBtn, pressed && styles.pressed]}>
+                      <Text style={styles.locCancelText}>Cancel</Text>
+                    </Pressable>
+                    
+                    <Pressable onPress={handleSaveWorker} style={({ pressed }) => [styles.locSaveBtn, pressed && styles.pressed]}>
+                      <Text style={styles.locSaveText}>Save Worker</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : (
+                // Worker List Content
+                <View>
+                  <View style={styles.banner}>
+                    <Feather name="clock" size={16} color="#946B22" style={styles.bannerIcon} />
+                    <Text style={styles.bannerText}>
+                      Configure working hour schedules and availability for all shop employees.
+                    </Text>
+                  </View>
+
+                  <Pressable onPress={handleAddWorker} style={({ pressed }) => [styles.addLocationCard, pressed && styles.pressed]}>
+                    <View style={styles.addLocationIconCircle}>
+                      <Feather name="plus" size={20} color="#946B22" />
+                    </View>
+                    <Text style={styles.addLocationCardText}>Add New Worker</Text>
+                  </Pressable>
+
+                  <Text style={styles.sectionHeading}>Employee Rosters</Text>
+
+                  {employeeHours.map((emp) => (
+                    <Card key={emp.id} style={styles.employeeCard}>
+                      <View style={styles.empRow}>
+                        <View style={styles.empAvatarWrapper}>
+                          <Image source={emp.avatar} style={styles.empAvatarImg} />
+                        </View>
+                        <View style={styles.empDetails}>
+                          <Text style={styles.empNameText}>{emp.name}</Text>
+                          <Text style={styles.empRoleText}>{emp.role}</Text>
+                        </View>
+                        <Switch
+                          value={emp.active}
+                          onValueChange={(val) => {
+                            setEmployeeHours((current) =>
+                              current.map((item) => (item.id === emp.id ? { ...item, active: val } : item))
+                            );
+                          }}
+                          trackColor={{ false: "#DADCD7", true: "#E7CE9B" }}
+                          thumbColor={emp.active ? colors.primaryDark : colors.muted}
+                        />
+                      </View>
+
+                      <View style={styles.locDivider} />
+                      <View style={styles.locActionsRow}>
+                        <View style={{ flexDirection: "row", alignItems: "center" }}>
+                          <Feather name="clock" size={14} color="#946B22" style={{ marginRight: 6 }} />
+                          <Text style={{ fontSize: 11, fontFamily: fonts.medium, color: colors.secondaryText }}>
+                            {emp.active ? `${emp.start} - ${emp.end}` : "Off-duty"}
+                          </Text>
+                        </View>
+                        <View style={styles.locActionButtons}>
+                          <Pressable onPress={() => handleEditWorker(emp)} style={styles.locRoundBtn}>
+                            <Feather name="edit-3" size={14} color={colors.secondaryText} />
+                          </Pressable>
+                          
+                          <Pressable onPress={() => handleDeleteWorker(emp.id)} style={[styles.locRoundBtn, { borderColor: "rgba(198,64,70,0.12)" }]}>
+                            <Feather name="trash-2" size={14} color={colors.error} />
+                          </Pressable>
+                        </View>
+                      </View>
+                    </Card>
+                  ))}
+
+                  <Pressable onPress={() => setHoursModalVisible(false)} style={({ pressed }) => [styles.saveHoursBtn, pressed && styles.pressed]}>
+                    <Text style={styles.saveHoursBtnText}>Save Schedule & Roster</Text>
+                  </Pressable>
+                </View>
+              )}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -970,5 +1460,766 @@ const styles = StyleSheet.create({
   offDutyBanner: { marginTop: 12, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 12 },
   offDutyText: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, fontStyle: "italic" },
   saveHoursBtn: { minHeight: 46, borderRadius: radius.full, backgroundColor: colors.primaryDark, justifyContent: "center", alignItems: "center", marginTop: 10 },
-  saveHoursBtnText: { color: colors.white, fontFamily: fonts.bold, fontSize: 12 }
+  saveHoursBtnText: { color: colors.white, fontFamily: fonts.bold, fontSize: 12 },
+  modalOverlayBottom: { flex: 1, backgroundColor: "rgba(15,17,21,0.65)", justifyContent: "center", alignItems: "center", padding: 16 },
+  editContainer: {
+    width: "100%",
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    paddingTop: 16,
+    paddingHorizontal: 24,
+    paddingBottom: 30,
+    maxHeight: "92%",
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: -10 },
+    elevation: 10
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: "#ECECE6",
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 10
+  },
+  modalCloseBtn: {
+    position: "absolute",
+    top: 16,
+    left: 24,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#F5F5F5",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10
+  },
+  editTitle: {
+    color: colors.text,
+    fontFamily: fonts.heading,
+    fontSize: 20,
+    textAlign: "center",
+    marginVertical: 12
+  },
+  goldDivider: {
+    width: 36,
+    height: 3,
+    backgroundColor: "#C89A43",
+    borderRadius: 1.5,
+    alignSelf: "center",
+    marginBottom: 16
+  },
+  editScrollContent: {
+    paddingBottom: 24
+  },
+  editForm: {
+    gap: 14,
+    marginBottom: 20
+  },
+  editInputLabel: {
+    color: colors.text,
+    fontFamily: fonts.bold,
+    fontSize: 13,
+    marginTop: 8
+  },
+  inputWithIconRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10
+  },
+  inputIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#F8F8F8",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  editTextInputWithIcon: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#F8F8F8",
+    paddingHorizontal: 16,
+    color: colors.text,
+    fontFamily: fonts.medium,
+    fontSize: 14
+  },
+  editActionRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 20
+  },
+  editCancelBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#946B22",
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  editCancelText: {
+    color: "#946B22",
+    fontFamily: fonts.bold,
+    fontSize: 14
+  },
+  editSaveBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#946B22",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  editSaveText: {
+    color: colors.white,
+    fontFamily: fonts.bold,
+    fontSize: 14
+  },
+  pageContainer: {
+    paddingBottom: 20
+  },
+  backButtonCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2
+  },
+  shopHeroCard: {
+    marginTop: 6,
+    marginBottom: 14,
+    borderRadius: 24,
+    overflow: "hidden",
+    padding: 20,
+    backgroundColor: colors.black,
+    position: "relative"
+  },
+  shopHeroInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    zIndex: 2
+  },
+  shopActionsCard: {
+    padding: 0,
+    borderRadius: 20,
+    overflow: "hidden",
+    backgroundColor: colors.white,
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: colors.border
+  },
+  shopActionRow: {
+    height: 56,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border
+  },
+  shopActionIconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    backgroundColor: "#FDF7EC",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12
+  },
+  shopActionLabel: {
+    flex: 1,
+    color: colors.text,
+    fontFamily: fonts.medium,
+    fontSize: 14
+  },
+  qrCard: {
+    marginTop: 10,
+    marginBottom: 20,
+    borderRadius: 24,
+    overflow: "hidden",
+    padding: 24,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    position: "relative",
+    borderWidth: 1,
+    borderColor: colors.border
+  },
+  qrCardHeader: {
+    alignItems: "center",
+    marginBottom: 20,
+    zIndex: 2
+  },
+  qrShopAddress: {
+    color: colors.secondaryText,
+    fontFamily: fonts.body,
+    fontSize: 13,
+    marginTop: 4
+  },
+  qrFrame: {
+    width: 220,
+    height: 220,
+    borderRadius: 16,
+    borderWidth: 3,
+    borderColor: "#C89A43",
+    padding: 8,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4
+  },
+  qrCodeImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 8
+  },
+  qrDescription: {
+    color: colors.secondaryText,
+    fontFamily: fonts.body,
+    fontSize: 13,
+    textAlign: "center",
+    marginTop: 20,
+    lineHeight: 18,
+    zIndex: 2,
+    paddingHorizontal: 10
+  },
+  qrActions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 10
+  },
+  shareQrBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#946B22",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  shareQrText: {
+    color: colors.white,
+    fontFamily: fonts.bold,
+    fontSize: 14
+  },
+  downloadQrBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#946B22",
+    backgroundColor: colors.white,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  downloadQrText: {
+    color: "#946B22",
+    fontFamily: fonts.bold,
+    fontSize: 14
+  },
+  addLocationCard: {
+    height: 64,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: "#F3E2C3",
+    borderStyle: "dashed",
+    backgroundColor: "#FDF7EC",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    marginBottom: 20,
+    marginTop: 10
+  },
+  addLocationIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#F3E2C3"
+  },
+  addLocationCardText: {
+    color: "#946B22",
+    fontFamily: fonts.bold,
+    fontSize: 14
+  },
+  locationCard: {
+    borderRadius: 20,
+    padding: 16,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 12
+  },
+  locHeaderRow: {
+    flexDirection: "row",
+    alignItems: "flex-start"
+  },
+  locIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: "#FDF7EC",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2
+  },
+  locTitleText: {
+    color: colors.text,
+    fontFamily: fonts.headingSemi,
+    fontSize: 15
+  },
+  locAddressText: {
+    color: colors.secondaryText,
+    fontFamily: fonts.body,
+    fontSize: 13,
+    marginTop: 4,
+    lineHeight: 18
+  },
+  locDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 14
+  },
+  locActionsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  setDefaultPressable: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  setDefaultText: {
+    color: colors.secondaryText,
+    fontFamily: fonts.semibold,
+    fontSize: 12
+  },
+  locActionButtons: {
+    flexDirection: "row",
+    gap: 8
+  },
+  locRoundBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  defaultBadgeGold: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#946B22",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6
+  },
+  mapCard: {
+    borderRadius: 20,
+    overflow: "hidden",
+    marginBottom: 16,
+    height: 200,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 0
+  },
+  useLiveLocationBtn: {
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#FDF7EC",
+    borderWidth: 1,
+    borderColor: "#F3E2C3",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16
+  },
+  useLiveLocationText: {
+    color: "#946B22",
+    fontFamily: fonts.bold,
+    fontSize: 14
+  },
+  addressFormCard: {
+    borderRadius: 20,
+    padding: 18,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 20
+  },
+  searchLocationBtnInner: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#FDF7EC",
+    borderWidth: 1,
+    borderColor: "#F3E2C3",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  locSaveActionRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 4
+  },
+  locCancelBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#946B22",
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  locCancelText: {
+    color: "#946B22",
+    fontFamily: fonts.bold,
+    fontSize: 14
+  },
+  locSaveBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#946B22",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  locSaveText: {
+    color: colors.white,
+    fontFamily: fonts.bold,
+    fontSize: 14
+  },
+  employeeCard: {
+    borderRadius: 20,
+    padding: 16,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 12
+  },
+  empAvatarWrapper: {
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderColor: "#C89A43",
+    padding: 2,
+    backgroundColor: colors.white
+  },
+  empAvatarImg: {
+    width: 38,
+    height: 38,
+    borderRadius: 19
+  },
+  empNameText: {
+    color: colors.text,
+    fontFamily: fonts.headingSemi,
+    fontSize: 14
+  },
+  empRoleText: {
+    color: colors.secondaryText,
+    fontFamily: fonts.body,
+    fontSize: 11,
+    marginTop: 2
+  },
+  hoursEditorRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    marginTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: 14,
+    gap: 8
+  },
+  toSeparatorBox: {
+    height: 48,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4
+  },
+  toSeparatorText: {
+    color: colors.muted,
+    fontFamily: fonts.bold,
+    fontSize: 14
+  },
+  offDutyBannerBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: 14
+  },
+  cardPatternDark: {
+    position: 'absolute',
+    top: -120,
+    left: -120,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: '#28231E',
+    opacity: 0.95
+  },
+  cardPatternGold: {
+    position: 'absolute',
+    top: -120,
+    left: -120,
+    width: 242,
+    height: 242,
+    borderRadius: 121,
+    borderWidth: 2,
+    borderColor: '#C89A43',
+    backgroundColor: 'transparent'
+  },
+  lastRow: {
+    borderBottomWidth: 0
+  },
+  sectionHeadingBento: {
+    fontFamily: fonts.bold,
+    fontSize: 12,
+    color: colors.secondaryText,
+    letterSpacing: 1.2,
+    marginTop: 24,
+    marginBottom: 10
+  },
+  bentoGridContainer: {
+    gap: 12,
+    marginBottom: 20
+  },
+  bentoMapTile: {
+    height: 140,
+    borderRadius: 24,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.border,
+    position: "relative"
+  },
+  tileMapBackground: {
+    ...StyleSheet.absoluteFill,
+    opacity: 0.8
+  },
+  tileGlassOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(255,255,255,0.3)"
+  },
+  tileContent: {
+    ...StyleSheet.absoluteFill,
+    padding: 16,
+    justifyContent: "space-between"
+  },
+  tileHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  tileIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2
+  },
+  liveIndicatorCircle: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#10B981"
+  },
+  tileTitle: {
+    color: colors.text,
+    fontFamily: fonts.headingSemi,
+    fontSize: 16
+  },
+  tileSubtitle: {
+    color: colors.secondaryText,
+    fontFamily: fonts.body,
+    fontSize: 11,
+    marginTop: 2
+  },
+  bentoRow: {
+    flexDirection: "row",
+    gap: 12,
+    height: 130
+  },
+  bentoHalfTile: {
+    flex: 1,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
+    position: "relative",
+    overflow: "hidden"
+  },
+  bentoQrTile: {
+    backgroundColor: colors.black
+  },
+  bentoHoursTile: {
+    backgroundColor: colors.white
+  },
+  tileContentHalf: {
+    ...StyleSheet.absoluteFill,
+    padding: 16,
+    justifyContent: "space-between"
+  },
+  tileTitleHalf: {
+    color: colors.text,
+    fontFamily: fonts.headingSemi,
+    fontSize: 14
+  },
+  tileDescriptionHalf: {
+    color: colors.secondaryText,
+    fontFamily: fonts.body,
+    fontSize: 11,
+    marginTop: 2
+  },
+  tileTitleHalfLight: {
+    color: colors.white,
+    fontFamily: fonts.headingSemi,
+    fontSize: 14
+  },
+  tileDescriptionHalfLight: {
+    color: "rgba(255,255,255,0.6)",
+    fontFamily: fonts.body,
+    fontSize: 11,
+    marginTop: 2
+  },
+  tileTitleLight: {
+    color: colors.white,
+    fontFamily: fonts.headingSemi,
+    fontSize: 16,
+    textShadowColor: "rgba(0,0,0,0.6)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3
+  },
+  tileSubtitleLight: {
+    color: "#E2E5E0",
+    fontFamily: fonts.body,
+    fontSize: 11,
+    marginTop: 2,
+    textShadowColor: "rgba(0,0,0,0.6)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3
+  },
+  activeRosterBadge: {
+    backgroundColor: "#946B22",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8
+  },
+  activeRosterBadgeText: {
+    color: colors.white,
+    fontFamily: fonts.bold,
+    fontSize: 9
+  },
+  immersiveContainer: {
+    flex: 1,
+    backgroundColor: "#FBFBF9"
+  },
+  immersiveHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border
+  },
+  immersiveBackBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2
+  },
+  immersiveHeaderTitle: {
+    color: colors.text,
+    fontFamily: fonts.heading,
+    fontSize: 18
+  },
+  immersiveContentContainer: {
+    padding: 20,
+    paddingBottom: 40
+  },
+  floatingCardModal: {
+    width: "95%",
+    maxWidth: 420,
+    borderRadius: 32,
+    borderWidth: 1.5,
+    borderColor: "#C89A43",
+    backgroundColor: colors.white,
+    padding: 20,
+    maxHeight: "85%",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10
+  },
+  modalHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ECECE6"
+  },
+  modalHeaderTitleBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8
+  },
+  modalTitleText: {
+    color: colors.text,
+    fontFamily: fonts.heading,
+    fontSize: 18
+  },
+  modalCloseCircleBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#FDF7EC",
+    borderWidth: 1,
+    borderColor: "#F3E2C3",
+    alignItems: "center",
+    justifyContent: "center"
+  }
 });

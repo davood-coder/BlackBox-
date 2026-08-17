@@ -1,4 +1,4 @@
-import { Image, Modal, Pressable, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+import { Image, Modal, Pressable, StyleSheet, Switch, Text, TextInput, View, ScrollView } from "react-native";
 import { useState } from "react";
 import type { ComponentProps, ComponentType } from "react";
 import { Feather, Ionicons } from "@expo/vector-icons";
@@ -21,6 +21,7 @@ type ProfileMenuItem = {
 };
 
 const customerMenu: ProfileMenuItem[] = [
+  { label: "Edit Profile", icon: "user-check", route: "EditProfile" },
   { label: "My Bookings", icon: "calendar", route: "MyBookings" },
   { label: "Favorite Shops & Barbers", icon: "heart", route: "Favorites" },
   { label: "Saved Style Photos", icon: "image", route: "Profile" },
@@ -32,6 +33,7 @@ const customerMenu: ProfileMenuItem[] = [
 ];
 
 const barberMenu: ProfileMenuItem[] = [
+  { label: "Edit Profile", icon: "user-check", route: "EditProfile" },
   { label: "Notifications", icon: "bell", route: "Notifications" },
   { label: "Help & Support", icon: "help-circle", route: "Profile" },
   { label: "Privacy & Safety", icon: "shield", route: "Privacy" },
@@ -71,6 +73,7 @@ export default function Profile({ navigation }: any) {
   const [shareLocation, setShareLocation] = useState(true);
   const [shareAnalytics, setShareAnalytics] = useState(false);
   const [tailoredAds, setTailoredAds] = useState(true);
+  const [showHoursDropdown, setShowHoursDropdown] = useState(false);
 
   const [tempName, setTempName] = useState(profileName);
   const [tempEmail, setTempEmail] = useState(profileEmail);
@@ -113,25 +116,49 @@ export default function Profile({ navigation }: any) {
   const completedBookings = profileBookings.filter((booking) => booking.status === "Completed");
   const payout = (profile.basePayout || 0) + completedBookings.reduce((total, booking) => total + (booking.total || 0), 0);
   const homeRoute = isBarber ? "BarberDashboard" : "Home";
-  const stats = buildStats(workspace, {
-    activeBookings: activeBookings.length,
-    pendingRequests: pendingRequests.length,
-    queue: confirmedBookings.length + (profile.queueOffset || 0),
-    payout,
-    rewardPoints: profile.rewardPoints || 0,
-    savedShops: favoriteShopIds.length
-  });
-  const focusMetrics = isBarber
+
+  const statsWithIcons = isBarber
     ? [
-        { label: "Shop", value: shopName },
-        { label: "Today queue", value: `${confirmedBookings.length + (profile.queueOffset || 0)} clients` },
-        { label: "Repeat clients", value: `${profile.repeatClients || 0}%` }
+        {
+          label: "Pending\nRequests",
+          value: String(pendingRequests.length),
+          icon: "clipboard" as const,
+          route: "BarberBookings"
+        },
+        {
+          label: "Today\nQueue",
+          value: String(confirmedBookings.length + (profile.queueOffset || 0)),
+          icon: "clock" as const,
+          route: "BarberDashboard"
+        },
+        {
+          label: "Payout",
+          value: `$${payout}`,
+          icon: "wallet" as const,
+          route: "BusinessHub"
+        }
       ]
     : [
-        { label: "Favorite barber", value: selectedBarber.name },
-        { label: "Cadence", value: profile.cadence || "Not set" },
-        { label: "Saved styles", value: `${profile.savedStyles || 0} photos` }
+        {
+          label: "Active\nBookings",
+          value: String(activeBookings.length),
+          icon: "calendar" as const,
+          route: "MyBookings"
+        },
+        {
+          label: "Reward\nPoints",
+          value: String(profile.rewardPoints || 0),
+          icon: "gift" as const,
+          route: "Profile"
+        },
+        {
+          label: "Saved\nShops",
+          value: String(favoriteShopIds.length),
+          icon: "heart" as const,
+          route: "Favorites"
+        }
       ];
+
   const details = isBarber
     ? [
         { label: "Shop", value: shopName },
@@ -147,7 +174,24 @@ export default function Profile({ navigation }: any) {
         { label: "Saved shops", value: `${favoriteShopIds.length} shops` }
       ];
 
+  function openEditModal() {
+    setTempName(profileName);
+    setTempEmail(profileEmail);
+    setTempShopName(shopName);
+    setTempRole(role);
+    setTempWorkingHours(workingHours);
+    setTempPhone(phone);
+    setTempHeadline(profileHeadline);
+    setTempAvatar(profileAvatar);
+    setShowHoursDropdown(false);
+    setEditModalVisible(true);
+  }
+
   function openMenuItem(item: ProfileMenuItem) {
+    if (item.label === "Edit Profile") {
+      openEditModal();
+      return;
+    }
     if (item.route === "Privacy") {
       setPrivacyModalVisible(true);
       return;
@@ -159,77 +203,104 @@ export default function Profile({ navigation }: any) {
     navigation.navigate(item.route, item.params);
   }
 
+  const getDetailIcon = (label: string): FeatherName => {
+    const lower = label.toLowerCase();
+    if (lower.includes("shop")) return "home";
+    if (lower.includes("role")) return "user";
+    if (lower.includes("hours") || lower.includes("working")) return "clock";
+    if (lower.includes("phone")) return "phone";
+    if (lower.includes("preference") || lower.includes("service")) return "sliders";
+    if (lower.includes("payment")) return "credit-card";
+    if (lower.includes("styles")) return "image";
+    return "info";
+  };
+
   return (
     <View style={styles.root}>
       <Screen scroll bottomInset>
         <AppHeader
           title="Profile"
           onBack={() => goBackOrNavigate(navigation, homeRoute)}
+          backVariant="circle"
+          right={
+            <Pressable
+              onPress={() => navigation.navigate("Notifications")}
+              style={styles.notificationBtn}
+            >
+              <Feather name="bell" size={24} color={colors.text} />
+              <View style={styles.notificationBadge} />
+            </Pressable>
+          }
         />
 
         <Card style={styles.identityCard}>
+          <View style={styles.cardPatternDark} />
+          <View style={styles.cardPatternGold} />
+          
           <View style={styles.identityTop}>
-            <Image source={profileAvatar} style={styles.avatar} />
+            <View style={styles.avatarWrapper}>
+              <Image source={profileAvatar} style={styles.avatar} />
+            </View>
             <View style={styles.identityCopy}>
-              <View style={styles.badgeRow}>
-                <Text style={styles.roleLabel}>{profile.roleLabel}</Text>
-                {profile.badge && profile.badge.toUpperCase() !== "PRO" ? (
-                  <View style={styles.badge}><Text style={styles.badgeText}>{profile.badge}</Text></View>
-                ) : null}
+              <View style={styles.roleBadge}>
+                <Text style={styles.roleBadgeText}>{profile.roleLabel.toUpperCase()}</Text>
               </View>
               <Text style={styles.name}>{profileName}</Text>
               <Text style={styles.email}>{profileEmail}</Text>
+              {profile.badge ? (
+                <View style={styles.premiumBadge}>
+                  <Ionicons name="shield-checkmark" size={14} color="#946B22" style={{ marginRight: 4 }} />
+                  <Text style={styles.premiumBadgeText}>{profile.badge}</Text>
+                </View>
+              ) : null}
             </View>
-            <Pressable
-              onPress={() => {
-                setTempName(profileName);
-                setTempEmail(profileEmail);
-                setTempShopName(shopName);
-                setTempRole(role);
-                setTempWorkingHours(workingHours);
-                setTempPhone(phone);
-                setTempHeadline(profileHeadline);
-                setTempAvatar(profileAvatar);
-                setEditModalVisible(true);
-              }}
-              style={({ pressed }) => [styles.editProfileBtn, pressed && styles.pressed]}
-            >
-              <Feather name="edit-2" size={16} color={colors.primaryDark} />
-            </Pressable>
+            <View style={styles.editProfileColumn}>
+              <Pressable
+                onPress={openEditModal}
+                style={({ pressed }) => [styles.editCircleBtn, pressed && styles.pressed]}
+              >
+                <Feather name="edit-2" size={18} color="#946B22" />
+              </Pressable>
+              <Text style={styles.editProfileText}>Edit Profile</Text>
+            </View>
           </View>
-          <Text style={styles.headline}>{profileHeadline}</Text>
         </Card>
 
-        <View style={styles.statsGrid}>
-          {stats.map((item) => (
-            <Card key={item.label} style={styles.statCard}>
-              <Text style={styles.statValue}>{item.value}</Text>
+        <View style={styles.statsRow}>
+          {statsWithIcons.map((item) => (
+            <Pressable
+              key={item.label.replace("\n", " ")}
+              onPress={() => navigation.navigate(item.route)}
+              style={styles.statCard}
+            >
+              <View style={styles.statTopRow}>
+                <View style={styles.statIconContainer}>
+                  <Feather name={item.icon} size={16} color="#946B22" />
+                </View>
+                <Text style={styles.statValue}>{item.value}</Text>
+              </View>
               <Text style={styles.statLabel}>{item.label}</Text>
-            </Card>
+              
+              <View style={styles.statArrowCircle}>
+                <Feather name="arrow-right" size={10} color="#946B22" />
+              </View>
+            </Pressable>
           ))}
         </View>
 
-        {!isBarber ? (
-          <Card style={[styles.focusCard, isBarber && styles.barberFocusCard]}>
-            <View style={styles.focusHeader}>
-              <View>
-                <Text style={styles.focusTitle}>{isBarber ? "Barber Profile" : "Grooming Profile"}</Text>
-                <Text style={styles.focusCopy}>{profile.note}</Text>
-              </View>
-              <Text style={styles.focusStatus}>{isBarber ? "Accepting bookings" : selectedPreference.label}</Text>
-            </View>
-            <View style={styles.metricGrid}>
-              {focusMetrics.map((item) => (
-                <ProfileMetric key={item.label} label={item.label} value={item.value} />
-              ))}
-            </View>
-          </Card>
-        ) : null}
-
         <Card style={styles.detailsCard}>
-          <Text style={styles.sectionTitle}>{isBarber ? "Business Details" : "Customer Details"}</Text>
+          <View style={styles.sectionTitleRow}>
+            <Text style={styles.sectionTitle}>{isBarber ? "Business Details" : "Customer Details"}</Text>
+            <Pressable onPress={() => {}} style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+              <Text style={styles.viewAllText}>View All</Text>
+              <Ionicons name="chevron-forward" size={14} color="#946B22" />
+            </Pressable>
+          </View>
           {details.map((item, index) => (
             <View key={`${item.label}-${item.value}`} style={[styles.detailRow, index === details.length - 1 && styles.lastRow]}>
+              <View style={styles.detailIconContainer}>
+                <Feather name={getDetailIcon(item.label)} size={16} color="#946B22" />
+              </View>
               <Text style={styles.detailLabel}>{item.label}</Text>
               <Text style={styles.detailValue} numberOfLines={1}>{item.value}</Text>
             </View>
@@ -243,9 +314,11 @@ export default function Profile({ navigation }: any) {
               onPress={() => openMenuItem(item)}
               style={({ pressed }) => [styles.menuRow, index === menu.length - 1 && styles.lastRow, pressed && styles.pressed]}
             >
-              <MenuIcon name={item.icon} size={18} color={colors.text} />
+              <View style={styles.menuIconContainer}>
+                <Feather name={item.icon} size={16} color="#946B22" />
+              </View>
               <Text style={styles.menuLabel}>{item.label}</Text>
-              <Ionicons name="chevron-forward" size={18} color={colors.secondaryText} />
+              <Ionicons name="chevron-forward" size={16} color={colors.secondaryText} />
             </Pressable>
           ))}
         </Card>
@@ -253,185 +326,256 @@ export default function Profile({ navigation }: any) {
       {isBarber ? <BarberBottomNav active="Profile" navigation={navigation} /> : <BottomNav active="Profile" navigation={navigation} />}
 
       <Modal visible={editModalVisible} transparent animationType="fade" onRequestClose={() => setEditModalVisible(false)}>
-        <View style={styles.modalOverlay}>
+        <View style={styles.modalOverlayCenter}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setEditModalVisible(false)} />
-          <View style={styles.editContainer}>
-            <Text style={styles.editTitle}>Edit Profile</Text>
+          <View style={styles.editPopUpCard}>
+            <View style={styles.popUpHeaderRow}>
+              <View style={styles.popUpHeaderTitleBox}>
+                <Feather name="edit-3" size={18} color="#946B22" style={{ marginRight: 8 }} />
+                <Text style={styles.popUpTitleText}>Edit Profile</Text>
+              </View>
+              <Pressable onPress={() => setEditModalVisible(false)} style={styles.modalCloseCircleBtn}>
+                <Feather name="x" size={16} color={colors.text} />
+              </Pressable>
+            </View>
 
-            <View style={styles.editForm}>
-              <Text style={styles.editInputLabel}>Profile Picture</Text>
-              <View style={styles.avatarPickerRow}>
-                {AVATAR_OPTIONS.map((img, idx) => {
-                  const isSelected = tempAvatar === img;
-                  return (
-                    <Pressable
-                      key={idx}
-                      onPress={() => setTempAvatar(img)}
-                      style={[styles.avatarPickerItem, isSelected && styles.avatarPickerItemActive]}
-                    >
-                      <Image source={img} style={styles.avatarPickerImg} />
-                    </Pressable>
-                  );
-                })}
+            <ScrollView showsVerticalScrollIndicator={false} style={{ flexGrow: 1 }} contentContainerStyle={styles.editScrollContent}>
+              <View style={styles.editForm}>
+                <Text style={styles.editInputLabel}>Profile Picture</Text>
+                <View style={styles.avatarPickerRow}>
+                  {AVATAR_OPTIONS.map((img, idx) => {
+                    const isSelected = tempAvatar === img;
+                    return (
+                      <Pressable
+                        key={idx}
+                        onPress={() => setTempAvatar(img)}
+                        style={[styles.avatarPickerItem, isSelected && styles.avatarPickerItemActive]}
+                      >
+                        <Image source={img} style={styles.avatarPickerImg} />
+                        {isSelected && (
+                          <View style={styles.avatarCheckBadge}>
+                            <Feather name="check" size={10} color={colors.white} />
+                          </View>
+                        )}
+                      </Pressable>
+                    );
+                  })}
 
-                <Pressable
-                  onPress={handlePickImage}
-                  style={[
-                    styles.avatarPickerItem,
-                    styles.galleryPickerBtn,
-                    typeof tempAvatar === "string" && styles.avatarPickerItemActive
-                  ]}
-                >
-                  {typeof tempAvatar === "string" ? (
-                    <Image source={{ uri: tempAvatar }} style={styles.avatarPickerImg} />
-                  ) : (
-                    <Feather name="plus" size={18} color={colors.primaryDark} />
-                  )}
-                </Pressable>
+                  <Pressable
+                    onPress={handlePickImage}
+                    style={[
+                      styles.avatarPickerItem,
+                      styles.galleryPickerBtn,
+                      typeof tempAvatar === "string" && styles.avatarPickerItemActive
+                    ]}
+                  >
+                    {typeof tempAvatar === "string" ? (
+                      <>
+                        <Image source={{ uri: tempAvatar }} style={styles.avatarPickerImg} />
+                        <View style={styles.avatarCheckBadge}>
+                          <Feather name="check" size={10} color={colors.white} />
+                        </View>
+                      </>
+                    ) : (
+                      <Feather name="plus" size={18} color="#946B22" />
+                    )}
+                  </Pressable>
+                </View>
+
+                <Text style={styles.editInputLabel}>Full Name</Text>
+                <View style={styles.inputWithIconRow}>
+                  <View style={styles.inputIconBox}>
+                    <Feather name="user" size={18} color="#555" />
+                  </View>
+                  <TextInput
+                    value={tempName}
+                    onChangeText={setTempName}
+                    style={styles.editTextInputWithIcon}
+                    placeholder="Enter full name"
+                    placeholderTextColor={colors.muted}
+                  />
+                </View>
+
+                <Text style={styles.editInputLabel}>Email</Text>
+                <View style={styles.inputWithIconRow}>
+                  <View style={styles.inputIconBox}>
+                    <Feather name="mail" size={18} color="#555" />
+                  </View>
+                  <TextInput
+                    value={tempEmail}
+                    onChangeText={setTempEmail}
+                    style={styles.editTextInputWithIcon}
+                    placeholder="Enter email"
+                    placeholderTextColor={colors.muted}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+
+                <Text style={styles.editInputLabel}>Phone Number</Text>
+                <View style={styles.inputWithIconRow}>
+                  <View style={styles.inputIconBox}>
+                    <Feather name="phone" size={18} color="#555" />
+                  </View>
+                  <TextInput
+                    value={tempPhone}
+                    onChangeText={setTempPhone}
+                    style={styles.editTextInputWithIcon}
+                    placeholder="Enter phone number"
+                    placeholderTextColor={colors.muted}
+                    keyboardType="phone-pad"
+                  />
+                </View>
+
+                {isBarber ? (
+                  <>
+                    <Text style={styles.editInputLabel}>Company / Shop Name</Text>
+                    <View style={styles.inputWithIconRow}>
+                      <View style={styles.inputIconBox}>
+                        <Feather name="home" size={18} color="#555" />
+                      </View>
+                      <TextInput
+                        value={tempShopName}
+                        onChangeText={setTempShopName}
+                        style={styles.editTextInputWithIcon}
+                        placeholder="Enter company name"
+                        placeholderTextColor={colors.muted}
+                      />
+                    </View>
+
+                    <Text style={styles.editInputLabel}>Role</Text>
+                    <View style={styles.inputWithIconRow}>
+                      <View style={styles.inputIconBox}>
+                        <Feather name="briefcase" size={18} color="#555" />
+                      </View>
+                      <TextInput
+                        value={tempRole}
+                        onChangeText={setTempRole}
+                        style={styles.editTextInputWithIcon}
+                        placeholder="e.g. Owner barber"
+                        placeholderTextColor={colors.muted}
+                      />
+                    </View>
+
+                    <Text style={styles.editInputLabel}>Working Hours</Text>
+                    <View style={styles.inputWithIconRow}>
+                      <View style={styles.inputIconBox}>
+                        <Feather name="clock" size={18} color="#555" />
+                      </View>
+                      <Pressable
+                        onPress={() => setShowHoursDropdown(!showHoursDropdown)}
+                        style={styles.editDropdownInput}
+                      >
+                        <Text style={[styles.editDropdownText, !tempWorkingHours && { color: colors.muted }]}>
+                          {tempWorkingHours || "Select working hours"}
+                        </Text>
+                        <Feather name="chevron-down" size={18} color="#555" />
+                      </Pressable>
+                    </View>
+
+                    {showHoursDropdown && (
+                      <View style={styles.dropdownOptionsContainer}>
+                        {["9:00 AM - 9:00 PM", "8:00 AM - 8:00 PM", "9:00 AM - 6:00 PM", "10:00 AM - 7:00 PM"].map((opt) => (
+                          <Pressable
+                            key={opt}
+                            onPress={() => {
+                              setTempWorkingHours(opt);
+                              setShowHoursDropdown(false);
+                            }}
+                            style={styles.dropdownOptionItem}
+                          >
+                            <Text style={[styles.dropdownOptionText, tempWorkingHours === opt && { color: "#946B22", fontFamily: fonts.bold }]}>
+                              {opt}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
+
+                    <Text style={styles.editInputLabel}>Company Description</Text>
+                    <TextInput
+                      value={tempHeadline}
+                      onChangeText={setTempHeadline}
+                      style={styles.editCompanyDescriptionInput}
+                      placeholder="Enter company details"
+                      placeholderTextColor={colors.muted}
+                      multiline
+                      numberOfLines={4}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.editInputLabel}>Grooming Preferences / Bio</Text>
+                    <TextInput
+                      value={tempHeadline}
+                      onChangeText={setTempHeadline}
+                      style={styles.editCompanyDescriptionInput}
+                      placeholder="Describe your styling preferences"
+                      placeholderTextColor={colors.muted}
+                      multiline
+                      numberOfLines={4}
+                    />
+                  </>
+                )}
               </View>
 
-              <Text style={styles.editInputLabel}>Full Name</Text>
-              <TextInput
-                value={tempName}
-                onChangeText={setTempName}
-                style={styles.editTextInput}
-                placeholder="Enter full name"
-                placeholderTextColor={colors.muted}
-              />
+              <View style={styles.editActionRow}>
+                <Pressable
+                  onPress={() => setEditModalVisible(false)}
+                  style={({ pressed }) => [styles.editCancelBtn, pressed && styles.pressed]}
+                >
+                  <Text style={styles.editCancelText}>Cancel</Text>
+                </Pressable>
 
-              <Text style={styles.editInputLabel}>Email</Text>
-              <TextInput
-                value={tempEmail}
-                onChangeText={setTempEmail}
-                style={styles.editTextInput}
-                placeholder="Enter email"
-                placeholderTextColor={colors.muted}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+                <Pressable
+                  onPress={() => {
+                    temporaryProfiles[workspace].name = tempName;
+                    temporaryProfiles[workspace].email = tempEmail;
+                    temporaryProfiles[workspace].phone = tempPhone;
+                    temporaryProfiles[workspace].headline = tempHeadline;
+                    temporaryProfiles[workspace].avatar = tempAvatar;
+                    
+                    const shopDetail = temporaryProfiles[workspace].details?.find((d: any) => d.label === "Shop" || d.label === "Home shop");
+                    if (shopDetail) {
+                      shopDetail.value = tempShopName;
+                    }
+                    const roleDetail = temporaryProfiles[workspace].details?.find((d: any) => d.label === "Role");
+                    if (roleDetail) {
+                      roleDetail.value = tempRole;
+                    }
+                    const hoursDetail = temporaryProfiles[workspace].details?.find((d: any) => d.label === "Working hours");
+                    if (hoursDetail) {
+                      hoursDetail.value = tempWorkingHours;
+                    }
 
-              <Text style={styles.editInputLabel}>Phone Number</Text>
-              <TextInput
-                value={tempPhone}
-                onChangeText={setTempPhone}
-                style={styles.editTextInput}
-                placeholder="Enter phone number"
-                placeholderTextColor={colors.muted}
-                keyboardType="phone-pad"
-              />
-
-              {isBarber ? (
-                <>
-                  <Text style={styles.editInputLabel}>Company / Shop Name</Text>
-                  <TextInput
-                    value={tempShopName}
-                    onChangeText={setTempShopName}
-                    style={styles.editTextInput}
-                    placeholder="Enter company name"
-                    placeholderTextColor={colors.muted}
-                  />
-
-                  <Text style={styles.editInputLabel}>Role</Text>
-                  <TextInput
-                    value={tempRole}
-                    onChangeText={setTempRole}
-                    style={styles.editTextInput}
-                    placeholder="e.g. Owner barber"
-                    placeholderTextColor={colors.muted}
-                  />
-
-                  <Text style={styles.editInputLabel}>Working Hours</Text>
-                  <TextInput
-                    value={tempWorkingHours}
-                    onChangeText={setTempWorkingHours}
-                    style={styles.editTextInput}
-                    placeholder="e.g. 9:00 AM - 9:00 PM"
-                    placeholderTextColor={colors.muted}
-                  />
-
-                  <Text style={styles.editInputLabel}>Company Description</Text>
-                  <TextInput
-                    value={tempHeadline}
-                    onChangeText={setTempHeadline}
-                    style={[styles.editTextInput, { minHeight: 68, textAlignVertical: "top" }]}
-                    placeholder="Enter company details"
-                    placeholderTextColor={colors.muted}
-                    multiline
-                    numberOfLines={3}
-                  />
-                </>
-              ) : (
-                <>
-                  <Text style={styles.editInputLabel}>Grooming Preferences / Bio</Text>
-                  <TextInput
-                    value={tempHeadline}
-                    onChangeText={setTempHeadline}
-                    style={[styles.editTextInput, { minHeight: 68, textAlignVertical: "top" }]}
-                    placeholder="Describe your styling preferences"
-                    placeholderTextColor={colors.muted}
-                    multiline
-                    numberOfLines={3}
-                  />
-                </>
-              )}
-            </View>
-
-            <View style={styles.editActionRow}>
-              <Pressable
-                onPress={() => setEditModalVisible(false)}
-                style={({ pressed }) => [styles.editCancelBtn, pressed && styles.pressed]}
-              >
-                <Text style={styles.editCancelText}>Cancel</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => {
-                  temporaryProfiles[workspace].name = tempName;
-                  temporaryProfiles[workspace].email = tempEmail;
-                  temporaryProfiles[workspace].phone = tempPhone;
-                  temporaryProfiles[workspace].headline = tempHeadline;
-                  temporaryProfiles[workspace].avatar = tempAvatar;
-                  
-                  const shopDetail = temporaryProfiles[workspace].details?.find((d: any) => d.label === "Shop" || d.label === "Home shop");
-                  if (shopDetail) {
-                    shopDetail.value = tempShopName;
-                  }
-                  const roleDetail = temporaryProfiles[workspace].details?.find((d: any) => d.label === "Role");
-                  if (roleDetail) {
-                    roleDetail.value = tempRole;
-                  }
-                  const hoursDetail = temporaryProfiles[workspace].details?.find((d: any) => d.label === "Working hours");
-                  if (hoursDetail) {
-                    hoursDetail.value = tempWorkingHours;
-                  }
-
-                  setProfileName(tempName);
-                  setProfileEmail(tempEmail);
-                  setShopName(tempShopName);
-                  setRole(tempRole);
-                  setWorkingHours(tempWorkingHours);
-                  setPhone(tempPhone);
-                  setProfileHeadline(tempHeadline);
-                  setProfileAvatar(tempAvatar);
-                  setEditModalVisible(false);
-                }}
-                style={({ pressed }) => [styles.editSaveBtn, pressed && styles.pressed]}
-              >
-                <Text style={styles.editSaveText}>Save Changes</Text>
-              </Pressable>
-            </View>
+                    setProfileName(tempName);
+                    setProfileEmail(tempEmail);
+                    setShopName(tempShopName);
+                    setRole(tempRole);
+                    setWorkingHours(tempWorkingHours);
+                    setPhone(tempPhone);
+                    setProfileHeadline(tempHeadline);
+                    setProfileAvatar(tempAvatar);
+                    setEditModalVisible(false);
+                  }}
+                  style={({ pressed }) => [styles.editSaveBtn, pressed && styles.pressed]}
+                >
+                  <Text style={styles.editSaveText}>Save Changes</Text>
+                </Pressable>
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
 
       <Modal visible={privacyModalVisible} transparent animationType="slide" onRequestClose={() => setPrivacyModalVisible(false)}>
-        <View style={styles.modalOverlay}>
+        <View style={styles.privacyOverlay}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setPrivacyModalVisible(false)} />
           <View style={styles.privacyContainer}>
             <View style={styles.privacyHeader}>
               <Text style={styles.privacyTitle}>Privacy Settings</Text>
               <Pressable onPress={() => setPrivacyModalVisible(false)} style={styles.privacyCloseBtn}>
-                <Feather name="x" size={20} color={colors.text} />
+                <Feather name="x" size={16} color={colors.text} />
               </Pressable>
             </View>
 
@@ -494,246 +638,276 @@ export default function Profile({ navigation }: any) {
   );
 }
 
-function buildStats(
-  workspace: Workspace,
-  values: { activeBookings: number; pendingRequests: number; queue: number; payout: number; rewardPoints: number; savedShops: number }
-) {
-  if (workspace === "Barber") {
-    return [
-      { label: "Pending Requests", value: String(values.pendingRequests) },
-      { label: "Today Queue", value: String(values.queue) },
-      { label: "Payout", value: `$${values.payout}` }
-    ];
-  }
-  return [
-    { label: "Active Bookings", value: String(values.activeBookings) },
-    { label: "Reward Points", value: String(values.rewardPoints) },
-    { label: "Saved Shops", value: String(values.savedShops) }
-  ];
-}
-
-function ProfileMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.profileMetric}>
-      <Text style={styles.metricLabel}>{label}</Text>
-      <Text style={styles.metricValue} numberOfLines={1}>{value}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.background
   },
   identityCard: {
-    gap: 14,
     marginTop: 6,
-    marginBottom: 14
+    marginBottom: 14,
+    borderRadius: 24,
+    overflow: "hidden",
+    padding: 20,
+    backgroundColor: colors.white,
+    position: "relative"
+  },
+  cardPatternDark: {
+    position: 'absolute',
+    top: -120,
+    left: -120,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: '#28231E',
+    opacity: 0.95
+  },
+  cardPatternGold: {
+    position: 'absolute',
+    top: -120,
+    left: -120,
+    width: 242,
+    height: 242,
+    borderRadius: 121,
+    borderWidth: 2,
+    borderColor: '#C89A43',
+    backgroundColor: 'transparent'
   },
   identityTop: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 14
+    gap: 14,
+    zIndex: 2
   },
-  editProfileBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.white,
-    alignItems: "center",
-    justifyContent: "center"
+  avatarWrapper: {
+    borderRadius: 40,
+    borderWidth: 2.5,
+    borderColor: "#C89A43",
+    padding: 3,
+    backgroundColor: colors.white
   },
   avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    borderWidth: 2,
-    borderColor: colors.primary
+    width: 68,
+    height: 68,
+    borderRadius: 34
   },
   identityCopy: {
     flex: 1,
-    minWidth: 0
+    minWidth: 0,
+    marginLeft: 4
   },
-  badgeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 6
-  },
-  roleLabel: {
-    color: colors.primaryDark,
-    fontFamily: fonts.bold,
-    fontSize: 10,
-    textTransform: "uppercase"
-  },
-  badge: {
-    borderRadius: radius.full,
-    backgroundColor: colors.black,
+  roleBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#FDF7EC",
     paddingHorizontal: 8,
-    paddingVertical: 4
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginBottom: 4
   },
-  badgeText: {
-    color: colors.white,
+  roleBadgeText: {
+    color: "#946B22",
     fontFamily: fonts.bold,
-    fontSize: 8,
-    textTransform: "uppercase"
+    fontSize: 9,
+    letterSpacing: 0.5
   },
   name: {
     color: colors.text,
-    fontFamily: fonts.headingSemi,
-    fontSize: 20
+    fontFamily: fonts.heading,
+    fontSize: 22
   },
   email: {
     color: colors.secondaryText,
     fontFamily: fonts.body,
-    fontSize: 16,
-    marginTop: 4
+    fontSize: 13,
+    marginTop: 2
   },
-  headline: {
+  premiumBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: "#FDF7EC",
+    borderWidth: 1,
+    borderColor: "#F3E2C3",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 6
+  },
+  premiumBadgeText: {
+    color: "#946B22",
+    fontFamily: fonts.semibold,
+    fontSize: 11
+  },
+  editProfileColumn: {
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  editCircleBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2
+  },
+  editProfileText: {
     color: colors.secondaryText,
-    fontFamily: fonts.body,
-    fontSize: 16,
-    lineHeight: 22
+    fontFamily: fonts.medium,
+    fontSize: 10,
+    marginTop: 6
   },
-  statsGrid: {
+  notificationBtn: {
+    position: "relative",
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primaryDark
+  },
+  statsRow: {
     flexDirection: "row",
     gap: 10,
     marginBottom: 14
   },
   statCard: {
     flex: 1,
-    minHeight: 84,
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#ECECE6",
+    minHeight: 100,
+    position: "relative"
+  },
+  statTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6
+  },
+  statIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: "#FDF7EC",
+    alignItems: "center",
     justifyContent: "center"
   },
   statValue: {
-    color: colors.primaryDark,
+    color: "#946B22",
     fontFamily: fonts.heading,
-    fontSize: 23
+    fontSize: 20,
+    marginLeft: 8
   },
   statLabel: {
     color: colors.secondaryText,
     fontFamily: fonts.medium,
-    fontSize: 16,
-    lineHeight: 22,
-    marginTop: 4
-  },
-  focusCard: {
-    gap: 14,
-    marginBottom: 14,
-    borderColor: "rgba(212,168,90,0.26)",
-    backgroundColor: "rgba(212,168,90,0.08)"
-  },
-  barberFocusCard: {
-    borderColor: "rgba(17,17,17,0.14)",
-    backgroundColor: "#FFFFFF"
-  },
-  focusHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: 12
-  },
-  focusTitle: {
-    color: colors.text,
-    fontFamily: fonts.headingSemi,
-    fontSize: 15
-  },
-  focusCopy: {
-    color: colors.secondaryText,
-    fontFamily: fonts.body,
-    fontSize: 16,
-    lineHeight: 22,
-    marginTop: 4
-  },
-  focusStatus: {
-    color: colors.primaryDark,
-    fontFamily: fonts.semibold,
-    fontSize: 10,
-    textAlign: "right"
-  },
-  metricGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10
-  },
-  profileMetric: {
-    flexGrow: 1,
-    flexBasis: "30%",
-    minWidth: 96,
-    minHeight: 58,
-    borderRadius: radius.sm,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.border,
-    justifyContent: "center",
-    paddingHorizontal: 10
-  },
-  metricLabel: {
-    color: colors.muted,
-    fontFamily: fonts.body,
-    fontSize: 10
-  },
-  metricValue: {
-    color: colors.text,
-    fontFamily: fonts.semibold,
     fontSize: 12,
-    marginTop: 4
+    lineHeight: 16
+  },
+  statArrowCircle: {
+    position: "absolute",
+    bottom: 12,
+    right: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E3E4DE",
+    alignItems: "center",
+    justifyContent: "center"
   },
   detailsCard: {
     padding: 0,
+    borderRadius: 20,
     overflow: "hidden",
-    marginBottom: 14
+    marginBottom: 14,
+    backgroundColor: colors.white
+  },
+  sectionTitleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8
   },
   sectionTitle: {
     color: colors.text,
     fontFamily: fonts.headingSemi,
-    fontSize: 15,
-    paddingHorizontal: 14,
-    paddingTop: 14,
-    paddingBottom: 4
+    fontSize: 16
+  },
+  viewAllText: {
+    color: "#946B22",
+    fontFamily: fonts.bold,
+    fontSize: 12
   },
   detailRow: {
-    minHeight: 48,
+    height: 52,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: colors.border
   },
-  detailLabel: {
-    width: 118,
-    color: colors.secondaryText,
-    fontFamily: fonts.medium,
-    fontSize: 16
+  detailIconContainer: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    backgroundColor: "#FDF7EC",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12
   },
-  detailValue: {
+  detailLabel: {
     flex: 1,
     color: colors.text,
+    fontFamily: fonts.medium,
+    fontSize: 14
+  },
+  detailValue: {
+    color: colors.secondaryText,
     fontFamily: fonts.semibold,
-    fontSize: 12,
+    fontSize: 13,
     textAlign: "right"
   },
   menuCard: {
     padding: 0,
-    borderRadius: radius.md,
-    overflow: "hidden"
+    borderRadius: 20,
+    overflow: "hidden",
+    backgroundColor: colors.white
   },
   menuRow: {
-    minHeight: 56,
+    height: 54,
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: colors.border
   },
-  lastRow: {
-    borderBottomWidth: 0
+  menuIconContainer: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    backgroundColor: "#FDF7EC",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12
   },
   menuLabel: {
     flex: 1,
@@ -741,121 +915,253 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     fontSize: 14
   },
+  lastRow: {
+    borderBottomWidth: 0
+  },
   pressed: {
     opacity: 0.75,
     backgroundColor: colors.elevated
   },
-  modalOverlay: {
+  modalOverlayCenter: {
     flex: 1,
-    backgroundColor: "rgba(15,17,21,0.76)",
+    backgroundColor: "rgba(15,17,21,0.65)",
     justifyContent: "center",
     alignItems: "center",
-    padding: 24
+    padding: 16
   },
-  editContainer: {
+  editPopUpCard: {
     width: "100%",
-    maxWidth: 340,
+    maxWidth: 480,
+    maxHeight: "86%",
     backgroundColor: colors.white,
-    borderRadius: radius.lg,
-    padding: 24
+    borderRadius: 24,
+    paddingTop: 18,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 12,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.06)"
+  },
+  popUpHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingBottom: 12,
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.06)"
+  },
+  popUpHeaderTitleBox: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  popUpTitleText: {
+    color: colors.text,
+    fontFamily: fonts.heading,
+    fontSize: 18
+  },
+  modalCloseCircleBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#F5F5F5",
+    alignItems: "center",
+    justifyContent: "center"
   },
   editTitle: {
     color: colors.text,
     fontFamily: fonts.heading,
     fontSize: 20,
-    marginBottom: 20,
-    textAlign: "center"
+    textAlign: "center",
+    marginVertical: 12
+  },
+  goldDivider: {
+    width: 36,
+    height: 3,
+    backgroundColor: "#C89A43",
+    borderRadius: 1.5,
+    alignSelf: "center",
+    marginBottom: 16
+  },
+  editScrollContent: {
+    paddingBottom: 24
   },
   editForm: {
-    gap: 12,
-    marginBottom: 24
+    gap: 14,
+    marginBottom: 20
   },
   editInputLabel: {
     color: colors.text,
-    fontFamily: fonts.semibold,
-    fontSize: 12
+    fontFamily: fonts.bold,
+    fontSize: 13,
+    marginTop: 8
   },
-  editTextInput: {
-    minHeight: 44,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
+  inputWithIconRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10
+  },
+  inputIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#F8F8F8",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  editTextInputWithIcon: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#F8F8F8",
+    paddingHorizontal: 16,
     color: colors.text,
-    fontFamily: fonts.body,
-    fontSize: 12,
-    paddingHorizontal: 12
+    fontFamily: fonts.medium,
+    fontSize: 14
+  },
+  editDropdownInput: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "#F8F8F8",
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  editDropdownText: {
+    color: colors.text,
+    fontFamily: fonts.medium,
+    fontSize: 14
+  },
+  dropdownOptionsContainer: {
+    backgroundColor: "#F8F8F8",
+    borderRadius: 12,
+    padding: 8,
+    marginTop: -8,
+    gap: 4
+  },
+  dropdownOptionItem: {
+    height: 40,
+    justifyContent: "center",
+    paddingHorizontal: 12,
+    borderRadius: 8
+  },
+  dropdownOptionText: {
+    color: colors.text,
+    fontFamily: fonts.medium,
+    fontSize: 14
+  },
+  editCompanyDescriptionInput: {
+    width: "100%",
+    minHeight: 90,
+    borderRadius: 12,
+    backgroundColor: "#F8F8F8",
+    padding: 16,
+    color: colors.text,
+    fontFamily: fonts.medium,
+    fontSize: 14,
+    textAlignVertical: "top"
   },
   editActionRow: {
     flexDirection: "row",
-    gap: 12
+    gap: 12,
+    marginTop: 20
   },
   editCancelBtn: {
     flex: 1,
-    minHeight: 44,
-    borderRadius: radius.full,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: colors.border,
-    justifyContent: "center",
+    borderColor: "#946B22",
+    backgroundColor: colors.white,
     alignItems: "center",
-    backgroundColor: colors.white
+    justifyContent: "center"
   },
   editCancelText: {
-    color: colors.text,
-    fontFamily: fonts.semibold,
-    fontSize: 12
+    color: "#946B22",
+    fontFamily: fonts.bold,
+    fontSize: 14
   },
   editSaveBtn: {
     flex: 1,
-    minHeight: 44,
-    borderRadius: radius.full,
-    backgroundColor: colors.primaryDark,
-    justifyContent: "center",
-    alignItems: "center"
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#946B22",
+    alignItems: "center",
+    justifyContent: "center"
   },
   editSaveText: {
     color: colors.white,
-    fontFamily: fonts.semibold,
-    fontSize: 12
+    fontFamily: fonts.bold,
+    fontSize: 14
   },
   avatarPickerRow: {
     flexDirection: "row",
     gap: 12,
     alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 10
+    justifyContent: "flex-start",
+    marginVertical: 4
   },
   avatarPickerItem: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     borderWidth: 2,
     borderColor: "transparent",
-    overflow: "hidden",
-    padding: 2
+    position: "relative"
   },
   avatarPickerItemActive: {
-    borderColor: colors.primary
+    borderColor: "#C89A43"
   },
   avatarPickerImg: {
     width: "100%",
     height: "100%",
-    borderRadius: 22
+    borderRadius: 28
+  },
+  avatarCheckBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#946B22",
+    alignItems: "center",
+    justifyContent: "center"
   },
   galleryPickerBtn: {
-    backgroundColor: colors.elevated,
+    backgroundColor: "#FDF7EC",
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: "#F3E2C3",
     alignItems: "center",
     justifyContent: "center",
     borderStyle: "dashed"
   },
+  privacyOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15,17,21,0.65)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16
+  },
   privacyContainer: {
-    width: "100%",
-    maxWidth: 340,
+    width: "95%",
+    maxWidth: 360,
     backgroundColor: colors.white,
-    borderRadius: radius.lg,
-    padding: 24
+    borderRadius: 32,
+    borderWidth: 1.5,
+    borderColor: "#C89A43",
+    padding: 24,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10
   },
   privacyHeader: {
     flexDirection: "row",
@@ -871,6 +1177,10 @@ const styles = StyleSheet.create({
   privacyCloseBtn: {
     width: 32,
     height: 32,
+    borderRadius: 16,
+    backgroundColor: "#FDF7EC",
+    borderWidth: 1,
+    borderColor: "#F3E2C3",
     alignItems: "center",
     justifyContent: "center"
   },

@@ -31,3 +31,22 @@ export function getCurrencyFromAddress(address?: string | null): CurrencyConfig 
   
   return { code: "USD", symbol: "$" };
 }
+
+export function convertCurrencyAmount(baseUsdAmount: number, targetCode: string): number {
+  switch (targetCode) {
+    case "INR":
+      return Math.round(baseUsdAmount * 83.5);
+    case "GBP":
+      return Math.round(baseUsdAmount * 0.78);
+    case "EUR":
+      return Math.round(baseUsdAmount * 0.92);
+    case "CAD":
+      return Math.round(baseUsdAmount * 1.37);
+    case "AUD":
+      return Math.round(baseUsdAmount * 1.52);
+    case "AED":
+      return Math.round(baseUsdAmount * 3.67);
+    default:
+      return baseUsdAmount;
+  }
+}

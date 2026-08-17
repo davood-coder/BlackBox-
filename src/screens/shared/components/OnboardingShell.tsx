@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import type { ImageSourcePropType } from "react-native";
-import { ImageBackground, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Image, ImageBackground, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { colors, fonts, radius, shadows, spacing } from "../../../theme";
+import { images } from "../../../assets/images";
 
 type OnboardingShellProps = {
   image: ImageSourcePropType;
@@ -164,6 +165,11 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.92)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.86)"
+  },
+  brandMarkImage: {
+    width: 30,
+    height: 30,
+    borderRadius: 15
   },
   brandMark: {
     width: 28,
