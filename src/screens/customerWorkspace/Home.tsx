@@ -180,6 +180,7 @@ const styles = StyleSheet.create({
   screenContent: { paddingTop: 4 },
   topbar: { minHeight: 58, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   brandRow: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1, minWidth: 0 },
+  brandMarkImage: { width: 38, height: 38, borderRadius: 19 },
   brandMark: { width: 38, height: 38, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: colors.primary },
   brand: { color: colors.text, fontFamily: fonts.headingHeavy, fontSize: 20 },
   locationRow: { flexDirection: "row", alignItems: "center", gap: 3, marginTop: 2, maxWidth: 210 },

@@ -21,6 +21,7 @@ type ProfileMenuItem = {
 };
 
 const customerMenu: ProfileMenuItem[] = [
+  { label: "Edit Profile", icon: "user-check", route: "EditProfile" },
   { label: "My Bookings", icon: "calendar", route: "MyBookings" },
   { label: "Favorite Shops & Barbers", icon: "heart", route: "Favorites" },
   { label: "Saved Style Photos", icon: "image", route: "Profile" },
@@ -32,6 +33,7 @@ const customerMenu: ProfileMenuItem[] = [
 ];
 
 const barberMenu: ProfileMenuItem[] = [
+  { label: "Edit Profile", icon: "user-check", route: "EditProfile" },
   { label: "Notifications", icon: "bell", route: "Notifications" },
   { label: "Help & Support", icon: "help-circle", route: "Profile" },
   { label: "Privacy & Safety", icon: "shield", route: "Privacy" },
@@ -172,7 +174,24 @@ export default function Profile({ navigation }: any) {
         { label: "Saved shops", value: `${favoriteShopIds.length} shops` }
       ];
 
+  function openEditModal() {
+    setTempName(profileName);
+    setTempEmail(profileEmail);
+    setTempShopName(shopName);
+    setTempRole(role);
+    setTempWorkingHours(workingHours);
+    setTempPhone(phone);
+    setTempHeadline(profileHeadline);
+    setTempAvatar(profileAvatar);
+    setShowHoursDropdown(false);
+    setEditModalVisible(true);
+  }
+
   function openMenuItem(item: ProfileMenuItem) {
+    if (item.label === "Edit Profile") {
+      openEditModal();
+      return;
+    }
     if (item.route === "Privacy") {
       setPrivacyModalVisible(true);
       return;
@@ -237,18 +256,7 @@ export default function Profile({ navigation }: any) {
             </View>
             <View style={styles.editProfileColumn}>
               <Pressable
-                onPress={() => {
-                  setTempName(profileName);
-                  setTempEmail(profileEmail);
-                  setTempShopName(shopName);
-                  setTempRole(role);
-                  setTempWorkingHours(workingHours);
-                  setTempPhone(phone);
-                  setTempHeadline(profileHeadline);
-                  setTempAvatar(profileAvatar);
-                  setShowHoursDropdown(false);
-                  setEditModalVisible(true);
-                }}
+                onPress={openEditModal}
                 style={({ pressed }) => [styles.editCircleBtn, pressed && styles.pressed]}
               >
                 <Feather name="edit-2" size={18} color="#946B22" />
@@ -317,20 +325,21 @@ export default function Profile({ navigation }: any) {
       </Screen>
       {isBarber ? <BarberBottomNav active="Profile" navigation={navigation} /> : <BottomNav active="Profile" navigation={navigation} />}
 
-      <Modal visible={editModalVisible} transparent animationType="slide" onRequestClose={() => setEditModalVisible(false)}>
-        <View style={styles.modalOverlay}>
+      <Modal visible={editModalVisible} transparent animationType="fade" onRequestClose={() => setEditModalVisible(false)}>
+        <View style={styles.modalOverlayCenter}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setEditModalVisible(false)} />
-          <View style={styles.editContainer}>
-            <View style={styles.modalHandle} />
-            
-            <Pressable onPress={() => setEditModalVisible(false)} style={styles.modalCloseBtn}>
-              <Feather name="x" size={18} color="#111" />
-            </Pressable>
+          <View style={styles.editPopUpCard}>
+            <View style={styles.popUpHeaderRow}>
+              <View style={styles.popUpHeaderTitleBox}>
+                <Feather name="edit-3" size={18} color="#946B22" style={{ marginRight: 8 }} />
+                <Text style={styles.popUpTitleText}>Edit Profile</Text>
+              </View>
+              <Pressable onPress={() => setEditModalVisible(false)} style={styles.modalCloseCircleBtn}>
+                <Feather name="x" size={16} color={colors.text} />
+              </Pressable>
+            </View>
 
-            <Text style={styles.editTitle}>Edit Profile</Text>
-            <View style={styles.goldDivider} />
-
-            <ScrollView showsVerticalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={styles.editScrollContent}>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ flexGrow: 1 }} contentContainerStyle={styles.editScrollContent}>
               <View style={styles.editForm}>
                 <Text style={styles.editInputLabel}>Profile Picture</Text>
                 <View style={styles.avatarPickerRow}>
@@ -913,45 +922,55 @@ const styles = StyleSheet.create({
     opacity: 0.75,
     backgroundColor: colors.elevated
   },
-  modalOverlay: {
+  modalOverlayCenter: {
     flex: 1,
-    backgroundColor: "rgba(15,17,21,0.5)",
-    justifyContent: "flex-end"
+    backgroundColor: "rgba(15,17,21,0.65)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16
   },
-  editContainer: {
+  editPopUpCard: {
     width: "100%",
+    maxWidth: 480,
+    maxHeight: "86%",
     backgroundColor: colors.white,
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
-    paddingTop: 16,
-    paddingHorizontal: 24,
-    paddingBottom: 30,
-    maxHeight: "92%",
+    borderRadius: 24,
+    paddingTop: 18,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
     shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: -10 },
-    elevation: 10
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 12,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.06)"
   },
-  modalHandle: {
-    width: 40,
-    height: 4,
-    backgroundColor: "#ECECE6",
-    borderRadius: 2,
-    alignSelf: "center",
-    marginBottom: 10
+  popUpHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingBottom: 12,
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.06)"
   },
-  modalCloseBtn: {
-    position: "absolute",
-    top: 16,
-    left: 24,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  popUpHeaderTitleBox: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  popUpTitleText: {
+    color: colors.text,
+    fontFamily: fonts.heading,
+    fontSize: 18
+  },
+  modalCloseCircleBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: "#F5F5F5",
     alignItems: "center",
-    justifyContent: "center",
-    zIndex: 10
+    justifyContent: "center"
   },
   editTitle: {
     color: colors.text,

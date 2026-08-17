@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ComponentProps } from "react";
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -16,6 +17,7 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import { PrimaryButton } from "../../components/ui";
 import { colors, fonts, radius, shadows, spacing } from "../../theme";
 import { useBooking } from "../../state/BookingContext";
+import { images } from "../../assets/images";
 
 type Role = "Customer" | "Barber";
 type FeatherIcon = ComponentProps<typeof Feather>["name"];
@@ -228,6 +230,11 @@ const styles = StyleSheet.create({
   },
   brandCompact: {
     marginBottom: 26
+  },
+  brandMarkImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22
   },
   brandMark: {
     width: 44,

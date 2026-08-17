@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { ComponentProps } from "react";
 import { ActivityIndicator, Image, Linking, Modal, Pressable, StyleSheet, Switch, Text, TextInput, View, LayoutAnimation, Platform, UIManager, ScrollView } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
@@ -445,7 +445,51 @@ function ShopPanel({ navigation }: { navigation: any }) {
   const [locName, setLocName] = useState("");
   const [locAddress, setLocAddress] = useState("");
   const [locCoords, setLocCoords] = useState({ latitude: 14.91342, longitude: 79.9855 });
+  const [locZoom, setLocZoom] = useState(14);
   const [resolvingLocation, setResolvingLocation] = useState(false);
+  const [autoDetectedBadge, setAutoDetectedBadge] = useState(false);
+  const locNameDebounceRef = useRef<any>(null);
+
+  async function handleAutoDetectAddressFromName(nameText: string) {
+    const term = nameText.trim();
+    if (term.length < 3) return;
+
+    setResolvingLocation(true);
+    try {
+      let res = await geocodeArea(term);
+      if (!res) {
+        const cleanedTerm = term.replace(/\b(shop|salon|barber|branch|base|store|parlor|studio|primary|secondary|home|my)\b/gi, "").trim();
+        if (cleanedTerm.length >= 3) {
+          res = await geocodeArea(cleanedTerm);
+        }
+      }
+
+      if (res) {
+        setLocAddress(res.label);
+        setLocCoords(res.coordinates);
+        setAutoDetectedBadge(true);
+      }
+    } catch (e) {
+      console.log("Auto detect address error:", e);
+    } finally {
+      setResolvingLocation(false);
+    }
+  }
+
+  function handleLocNameChange(text: string) {
+    setLocName(text);
+    setAutoDetectedBadge(false);
+
+    if (locNameDebounceRef.current) {
+      clearTimeout(locNameDebounceRef.current);
+    }
+
+    if (text.trim().length >= 3) {
+      locNameDebounceRef.current = setTimeout(() => {
+        handleAutoDetectAddressFromName(text);
+      }, 500);
+    }
+  }
 
   function handleAddWorker() {
     setEditingWorkerId(null);
@@ -511,6 +555,7 @@ function ShopPanel({ navigation }: { navigation: any }) {
     setLocName("");
     setLocAddress("");
     setLocCoords({ latitude: 14.91342, longitude: 79.9855 });
+    setAutoDetectedBadge(false);
     setLocFormVisible(true);
   }
 
@@ -519,6 +564,7 @@ function ShopPanel({ navigation }: { navigation: any }) {
     setLocName(loc.name);
     setLocAddress(loc.address);
     setLocCoords(loc.coordinates);
+    setAutoDetectedBadge(false);
     setLocFormVisible(true);
   }
 
@@ -872,6 +918,8 @@ function ShopPanel({ navigation }: { navigation: any }) {
                       origin={locCoords} 
                       height={200} 
                       originLabel={locAddress}
+                      zoom={locZoom}
+                      onZoomChange={setLocZoom}
                       onMapPress={async (coords) => {
                         setLocCoords(coords);
                         setResolvingLocation(true);
@@ -892,8 +940,12 @@ function ShopPanel({ navigation }: { navigation: any }) {
                       <Text style={styles.mapPinText}>Pinpoint your service area</Text>
                     </View>
                     <View style={styles.mapZoomControls}>
-                      <Pressable style={styles.zoomBtn}><Text style={styles.zoomBtnText}>+</Text></Pressable>
-                      <Pressable style={styles.zoomBtn}><Text style={styles.zoomBtnText}>-</Text></Pressable>
+                      <Pressable onPress={() => setLocZoom((z) => Math.min(18, z + 1))} style={styles.zoomBtn}>
+                        <Text style={styles.zoomBtnText}>+</Text>
+                      </Pressable>
+                      <Pressable onPress={() => setLocZoom((z) => Math.max(3, z - 1))} style={styles.zoomBtn}>
+                        <Text style={styles.zoomBtnText}>-</Text>
+                      </Pressable>
                     </View>
                   </Card>
 
@@ -910,21 +962,35 @@ function ShopPanel({ navigation }: { navigation: any }) {
                       </View>
                       <TextInput
                         value={locName}
-                        onChangeText={setLocName}
-                        placeholder="e.g. Current Base"
+                        onChangeText={handleLocNameChange}
+                        onSubmitEditing={() => handleAutoDetectAddressFromName(locName)}
+                        onBlur={() => handleAutoDetectAddressFromName(locName)}
+                        placeholder="e.g. Nellore / Primary Base"
                         placeholderTextColor={colors.muted}
                         style={styles.editTextInputWithIcon}
                       />
                     </View>
 
-                    <Text style={styles.editInputLabel}>Address</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12, marginBottom: 4 }}>
+                      <Text style={[styles.editInputLabel, { marginBottom: 0 }]}>Address</Text>
+                      {autoDetectedBadge ? (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "rgba(30,141,91,0.12)", paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.full }}>
+                          <Feather name="check-circle" size={12} color={colors.success} />
+                          <Text style={{ color: colors.success, fontFamily: fonts.medium, fontSize: 10 }}>Auto-Detected</Text>
+                        </View>
+                      ) : null}
+                    </View>
                     <View style={styles.inputWithIconRow}>
                       <View style={styles.inputIconBox}>
                         <Feather name="map-pin" size={18} color="#555" />
                       </View>
                       <TextInput
                         value={locAddress}
-                        onChangeText={setLocAddress}
+                        onChangeText={(text) => {
+                          setLocAddress(text);
+                          setAutoDetectedBadge(false);
+                        }}
+                        onSubmitEditing={handleGeocodeSearch}
                         placeholder="Search address or location"
                         placeholderTextColor={colors.muted}
                         style={[styles.editTextInputWithIcon, { flex: 1 }]}

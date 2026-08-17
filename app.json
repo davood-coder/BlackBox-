@@ -21,6 +21,7 @@
       "expo-font",
       "expo-status-bar"
     ],
+    "icon": "./src/assets/images/black-box-mark.png",
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -37,7 +38,8 @@
       }
     },
     "web": {
-      "bundler": "metro"
+      "bundler": "metro",
+      "favicon": "./src/assets/images/black-box-mark.png"
     }
   }
 }
