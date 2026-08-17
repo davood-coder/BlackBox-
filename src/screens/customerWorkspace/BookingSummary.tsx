@@ -44,7 +44,7 @@ export default function BookingSummary({ navigation }) {
       </SummarySection>
 
       {selectedAddOns.length ? (
-        <SummarySection title="Add-ons">
+        <SummarySection title="Add-Ons">
           <View style={styles.stackedRows}>
             {selectedAddOns.map((addOn) => (
               <RowCard key={addOn.id} icon={addOn.icon} title={addOn.label} subtitle={addOn.duration} price={`${currency.symbol}${addOn.price}`} />

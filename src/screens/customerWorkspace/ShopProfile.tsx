@@ -16,8 +16,11 @@ export default function ShopProfile({ navigation }: any) {
     selectedBarber,
     setSelectedBarber,
     favoriteShopIds,
-    toggleFavoriteShop
+    toggleFavoriteShop,
+    currency,
+    themeMode
   } = useBooking();
+  const isDark = themeMode === "dark";
   const isFavorite = favoriteShopIds.includes(selectedShop.id);
   const shopServices = selectedShop.services || services;
   const shopBarbers = selectedShop.bestBarbers || [];
@@ -46,7 +49,7 @@ export default function ShopProfile({ navigation }: any) {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, isDark && { backgroundColor: "#121214" }]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <ImageBackground source={selectedShop.image} resizeMode="cover" style={[styles.hero, { height: heroHeight }]}>
           <LinearGradient colors={["rgba(15,17,21,0.18)", "rgba(15,17,21,0.76)"]} style={styles.heroOverlay}>
@@ -127,7 +130,7 @@ export default function ShopProfile({ navigation }: any) {
                     <Text style={styles.serviceDescription} numberOfLines={1}>{service.description}</Text>
                     <Text style={styles.serviceDuration}>{service.duration}</Text>
                   </View>
-                  <Text style={styles.servicePrice}>${service.price}</Text>
+                  <Text style={styles.servicePrice}>{currency.symbol}{service.price}</Text>
                 </Pressable>
               );
             })}

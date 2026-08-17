@@ -4,14 +4,11 @@ export type CurrencyConfig = {
 };
 
 export function getCurrencyFromAddress(address?: string | null): CurrencyConfig {
-  if (!address) return { code: "USD", symbol: "$" };
+  if (!address) return { code: "INR", symbol: "₹" };
   const lower = address.toLowerCase();
   
-  if (lower.includes("india") || lower.includes("in")) {
-    // Specifically verify boundaries to prevent match errors on strings like "New York, USA" or "Indiana, USA"
-    if (/\b(india|in)\b/i.test(lower) || lower.includes(", india") || lower.endsWith(" india")) {
-      return { code: "INR", symbol: "₹" };
-    }
+  if (lower.includes("united states") || lower.includes("usa") || lower.includes("new york") || lower.includes("los angeles")) {
+    return { code: "USD", symbol: "$" };
   }
   if (lower.includes("united kingdom") || lower.includes("gb") || lower.includes("uk") || lower.includes("london") || lower.includes("england")) {
     return { code: "GBP", symbol: "£" };
@@ -29,7 +26,7 @@ export function getCurrencyFromAddress(address?: string | null): CurrencyConfig 
     return { code: "AED", symbol: "AED " };
   }
   
-  return { code: "USD", symbol: "$" };
+  return { code: "INR", symbol: "₹" };
 }
 
 export function convertCurrencyAmount(baseUsdAmount: number, targetCode: string): number {

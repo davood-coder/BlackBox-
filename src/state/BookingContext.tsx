@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
-import { Platform } from "react-native";
+import { Platform, useColorScheme } from "react-native";
 import * as Location from "expo-location";
 import {
   barbers,
@@ -65,6 +65,10 @@ type BookingContextValue = {
   toggleFavoriteShop: (shopId: string) => void;
   currency: CurrencyConfig;
   setCurrency: Dispatch<SetStateAction<CurrencyConfig>>;
+  themeMode: "light" | "dark";
+  setThemeMode: Dispatch<SetStateAction<"light" | "dark">>;
+  shopOpen: boolean;
+  setShopOpen: Dispatch<SetStateAction<boolean>>;
 };
 
 const initialShops = fallbackShops();
@@ -86,7 +90,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const [workspace, setWorkspace] = useState<Workspace>("Customer");
   const [notifications, setNotifications] = useState<AppNotification[]>(appNotifications);
   const [favoriteShopIds, setFavoriteShopIds] = useState<string[]>([barbershops[0].id]);
-  const [currency, setCurrency] = useState<CurrencyConfig>({ code: "USD", symbol: "$" });
+  const [currency, setCurrency] = useState<CurrencyConfig>({ code: "INR", symbol: "₹" });
+  const [themeMode, setThemeMode] = useState<"light" | "dark">("light");
+  const [shopOpen, setShopOpen] = useState(true);
 
   useEffect(() => {
     if (selectedShop?.address) {
@@ -299,7 +305,11 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     favoriteShopIds,
     toggleFavoriteShop,
     currency,
-    setCurrency
+    setCurrency,
+    themeMode,
+    setThemeMode,
+    shopOpen,
+    setShopOpen
   };
 
   return <BookingContext.Provider value={value}>{children}</BookingContext.Provider>;

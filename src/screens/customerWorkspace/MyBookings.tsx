@@ -9,24 +9,25 @@ import { colors, fonts, radius } from "../../theme";
 
 export default function MyBookings({ navigation }) {
   const [tab, setTab] = useState("Upcoming");
-  const { bookings, currency } = useBooking();
+  const { bookings, currency, themeMode } = useBooking();
+  const isDark = themeMode === "dark";
   const upcomingBookings = bookings.filter((booking) => booking.status === "Confirmed" || booking.status === "Pending");
   const pastBookings = bookings.filter((booking) => booking.status === "Completed");
   const cancelledBookings = bookings.filter((booking) => booking.status === "Cancelled" || booking.status === "Rejected");
   const visibleBookings = tab === "Upcoming" ? upcomingBookings : tab === "Past" ? pastBookings : cancelledBookings;
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, isDark && { backgroundColor: "#121214" }]}>
       <Screen scroll bottomInset>
         <AppHeader title="My Bookings" onBack={() => goBackOrNavigate(navigation, "Home")} right={<Feather name="search" size={20} color={colors.text} />} />
         <Card style={styles.summaryCard}>
           <View>
-            <Text style={styles.summaryLabel}>Next appointment</Text>
-            <Text style={styles.summaryTitle}>{upcomingBookings[0]?.shop || "No upcoming visit"}</Text>
+            <Text style={styles.summaryLabel}>Next Appointment</Text>
+            <Text style={styles.summaryTitle}>{upcomingBookings[0]?.shop || "No Upcoming Visit"}</Text>
             <Text style={styles.summaryMeta}>{upcomingBookings[0]?.date || "Book a chair when you are ready"}</Text>
           </View>
           <View style={styles.summaryPill}>
-            <Text style={styles.summaryPillText}>{upcomingBookings.length} active</Text>
+            <Text style={styles.summaryPillText}>{upcomingBookings.length} Active</Text>
           </View>
         </Card>
         <View style={styles.segment}>
@@ -52,7 +53,7 @@ export default function MyBookings({ navigation }) {
                   </View>
                 </View>
                 <View style={styles.bookingFooter}>
-                  <Text style={styles.totalText}>{booking.total ? `${currency.symbol}${booking.total}` : "Total pending"}</Text>
+                  <Text style={styles.totalText}>{booking.total ? `${currency.symbol}${booking.total}` : "Total Pending"}</Text>
                   <View style={styles.actionRow}>
                     <Pressable onPress={() => navigation.navigate("BookingDetails", { bookingId: booking.id })} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
                       <Text style={styles.actionText}>Details</Text>
@@ -73,7 +74,7 @@ export default function MyBookings({ navigation }) {
         </View>
         {!visibleBookings.length ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No {tab.toLowerCase()} bookings</Text>
+            <Text style={styles.emptyTitle}>No {tab} Bookings</Text>
             <Text style={styles.emptyCopy}>Your appointments will appear here as soon as they are created.</Text>
           </View>
         ) : null}

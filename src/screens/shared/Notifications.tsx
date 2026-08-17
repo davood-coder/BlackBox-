@@ -15,7 +15,8 @@ const notificationIcons: Record<AppNotification["type"], string> = {
 };
 
 export default function Notifications({ navigation }: any) {
-  const { notifications, unreadNotificationCount, markNotificationRead, markAllNotificationsRead, workspace } = useBooking();
+  const { notifications, unreadNotificationCount, markNotificationRead, markAllNotificationsRead, workspace, themeMode } = useBooking();
+  const isDark = themeMode === "dark";
   const fallbackRoute = workspace === "Barber" ? "BarberDashboard" : "Home";
 
   return (
@@ -32,8 +33,8 @@ export default function Notifications({ navigation }: any) {
         }
       />
       <View style={styles.summary}>
-        <Text style={styles.summaryTitle}>{unreadNotificationCount ? `${unreadNotificationCount} new updates` : "You are all caught up"}</Text>
-        <Text style={styles.summaryCopy}>Booking decisions, reminders, payments, and shop messages appear here.</Text>
+        <Text style={[styles.summaryTitle, isDark && { color: "#FFFFFF" }]}>{unreadNotificationCount ? `${unreadNotificationCount} new updates` : "You are all caught up"}</Text>
+        <Text style={[styles.summaryCopy, isDark && { color: "#8E8E93" }]}>Booking decisions, reminders, payments, and shop messages appear here.</Text>
       </View>
       <View style={styles.list}>
         {notifications.map((notification) => (

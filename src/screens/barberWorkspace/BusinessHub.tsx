@@ -4,12 +4,12 @@ import { ActivityIndicator, Image, Linking, Modal, Pressable, StyleSheet, Switch
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as ExpoLocation from "expo-location";
 import { images } from "../../assets/images";
-import { BarberBottomNav, Card, Screen } from "../../components/ui";
+import { BarberBottomNav, Card, IOSSegmentedControl, Screen } from "../../components/ui";
 import { services } from "../../data";
 import { MapPreview } from "../../components/MapPreview";
 import { geocodeArea, reverseGeocodeAreaLabel, fetchIPGeolocation } from "../../services/nearbyBarbers";
 import { useBooking } from "../../state/BookingContext";
-import { colors, fonts, radius } from "../../theme";
+import { colors, fonts, radius, getThemeColors } from "../../theme";
 import { getCurrencyFromAddress, convertCurrencyAmount } from "../../utils/currency";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -27,46 +27,38 @@ const hubTabs: Array<{ key: HubTab; label: string; icon: FeatherName; summary: s
 
 export default function BusinessHub({ navigation }: any) {
   const [tab, setTab] = useState<HubTab>("Services");
-  const { setWorkspace, currency, setCurrency } = useBooking();
+  const { setWorkspace, currency, setCurrency, themeMode } = useBooking();
+  const isDark = themeMode === "dark";
 
   useEffect(() => {
     setWorkspace("Barber");
     setCurrency(getCurrencyFromAddress("Thettu, Gudluru, Andhra Pradesh, India"));
   }, [setWorkspace, setCurrency]);
 
+  const theme = getThemeColors(isDark);
+
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: theme.background }]}>
       <Screen scroll bottomInset>
         <View style={styles.header}>
           <View style={styles.headerCopy}>
-            <Text style={styles.eyebrow}>Business workspace</Text>
-            <Text style={styles.title}>Manage your shop</Text>
+            <Text style={[styles.eyebrow, { color: theme.secondaryText }]}>BUSINESS WORKSPACE</Text>
+            <Text style={[styles.title, { color: theme.text }]}>Business</Text>
           </View>
         </View>
 
-        <View accessibilityRole="tablist" style={styles.tabRail}>
-          {hubTabs.map((item) => {
-            const active = tab === item.key;
-            return (
-              <Pressable
-                accessibilityRole="tab"
-                accessibilityState={{ selected: active }}
-                key={item.key}
-                onPress={() => {
-                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                  setTab(item.key);
-                }}
-                style={({ pressed }) => [styles.tabOption, active && styles.tabOptionActive, pressed && styles.pressed]}
-              >
-                <View style={[styles.tabIcon, active && styles.tabIconActive]}>
-                  <Feather name={item.icon} size={16} color={active ? colors.black : colors.primaryDark} />
-                </View>
-                <Text style={[styles.tabLabel, active && styles.tabLabelActive]} numberOfLines={1}>{item.label}</Text>
-                <Text style={[styles.tabSummary, active && styles.tabSummaryActive]} numberOfLines={1}>{item.summary}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <IOSSegmentedControl
+          values={[
+            { key: "Services", label: "Services" },
+            { key: "Payments", label: "Payments" },
+            { key: "Shop", label: "Shop" }
+          ]}
+          selectedValue={tab}
+          onChange={(newTab) => {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            setTab(newTab);
+          }}
+        />
 
         {tab === "Services" ? <ServicesPanel /> : null}
         {tab === "Payments" ? <PaymentsPanel /> : null}
@@ -78,7 +70,9 @@ export default function BusinessHub({ navigation }: any) {
 }
 
 function ServicesPanel() {
-  const { currency } = useBooking();
+  const { currency, themeMode } = useBooking();
+  const isDark = themeMode === "dark";
+  const theme = getThemeColors(isDark);
   const [serviceList, setServiceList] = useState(() =>
     services.map((s) => ({ ...s, enabled: true }))
   );
@@ -196,11 +190,11 @@ function ServicesPanel() {
             setDuration("");
             setShowForm(false);
           }} />
-          <View style={styles.floatingCardModal}>
-            <View style={styles.modalHeaderRow}>
+          <View style={[styles.floatingCardModal, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <View style={[styles.modalHeaderRow, { borderBottomColor: theme.border }]}>
               <View style={styles.modalHeaderTitleBox}>
                 <Feather name="scissors" size={18} color="#C89A43" />
-                <Text style={styles.modalTitleText}>{editingServiceId ? "Edit Service" : "New Service"}</Text>
+                <Text style={[styles.modalTitleText, { color: theme.text }]}>{editingServiceId ? "Edit Service" : "New Service"}</Text>
               </View>
               <Pressable onPress={() => {
                 setEditingServiceId(null);
@@ -208,53 +202,53 @@ function ServicesPanel() {
                 setPrice("");
                 setDuration("");
                 setShowForm(false);
-              }} style={styles.modalCloseCircleBtn}>
-                <Feather name="x" size={16} color={colors.text} />
+              }} style={[styles.modalCloseCircleBtn, { backgroundColor: theme.input, borderColor: theme.border }]}>
+                <Feather name="x" size={16} color={theme.text} />
               </Pressable>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={styles.editScrollContent}>
               <View style={styles.editForm}>
-                <Text style={styles.editInputLabel}>Service Name</Text>
+                <Text style={[styles.editInputLabel, { color: theme.text }]}>Service Name</Text>
                 <View style={styles.inputWithIconRow}>
-                  <View style={styles.inputIconBox}>
-                    <Feather name="tag" size={18} color="#555" />
+                  <View style={[styles.inputIconBox, { backgroundColor: theme.input }]}>
+                    <Feather name="tag" size={18} color="#C89A43" />
                   </View>
                   <TextInput
                     value={name}
                     onChangeText={setName}
-                    style={styles.editTextInputWithIcon}
+                    style={[styles.editTextInputWithIcon, { backgroundColor: theme.input, color: theme.text }]}
                     placeholder="Enter service name"
-                    placeholderTextColor={colors.muted}
+                    placeholderTextColor={theme.muted}
                   />
                 </View>
 
-                <Text style={styles.editInputLabel}>Price</Text>
+                <Text style={[styles.editInputLabel, { color: theme.text }]}>Price</Text>
                 <View style={styles.inputWithIconRow}>
-                  <View style={styles.inputIconBox}>
-                    <Text style={{ color: "#555", fontSize: 16, fontFamily: fonts.bold }}>{currency.symbol}</Text>
+                  <View style={[styles.inputIconBox, { backgroundColor: theme.input }]}>
+                    <Text style={{ color: "#C89A43", fontSize: 16, fontFamily: fonts.bold }}>{currency.symbol}</Text>
                   </View>
                   <TextInput
                     value={price}
                     onChangeText={setPrice}
-                    style={styles.editTextInputWithIcon}
+                    style={[styles.editTextInputWithIcon, { backgroundColor: theme.input, color: theme.text }]}
                     placeholder="Enter price"
-                    placeholderTextColor={colors.muted}
+                    placeholderTextColor={theme.muted}
                     keyboardType="numeric"
                   />
                 </View>
 
-                <Text style={styles.editInputLabel}>Duration</Text>
+                <Text style={[styles.editInputLabel, { color: theme.text }]}>Duration</Text>
                 <View style={styles.inputWithIconRow}>
-                  <View style={styles.inputIconBox}>
-                    <Feather name="clock" size={18} color="#555" />
+                  <View style={[styles.inputIconBox, { backgroundColor: theme.input }]}>
+                    <Feather name="clock" size={18} color="#C89A43" />
                   </View>
                   <TextInput
                     value={duration}
                     onChangeText={setDuration}
-                    style={styles.editTextInputWithIcon}
+                    style={[styles.editTextInputWithIcon, { backgroundColor: theme.input, color: theme.text }]}
                     placeholder="e.g. 30 min"
-                    placeholderTextColor={colors.muted}
+                    placeholderTextColor={theme.muted}
                   />
                 </View>
               </View>
@@ -268,16 +262,16 @@ function ServicesPanel() {
                     setDuration("");
                     setShowForm(false);
                   }}
-                  style={({ pressed }) => [styles.editCancelBtn, pressed && styles.pressed]}
+                  style={({ pressed }) => [styles.editCancelBtn, { backgroundColor: theme.input, borderColor: theme.border }, pressed && styles.pressed]}
                 >
-                  <Text style={styles.editCancelText}>Cancel</Text>
+                  <Text style={[styles.editCancelText, { color: theme.secondaryText }]}>Cancel</Text>
                 </Pressable>
 
                 <Pressable
                   onPress={handleAddOrEditService}
-                  style={({ pressed }) => [styles.editSaveBtn, pressed && styles.pressed]}
+                  style={({ pressed }) => [styles.editSaveBtn, { backgroundColor: isDark ? "#C89A43" : "#000000" }, pressed && styles.pressed]}
                 >
-                  <Text style={styles.editSaveText}>
+                  <Text style={[styles.editSaveText, { color: isDark ? "#000000" : "#FFFFFF" }]}>
                     {editingServiceId ? "Save Changes" : "Save Service"}
                   </Text>
                 </Pressable>
@@ -290,19 +284,19 @@ function ServicesPanel() {
         {serviceList.map((service) => {
           const custom = service.id.startsWith("custom-");
           return (
-            <View key={service.id} style={styles.serviceRow}>
+            <View key={service.id} style={[styles.serviceRow, { backgroundColor: theme.card, borderColor: theme.border }]}>
               {confirmDeleteId === service.id ? (
                 <View style={styles.confirmDeleteContainer}>
-                  <Text style={styles.confirmDeleteText} numberOfLines={1}>Delete "{service.label}"?</Text>
+                  <Text style={[styles.confirmDeleteText, { color: theme.text }]} numberOfLines={1}>Delete "{service.label}"?</Text>
                   <View style={styles.confirmActions}>
                     <Pressable
                       onPress={() => {
                         animateLayout();
                         setConfirmDeleteId(null);
                       }}
-                      style={({ pressed }) => [styles.confirmCancelBtn, pressed && styles.pressed]}
+                      style={({ pressed }) => [styles.confirmCancelBtn, { backgroundColor: theme.input }, pressed && styles.pressed]}
                     >
-                      <Text style={styles.confirmCancelText}>Cancel</Text>
+                      <Text style={[styles.confirmCancelText, { color: theme.secondaryText }]}>Cancel</Text>
                     </Pressable>
                     <Pressable
                       onPress={() => confirmDelete(service.id)}
@@ -314,23 +308,27 @@ function ServicesPanel() {
                 </View>
               ) : (
                 <>
-                  <View style={styles.serviceIcon}><Feather name={service.icon as FeatherName} size={17} color={colors.primaryDark} /></View>
+                  <View style={[styles.serviceIcon, { backgroundColor: theme.primarySoft }]}><Feather name={service.icon as FeatherName} size={17} color="#C89A43" /></View>
                   <View style={styles.serviceCopy}>
-                    <Text style={styles.serviceName} numberOfLines={1}>{service.label}</Text>
-                    <Text style={styles.serviceMeta}>{currency.symbol}{service.price} - {service.duration}</Text>
+                    <Text style={[styles.serviceName, { color: theme.text }]} numberOfLines={1}>{service.label}</Text>
+                    <Text style={[styles.serviceMeta, { color: theme.secondaryText }]}>{currency.symbol}{service.price} - {service.duration}</Text>
                   </View>
                   <View style={styles.serviceActions}>
                     <Pressable
                       accessibilityLabel={`Edit ${service.label}`}
                       onPress={() => startEdit(service)}
-                      style={({ pressed }) => [styles.editButton, editingServiceId === service.id && { backgroundColor: colors.primarySoft }, pressed && styles.pressed]}
+                      style={({ pressed }) => [
+                        styles.editButton,
+                        { backgroundColor: editingServiceId === service.id ? theme.primarySoft : (isDark ? "rgba(255,255,255,0.12)" : "#F2F2F7") },
+                        pressed && styles.pressed
+                      ]}
                     >
-                      <Feather name="edit-2" size={15} color={editingServiceId === service.id ? colors.primaryDark : colors.secondaryText} />
+                      <Feather name="edit-2" size={15} color={editingServiceId === service.id ? "#C89A43" : theme.secondaryText} />
                     </Pressable>
                     <Pressable
                       accessibilityLabel={`Delete ${service.label}`}
                       onPress={() => handleDeleteClick(service.id)}
-                      style={({ pressed }) => [styles.deleteButton, pressed && { backgroundColor: "rgba(198,64,70,0.12)" }, pressed && styles.pressed]}
+                      style={({ pressed }) => [styles.deleteButton, { backgroundColor: "rgba(255,59,48,0.12)" }, pressed && styles.pressed]}
                     >
                       <Feather name="trash-2" size={15} color={colors.error} />
                     </Pressable>
@@ -345,8 +343,8 @@ function ServicesPanel() {
                           )
                         );
                       }}
-                      trackColor={{ false: "#DADCD7", true: "#E7CE9B" }}
-                      thumbColor={service.enabled ? colors.primaryDark : colors.muted}
+                      trackColor={{ false: "#3A3A3C", true: "#C89A43" }}
+                      thumbColor={service.enabled ? colors.white : colors.muted}
                     />
                   </View>
                 </>
@@ -360,7 +358,9 @@ function ServicesPanel() {
 }
 
 function PaymentsPanel() {
-  const { currency } = useBooking();
+  const { currency, themeMode } = useBooking();
+  const isDark = themeMode === "dark";
+  const theme = getThemeColors(isDark);
   const [message, setMessage] = useState("");
 
   // Base amounts in USD
@@ -383,24 +383,24 @@ function PaymentsPanel() {
   return (
     <View>
       <PanelHeader title="Payments" copy="Payouts and collected revenue" />
-      <View style={styles.payoutHero}>
+      <View style={[styles.payoutHero, { backgroundColor: theme.card, borderColor: theme.border }]}>
         <View style={styles.payoutCopy}>
-          <Text style={styles.payoutLabel}>Available balance</Text>
-          <Text style={styles.payoutValue}>{currency.symbol}{formatValue(displayBalance)}</Text>
-          <Text style={styles.payoutMeta}>Today collected {currency.symbol}{formatValue(displayToday)}</Text>
+          <Text style={[styles.payoutLabel, { color: theme.secondaryText }]}>Available Balance</Text>
+          <Text style={[styles.payoutValue, { color: theme.text }]}>{currency.symbol}{formatValue(displayBalance)}</Text>
+          <Text style={[styles.payoutMeta, { color: theme.secondaryText }]}>Today Collected {currency.symbol}{formatValue(displayToday)}</Text>
         </View>
-        <View style={styles.readyBadge}>
-          <Feather name="check-circle" size={14} color={colors.success} />
-          <Text style={styles.readyText}>Ready</Text>
+        <View style={[styles.readyBadge, !isDark && { backgroundColor: "#E8F5E9", borderWidth: 1, borderColor: "#C8E6C9" }]}>
+          <Feather name="check-circle" size={14} color={isDark ? colors.success : "#2E7D32"} />
+          <Text style={[styles.readyText, !isDark && { color: "#1B5E20", fontFamily: fonts.bold }]}>Ready</Text>
         </View>
       </View>
       <View style={styles.metricGrid}>
-        <BusinessMetric label="This week" value={`${currency.symbol}${formatValue(displayWeek)}`} change="+8%" />
-        <BusinessMetric label="Avg ticket" value={`${currency.symbol}${formatValue(displayAvgTicket)}`} change={`+${currency.symbol}${formatValue(displayAvgTicketChange)}`} />
+        <BusinessMetric label="This Week" value={`${currency.symbol}${formatValue(displayWeek)}`} change="+8%" />
+        <BusinessMetric label="Avg Ticket" value={`${currency.symbol}${formatValue(displayAvgTicket)}`} change={`+${currency.symbol}${formatValue(displayAvgTicketChange)}`} />
       </View>
-      <Pressable onPress={() => setMessage("Withdrawal request sent to your verified account.")} style={({ pressed }) => [styles.withdrawButton, pressed && styles.pressed]}>
-        <Feather name="arrow-down-circle" size={18} color={colors.black} />
-        <Text style={styles.withdrawText}>Withdraw earnings</Text>
+      <Pressable onPress={() => setMessage("Withdrawal request sent to your verified account.")} style={({ pressed }) => [styles.withdrawButton, { backgroundColor: isDark ? "#C89A43" : "#000000" }, pressed && styles.pressed]}>
+        <Feather name="arrow-down-circle" size={18} color={isDark ? "#000000" : "#FFFFFF"} />
+        <Text style={[styles.withdrawText, { color: isDark ? "#000000" : "#FFFFFF" }]}>Withdraw Earnings</Text>
       </Pressable>
       {message ? <Text style={styles.successMessage}>{message}</Text> : null}
     </View>
@@ -410,8 +410,9 @@ function PaymentsPanel() {
 type ShopSubView = "main" | "manage-locations" | "add-address" | "working-hours" | "qr-code";
 
 function ShopPanel({ navigation }: { navigation: any }) {
-  const { setCurrency, currency } = useBooking();
-  const [open, setOpen] = useState(true);
+  const { setCurrency, currency, themeMode, shopOpen, setShopOpen } = useBooking();
+  const isDark = themeMode === "dark";
+  const theme = getThemeColors(isDark);
   const [showBanner, setShowBanner] = useState(true);
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const [locationsModalVisible, setLocationsModalVisible] = useState(false);
@@ -741,15 +742,15 @@ function ShopPanel({ navigation }: { navigation: any }) {
             <Text style={styles.shopName} numberOfLines={1}>Black Box Barbershop</Text>
             <Text style={styles.shopAddress} numberOfLines={1}>123 Main Street, New York</Text>
           </View>
-          <View style={[styles.shopStatus, !open && styles.shopStatusClosed]}>
-            <Text style={[styles.shopStatusText, !open && styles.shopStatusTextClosed]}>{open ? "Open" : "Closed"}</Text>
+          <View style={[styles.shopStatus, !shopOpen && styles.shopStatusClosed]}>
+            <Text style={[styles.shopStatusText, !shopOpen && styles.shopStatusTextClosed]}>{shopOpen ? "Open" : "Closed"}</Text>
           </View>
         </View>
       </Card>
       
-      <SettingRow icon="power" title="Accepting bookings" copy="Customers can request open slots" value={open} onChange={setOpen} />
+      <SettingRow icon="power" title="Accepting bookings" copy="Customers can request open slots" value={shopOpen} onChange={setShopOpen} />
       
-      <Text style={styles.sectionHeadingBento}>SHOP MANAGEMENT</Text>
+      <Text style={[styles.sectionHeadingBento, { color: theme.secondaryText }]}>SHOP MANAGEMENT</Text>
 
       <View style={styles.bentoGridContainer}>
         {/* Row 1: Map Tile (Full Width) */}
@@ -757,7 +758,7 @@ function ShopPanel({ navigation }: { navigation: any }) {
           onPress={() => {
             setLocationsModalVisible(true);
           }} 
-          style={({ pressed }) => [styles.bentoMapTile, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.bentoMapTile, { borderColor: theme.border }, pressed && styles.pressed]}
         >
           <View style={styles.tileMapBackground}>
             <MapPreview shops={[]} origin={locCoords} height={140} originLabel={locAddress} compact={true} />
@@ -765,7 +766,7 @@ function ShopPanel({ navigation }: { navigation: any }) {
           <View style={styles.tileGlassOverlay} />
           <View style={styles.tileContent}>
             <View style={styles.tileHeaderRow}>
-              <View style={styles.tileIconContainer}>
+              <View style={[styles.tileIconContainer, { backgroundColor: theme.card, borderColor: theme.border }]}>
                 <Feather name="map-pin" size={18} color="#C89A43" />
               </View>
               <View style={styles.liveIndicatorCircle} />
@@ -783,12 +784,12 @@ function ShopPanel({ navigation }: { navigation: any }) {
             onPress={() => {
               setQrModalVisible(true);
             }} 
-            style={({ pressed }) => [styles.bentoHalfTile, styles.bentoQrTile, pressed && styles.pressed]}
+            style={({ pressed }) => [styles.bentoHalfTile, { backgroundColor: isDark ? "#1C1C1E" : "#000000" }, pressed && styles.pressed]}
           >
             <View style={styles.cardPatternDark} />
             <View style={styles.cardPatternGold} />
             <View style={styles.tileContentHalf}>
-              <View style={styles.tileIconContainer}>
+              <View style={[styles.tileIconContainer, { backgroundColor: isDark ? "#252528" : "#FFFFFF" }]}>
                 <Feather name="maximize" size={18} color="#C89A43" />
               </View>
               <View>
@@ -800,13 +801,13 @@ function ShopPanel({ navigation }: { navigation: any }) {
 
           <Pressable 
             onPress={() => {
-              setHoursModalVisible(true);
+              navigation.navigate("WorkingHours");
             }} 
-            style={({ pressed }) => [styles.bentoHalfTile, styles.bentoHoursTile, pressed && styles.pressed]}
+            style={({ pressed }) => [styles.bentoHalfTile, { backgroundColor: theme.card, borderColor: theme.border }, pressed && styles.pressed]}
           >
             <View style={styles.tileContentHalf}>
               <View style={styles.tileHeaderRow}>
-                <View style={styles.tileIconContainer}>
+                <View style={[styles.tileIconContainer, { backgroundColor: theme.input, borderColor: theme.border }]}>
                   <Feather name="clock" size={18} color="#946B22" />
                 </View>
                 <View style={styles.activeRosterBadge}>
@@ -814,8 +815,8 @@ function ShopPanel({ navigation }: { navigation: any }) {
                 </View>
               </View>
               <View>
-                <Text style={styles.tileTitleHalf}>Working Hours</Text>
-                <Text style={styles.tileDescriptionHalf}>Configure shifts</Text>
+                <Text style={[styles.tileTitleHalf, { color: theme.text }]}>Working Hours</Text>
+                <Text style={[styles.tileDescriptionHalf, { color: theme.secondaryText }]}>Configure shifts</Text>
               </View>
             </View>
           </Pressable>
@@ -826,32 +827,32 @@ function ShopPanel({ navigation }: { navigation: any }) {
       <Modal visible={qrModalVisible} transparent animationType="slide" onRequestClose={() => setQrModalVisible(false)}>
         <View style={styles.modalOverlayBottom}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setQrModalVisible(false)} />
-          <View style={styles.floatingCardModal}>
-            <View style={styles.modalHeaderRow}>
+          <View style={[styles.floatingCardModal, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <View style={[styles.modalHeaderRow, { borderBottomColor: theme.border }]}>
               <View style={styles.modalHeaderTitleBox}>
                 <Feather name="maximize" size={18} color="#C89A43" />
-                <Text style={styles.modalTitleText}>Shop QR Code</Text>
+                <Text style={[styles.modalTitleText, { color: theme.text }]}>Shop QR Code</Text>
               </View>
-              <Pressable onPress={() => setQrModalVisible(false)} style={styles.modalCloseCircleBtn}>
-                <Feather name="x" size={16} color={colors.text} />
+              <Pressable onPress={() => setQrModalVisible(false)} style={[styles.modalCloseCircleBtn, { backgroundColor: theme.input, borderColor: theme.border }]}>
+                <Feather name="x" size={16} color={theme.text} />
               </Pressable>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 10 }}>
-              <Card style={styles.qrCard}>
+              <Card style={[styles.qrCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
                 <View style={styles.cardPatternDark} />
                 <View style={styles.cardPatternGold} />
                 
                 <View style={styles.qrCardHeader}>
-                  <Text style={styles.qrShopName}>Black Box Barbershop</Text>
-                  <Text style={styles.qrShopAddress}>123 Main Street, New York</Text>
+                  <Text style={[styles.qrShopName, { color: theme.text }]}>Black Box Barbershop</Text>
+                  <Text style={[styles.qrShopAddress, { color: theme.secondaryText }]}>123 Main Street, New York</Text>
                 </View>
 
                 <View style={styles.qrFrame}>
                   <Image source={images.shopQrCode} style={styles.qrCodeImage} />
                 </View>
 
-                <Text style={styles.qrDescription}>
+                <Text style={[styles.qrDescription, { color: theme.secondaryText }]}>
                   Scan this code for quick checkout, profile view & payments at Black Box Barbershop.
                 </Text>
               </Card>
@@ -862,7 +863,7 @@ function ShopPanel({ navigation }: { navigation: any }) {
                   <Text style={styles.shareQrText}>Share QR Code</Text>
                 </Pressable>
                 
-                <Pressable onPress={() => alert("QR Code saved to gallery!")} style={({ pressed }) => [styles.downloadQrBtn, pressed && styles.pressed]}>
+                <Pressable onPress={() => alert("QR Code saved to gallery!")} style={({ pressed }) => [styles.downloadQrBtn, { backgroundColor: theme.card, borderColor: "#C89A43" }, pressed && styles.pressed]}>
                   <Feather name="download" size={16} color="#946B22" style={{ marginRight: 8 }} />
                   <Text style={styles.downloadQrText}>Download QR</Text>
                 </Pressable>
@@ -882,27 +883,27 @@ function ShopPanel({ navigation }: { navigation: any }) {
             setLocationsModalVisible(false);
             setLocFormVisible(false);
           }} />
-          <View style={styles.floatingCardModal}>
-            <View style={styles.modalHeaderRow}>
+          <View style={[styles.floatingCardModal, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <View style={[styles.modalHeaderRow, { borderBottomColor: theme.border }]}>
               <View style={styles.modalHeaderTitleBox}>
                 {locFormVisible ? (
                   <Pressable 
                     onPress={() => setLocFormVisible(false)} 
                     style={{ marginRight: 8, padding: 4 }}
                   >
-                    <Feather name="arrow-left" size={20} color={colors.text} />
+                    <Feather name="arrow-left" size={20} color={theme.text} />
                   </Pressable>
                 ) : (
                   <Feather name="map-pin" size={18} color="#C89A43" style={{ marginRight: 8 }} />
                 )}
-                <Text style={styles.modalTitleText}>
+                <Text style={[styles.modalTitleText, { color: theme.text }]}>
                   {locFormVisible ? (editingLocId ? "Edit Location" : "Add Location") : "Shop Locations"}
                 </Text>
               </View>
               
               {!locFormVisible ? (
-                <Pressable onPress={() => setLocationsModalVisible(false)} style={styles.modalCloseCircleBtn}>
-                  <Feather name="x" size={16} color={colors.text} />
+                <Pressable onPress={() => setLocationsModalVisible(false)} style={[styles.modalCloseCircleBtn, { backgroundColor: theme.input, borderColor: theme.border }]}>
+                  <Feather name="x" size={16} color={theme.text} />
                 </Pressable>
               ) : (
                 <View style={{ width: 32 }} />
@@ -912,7 +913,7 @@ function ShopPanel({ navigation }: { navigation: any }) {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 10 }}>
               {locFormVisible ? (
                 <View>
-                  <Card style={styles.mapCard}>
+                  <Card style={[styles.mapCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
                     <MapPreview 
                       shops={[]} 
                       origin={locCoords} 
@@ -936,29 +937,29 @@ function ShopPanel({ navigation }: { navigation: any }) {
                         setResolvingLocation(false);
                       }}
                     />
-                    <View style={styles.mapPinOverlay}>
-                      <Text style={styles.mapPinText}>Pinpoint your service area</Text>
+                    <View style={[styles.mapPinOverlay, { backgroundColor: isDark ? "rgba(15,17,21,0.75)" : "rgba(255,255,255,0.9)" }]}>
+                      <Text style={[styles.mapPinText, { color: theme.text }]}>Pinpoint your service area</Text>
                     </View>
                     <View style={styles.mapZoomControls}>
-                      <Pressable onPress={() => setLocZoom((z) => Math.min(18, z + 1))} style={styles.zoomBtn}>
-                        <Text style={styles.zoomBtnText}>+</Text>
+                      <Pressable onPress={() => setLocZoom((z) => Math.min(18, z + 1))} style={[styles.zoomBtn, { backgroundColor: theme.card, borderColor: theme.border }]}>
+                        <Text style={[styles.zoomBtnText, { color: theme.text }]}>+</Text>
                       </Pressable>
-                      <Pressable onPress={() => setLocZoom((z) => Math.max(3, z - 1))} style={styles.zoomBtn}>
-                        <Text style={styles.zoomBtnText}>-</Text>
+                      <Pressable onPress={() => setLocZoom((z) => Math.max(3, z - 1))} style={[styles.zoomBtn, { backgroundColor: theme.card, borderColor: theme.border }]}>
+                        <Text style={[styles.zoomBtnText, { color: theme.text }]}>-</Text>
                       </Pressable>
                     </View>
                   </Card>
 
-                  <Pressable onPress={handleUseLiveLocation} style={({ pressed }) => [styles.useLiveLocationBtn, pressed && styles.pressed]}>
+                  <Pressable onPress={handleUseLiveLocation} style={({ pressed }) => [styles.useLiveLocationBtn, { backgroundColor: isDark ? "rgba(200,154,67,0.18)" : "#F4EBD9", borderColor: isDark ? "#C89A43" : "#D7A84F" }, pressed && styles.pressed]}>
                     <Feather name="navigation" size={16} color="#946B22" style={{ marginRight: 8 }} />
-                    <Text style={styles.useLiveLocationText}>Use Current Live Location</Text>
+                    <Text style={[styles.useLiveLocationText, { color: isDark ? "#C89A43" : "#946B22" }]}>Use Current Live Location</Text>
                   </Pressable>
 
-                  <Card style={styles.addressFormCard}>
-                    <Text style={styles.editInputLabel}>Location Name</Text>
+                  <Card style={[styles.addressFormCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+                    <Text style={[styles.editInputLabel, { color: theme.text }]}>Location Name</Text>
                     <View style={styles.inputWithIconRow}>
-                      <View style={styles.inputIconBox}>
-                        <Feather name="bookmark" size={18} color="#555" />
+                      <View style={[styles.inputIconBox, { backgroundColor: theme.input }]}>
+                        <Feather name="bookmark" size={18} color="#C89A43" />
                       </View>
                       <TextInput
                         value={locName}
@@ -966,13 +967,13 @@ function ShopPanel({ navigation }: { navigation: any }) {
                         onSubmitEditing={() => handleAutoDetectAddressFromName(locName)}
                         onBlur={() => handleAutoDetectAddressFromName(locName)}
                         placeholder="e.g. Nellore / Primary Base"
-                        placeholderTextColor={colors.muted}
-                        style={styles.editTextInputWithIcon}
+                        placeholderTextColor={theme.muted}
+                        style={[styles.editTextInputWithIcon, { backgroundColor: theme.input, color: theme.text }]}
                       />
                     </View>
 
                     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12, marginBottom: 4 }}>
-                      <Text style={[styles.editInputLabel, { marginBottom: 0 }]}>Address</Text>
+                      <Text style={[styles.editInputLabel, { marginBottom: 0, color: theme.text }]}>Address</Text>
                       {autoDetectedBadge ? (
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "rgba(30,141,91,0.12)", paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.full }}>
                           <Feather name="check-circle" size={12} color={colors.success} />
@@ -981,8 +982,8 @@ function ShopPanel({ navigation }: { navigation: any }) {
                       ) : null}
                     </View>
                     <View style={styles.inputWithIconRow}>
-                      <View style={styles.inputIconBox}>
-                        <Feather name="map-pin" size={18} color="#555" />
+                      <View style={[styles.inputIconBox, { backgroundColor: theme.input }]}>
+                        <Feather name="map-pin" size={18} color="#C89A43" />
                       </View>
                       <TextInput
                         value={locAddress}
@@ -992,66 +993,66 @@ function ShopPanel({ navigation }: { navigation: any }) {
                         }}
                         onSubmitEditing={handleGeocodeSearch}
                         placeholder="Search address or location"
-                        placeholderTextColor={colors.muted}
-                        style={[styles.editTextInputWithIcon, { flex: 1 }]}
+                        placeholderTextColor={theme.muted}
+                        style={[styles.editTextInputWithIcon, { backgroundColor: theme.input, color: theme.text, flex: 1 }]}
                       />
-                      <Pressable onPress={handleGeocodeSearch} style={styles.searchLocationBtnInner}>
+                      <Pressable onPress={handleGeocodeSearch} style={[styles.searchLocationBtnInner, { backgroundColor: theme.input, borderColor: theme.border }]}>
                         {resolvingLocation ? (
-                          <ActivityIndicator size="small" color="#946B22" />
+                          <ActivityIndicator size="small" color="#C89A43" />
                         ) : (
-                          <Feather name="search" size={18} color="#946B22" />
+                          <Feather name="search" size={18} color="#C89A43" />
                         )}
                       </Pressable>
                     </View>
 
-                    <Pressable onPress={handleOpenInGoogleMaps} style={styles.googleMapsBtn}>
+                    <Pressable onPress={handleOpenInGoogleMaps} style={[styles.googleMapsBtn, { backgroundColor: theme.input, borderColor: theme.border }]}>
                       <Feather name="map" size={14} color={colors.info} />
-                      <Text style={styles.googleMapsBtnText}>Open / Search in Google Maps</Text>
+                      <Text style={[styles.googleMapsBtnText, { color: colors.info }]}>Open / Search in Google Maps</Text>
                     </Pressable>
                   </Card>
 
                   <View style={styles.locSaveActionRow}>
-                    <Pressable onPress={() => setLocFormVisible(false)} style={({ pressed }) => [styles.locCancelBtn, pressed && styles.pressed]}>
-                      <Text style={styles.locCancelText}>Cancel</Text>
+                    <Pressable onPress={() => setLocFormVisible(false)} style={({ pressed }) => [styles.locCancelBtn, { backgroundColor: theme.input, borderColor: theme.border }, pressed && styles.pressed]}>
+                      <Text style={[styles.locCancelText, { color: theme.secondaryText }]}>Cancel</Text>
                     </Pressable>
                     
-                    <Pressable onPress={handleSaveLocation} style={({ pressed }) => [styles.locSaveBtn, pressed && styles.pressed]}>
-                      <Text style={styles.locSaveText}>Save Location</Text>
+                    <Pressable onPress={handleSaveLocation} style={({ pressed }) => [styles.locSaveBtn, { backgroundColor: isDark ? "#C89A43" : "#000000" }, pressed && styles.pressed]}>
+                      <Text style={[styles.locSaveText, { color: isDark ? "#000000" : "#FFFFFF" }]}>Save Location</Text>
                     </Pressable>
                   </View>
                 </View>
               ) : (
                 <View>
                   {showBanner ? (
-                    <View style={styles.banner}>
+                    <View style={[styles.banner, { backgroundColor: isDark ? "rgba(200,154,67,0.15)" : "#F4EBD9" }]}>
                       <Feather name="info" size={16} color="#946B22" style={styles.bannerIcon} />
-                      <Text style={styles.bannerText}>
+                      <Text style={[styles.bannerText, { color: isDark ? "#CCCCCC" : "#1C1C1E" }]}>
                         Nearby bookings and job opportunities are prioritized based on your Default Location.
                       </Text>
                       <Pressable onPress={() => setShowBanner(false)} style={styles.bannerClose}>
-                        <Feather name="x" size={16} color={colors.muted} />
+                        <Feather name="x" size={16} color={theme.muted} />
                       </Pressable>
                     </View>
                   ) : null}
 
-                  <Pressable onPress={handleAddLocation} style={({ pressed }) => [styles.addLocationCard, pressed && styles.pressed]}>
-                    <View style={styles.addLocationIconCircle}>
+                  <Pressable onPress={handleAddLocation} style={({ pressed }) => [styles.addLocationCard, { backgroundColor: theme.card, borderColor: theme.border }, pressed && styles.pressed]}>
+                    <View style={[styles.addLocationIconCircle, { backgroundColor: theme.primarySoft }]}>
                       <Feather name="plus" size={20} color="#946B22" />
                     </View>
-                    <Text style={styles.addLocationCardText}>Add New Location</Text>
+                    <Text style={[styles.addLocationCardText, { color: theme.text }]}>Add New Location</Text>
                   </Pressable>
 
-                  <Text style={styles.sectionHeading}>Saved Locations</Text>
+                  <Text style={[styles.sectionHeading, { color: theme.secondaryText }]}>Saved Locations</Text>
 
                   {savedLocations.map((loc) => (
-                    <Card key={loc.id} style={styles.locationCard}>
+                    <Card key={loc.id} style={[styles.locationCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
                       <View style={styles.locHeaderRow}>
-                        <View style={styles.locIconBox}>
+                        <View style={[styles.locIconBox, { backgroundColor: theme.primarySoft }]}>
                           <Feather name="map-pin" size={18} color="#946B22" />
                         </View>
                         <View style={{ flex: 1, marginLeft: 12 }}>
                           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                            <Text style={styles.locTitleText}>{loc.name}</Text>
+                            <Text style={[styles.locTitleText, { color: theme.text }]}>{loc.name}</Text>
                             {loc.isDefault && (
                               <View style={styles.defaultBadgeGold}>
                                 <Feather name="star" size={8} color="#FFF" style={{ marginRight: 2 }} />
@@ -1059,26 +1060,26 @@ function ShopPanel({ navigation }: { navigation: any }) {
                               </View>
                             )}
                           </View>
-                          <Text style={styles.locAddressText}>{loc.address}</Text>
+                          <Text style={[styles.locAddressText, { color: theme.secondaryText }]}>{loc.address}</Text>
                         </View>
                       </View>
 
-                      <View style={styles.locDivider} />
+                      <View style={[styles.locDivider, { backgroundColor: theme.divider }]} />
 
                       <View style={styles.locActionsRow}>
                         <Pressable onPress={() => handleSetDefault(loc.id)} style={styles.setDefaultPressable}>
-                          <Feather name="star" size={16} color={loc.isDefault ? "#946B22" : colors.muted} style={{ marginRight: 6 }} />
-                          <Text style={[styles.setDefaultText, loc.isDefault && { color: "#946B22", fontFamily: fonts.bold }]}>
+                          <Feather name="star" size={16} color={loc.isDefault ? "#946B22" : theme.muted} style={{ marginRight: 6 }} />
+                          <Text style={[styles.setDefaultText, { color: theme.secondaryText }, loc.isDefault && { color: "#946B22", fontFamily: fonts.bold }]}>
                             {loc.isDefault ? "Default Location" : "Set as Default"}
                           </Text>
                         </Pressable>
 
                         <View style={styles.locActionButtons}>
-                          <Pressable onPress={() => handleEditLocation(loc)} style={styles.locRoundBtn}>
-                            <Feather name="edit-3" size={14} color={colors.secondaryText} />
+                          <Pressable onPress={() => handleEditLocation(loc)} style={[styles.locRoundBtn, { backgroundColor: theme.input, borderColor: theme.border }]}>
+                            <Feather name="edit-3" size={14} color={theme.secondaryText} />
                           </Pressable>
                           
-                          <Pressable onPress={() => handleDeleteLocation(loc.id)} style={[styles.locRoundBtn, { borderColor: "rgba(198,64,70,0.12)" }]}>
+                          <Pressable onPress={() => handleDeleteLocation(loc.id)} style={[styles.locRoundBtn, { backgroundColor: "rgba(255,59,48,0.12)", borderColor: "rgba(198,64,70,0.2)" }]}>
                             <Feather name="trash-2" size={14} color={colors.error} />
                           </Pressable>
                         </View>
@@ -1277,15 +1278,18 @@ function ShopPanel({ navigation }: { navigation: any }) {
 }
 
 function PanelHeader({ title, copy, action, onAction }: { title: string; copy: string; action?: string; onAction?: () => void }) {
+  const { themeMode } = useBooking();
+  const isDark = themeMode === "dark";
+  const theme = getThemeColors(isDark);
   return (
     <View style={styles.panelHeader}>
       <View style={styles.panelCopy}>
-        <Text style={styles.panelTitle}>{title}</Text>
-        <Text style={styles.panelBody}>{copy}</Text>
+        <Text style={[styles.panelTitle, { color: theme.text }]}>{title}</Text>
+        <Text style={[styles.panelBody, { color: theme.secondaryText }]}>{copy}</Text>
       </View>
       {action ? (
-        <Pressable onPress={onAction} style={({ pressed }) => [styles.panelAction, pressed && styles.pressed]}>
-          <Text style={styles.panelActionText}>{action}</Text>
+        <Pressable onPress={onAction} style={({ pressed }) => [styles.panelAction, { backgroundColor: isDark ? "#C89A43" : "#000000" }, pressed && styles.pressed]}>
+          <Text style={[styles.panelActionText, { color: isDark ? "#000000" : "#FFFFFF" }]}>{action}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -1293,22 +1297,30 @@ function PanelHeader({ title, copy, action, onAction }: { title: string; copy: s
 }
 
 function BusinessMetric({ label, value, change }: { label: string; value: string; change: string }) {
+  const { themeMode } = useBooking();
+  const isDark = themeMode === "dark";
+  const theme = getThemeColors(isDark);
   return (
-    <View style={styles.businessMetric}>
-      <Text style={styles.businessMetricLabel}>{label}</Text>
-      <Text style={styles.businessMetricValue}>{value}</Text>
+    <View style={[styles.businessMetric, { backgroundColor: theme.card, borderColor: theme.border }]}>
+      <Text style={[styles.businessMetricLabel, { color: theme.secondaryText }]}>{label}</Text>
+      <Text style={[styles.businessMetricValue, { color: theme.text }]}>{value}</Text>
       <Text style={styles.businessMetricChange}>{change}</Text>
     </View>
   );
 }
 
 function SettingRow({ icon, title, copy, value, onChange }: { icon: FeatherName; title: string; copy: string; value: boolean; onChange: (value: boolean) => void }) {
+  const { themeMode } = useBooking();
+  const isDark = themeMode === "dark";
+  const theme = getThemeColors(isDark);
   return (
-    <View style={styles.settingRow}>
-      <View style={styles.settingIcon}><Feather name={icon} size={17} color={colors.primaryDark} /></View>
+    <View style={[styles.settingRow, { backgroundColor: theme.card, borderColor: theme.border }]}>
+      <View style={[styles.settingIcon, { backgroundColor: theme.primarySoft }]}>
+        <Feather name={icon} size={17} color={colors.primaryDark} />
+      </View>
       <View style={styles.settingCopy}>
-        <Text style={styles.settingTitle}>{title}</Text>
-        <Text style={styles.settingBody}>{copy}</Text>
+        <Text style={[styles.settingTitle, { color: theme.text }]}>{title}</Text>
+        <Text style={[styles.settingBody, { color: theme.secondaryText }]}>{copy}</Text>
       </View>
       <Switch value={value} onValueChange={onChange} trackColor={{ false: "#DADCD7", true: "#E7CE9B" }} thumbColor={value ? colors.primaryDark : colors.muted} />
     </View>
@@ -1316,155 +1328,155 @@ function SettingRow({ icon, title, copy, value, onChange }: { icon: FeatherName;
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
-  header: { minHeight: 72, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 14 },
+  root: { flex: 1, backgroundColor: "#121214" },
+  header: { minHeight: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 14, paddingTop: 16, marginBottom: 16 },
   headerCopy: { flex: 1, minWidth: 0 },
-  eyebrow: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 9, textTransform: "uppercase" },
-  title: { color: colors.text, fontFamily: fonts.headingHeavy, fontSize: 24, marginTop: 4 },
-  iconButton: { width: 42, height: 42, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border },
-  tabRail: { minHeight: 86, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.white, padding: 6, flexDirection: "row", gap: 6, marginBottom: 20 },
+  eyebrow: { color: "#8E8E93", fontFamily: fonts.bold, fontSize: 12, textTransform: "uppercase", letterSpacing: 0.8 },
+  title: { color: "#FFFFFF", fontFamily: fonts.headingHeavy, fontSize: 32, letterSpacing: -0.5, marginTop: 2 },
+  iconButton: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.12)" },
+  tabRail: { minHeight: 86, borderRadius: radius.lg, borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", backgroundColor: "#1C1C1E", padding: 6, flexDirection: "row", gap: 6, marginBottom: 20 },
   tabOption: { flex: 1, minWidth: 0, borderRadius: radius.md, alignItems: "center", justifyContent: "center", paddingHorizontal: 6, paddingVertical: 8 },
-  tabOptionActive: { backgroundColor: colors.black },
-  tabIcon: { width: 30, height: 30, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: colors.primarySoft, marginBottom: 6 },
-  tabIconActive: { backgroundColor: colors.primary },
-  tabLabel: { color: colors.text, fontFamily: fonts.semibold, fontSize: 11 },
-  tabLabelActive: { color: colors.white },
-  tabSummary: { color: colors.secondaryText, fontFamily: fonts.medium, fontSize: 16, marginTop: 2 },
-  tabSummaryActive: { color: "#C8CAC5" },
-  panelHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14 },
+  tabOptionActive: { backgroundColor: "#C89A43" },
+  tabIcon: { width: 30, height: 30, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(200,154,67,0.18)", marginBottom: 6 },
+  tabIconActive: { backgroundColor: "#000000" },
+  tabLabel: { color: "#8E8E93", fontFamily: fonts.semibold, fontSize: 11 },
+  tabLabelActive: { color: "#000000" },
+  tabSummary: { color: "#8E8E93", fontFamily: fonts.medium, fontSize: 16, marginTop: 2 },
+  tabSummaryActive: { color: "#000000" },
+  panelHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 6, marginBottom: 14 },
   panelCopy: { flex: 1, minWidth: 0 },
-  panelTitle: { color: colors.text, fontFamily: fonts.headingSemi, fontSize: 19 },
-  panelBody: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, marginTop: 4 },
-  panelAction: { minHeight: 38, borderRadius: radius.full, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center", paddingHorizontal: 13 },
-  panelActionText: { color: colors.black, fontFamily: fonts.bold, fontSize: 10 },
-  form: { borderRadius: radius.md, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.primary, padding: 14, gap: 10, marginBottom: 12 },
-  input: { minHeight: 46, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, color: colors.text, fontFamily: fonts.body, fontSize: 12, paddingHorizontal: 12 },
+  panelTitle: { color: "#FFFFFF", fontFamily: fonts.headingSemi, fontSize: 18, letterSpacing: -0.4 },
+  panelBody: { color: "#8E8E93", fontFamily: fonts.body, fontSize: 13, marginTop: 2 },
+  panelAction: { minHeight: 36, borderRadius: 18, backgroundColor: "#C89A43", alignItems: "center", justifyContent: "center", paddingHorizontal: 14 },
+  panelActionText: { color: "#000000", fontFamily: fonts.bold, fontSize: 12 },
+  form: { borderRadius: 16, backgroundColor: "#1C1C1E", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)", padding: 14, gap: 10, marginBottom: 12 },
+  input: { minHeight: 46, borderRadius: 10, borderWidth: 0.5, borderColor: "rgba(255,255,255,0.12)", backgroundColor: "#252528", color: "#FFFFFF", fontFamily: fonts.body, fontSize: 14, paddingHorizontal: 12 },
   formRow: { flexDirection: "row", gap: 10 },
   halfInput: { flex: 1 },
-  saveButton: { minHeight: 44, borderRadius: radius.full, backgroundColor: colors.black, alignItems: "center", justifyContent: "center" },
-  saveText: { color: colors.white, fontFamily: fonts.semibold, fontSize: 11 },
+  saveButton: { minHeight: 44, borderRadius: 22, backgroundColor: "#C89A43", alignItems: "center", justifyContent: "center" },
+  saveText: { color: "#000000", fontFamily: fonts.semibold, fontSize: 13 },
   serviceList: { gap: 10 },
-  serviceRow: { minHeight: 70, borderRadius: radius.md, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, flexDirection: "row", alignItems: "center", gap: 10 },
-  serviceIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: colors.primarySoft },
+  serviceRow: { minHeight: 64, borderRadius: 16, backgroundColor: "#1C1C1E", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)", paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 10, shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } },
+  serviceIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(200,154,67,0.18)" },
   serviceCopy: { flex: 1, minWidth: 0 },
-  serviceName: { color: colors.text, fontFamily: fonts.semibold, fontSize: 12 },
-  serviceMeta: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, marginTop: 4 },
+  serviceName: { color: "#FFFFFF", fontFamily: fonts.semibold, fontSize: 14 },
+  serviceMeta: { color: "#8E8E93", fontFamily: fonts.body, fontSize: 13, marginTop: 2 },
   serviceActions: { flexDirection: "row", alignItems: "center", gap: 8 },
-  editButton: { width: 34, height: 34, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: colors.elevated },
-  deleteButton: { width: 34, height: 34, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: colors.elevated },
+  editButton: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,255,255,0.12)" },
+  deleteButton: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255,59,48,0.18)" },
   confirmDeleteContainer: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  confirmDeleteText: { color: colors.text, fontFamily: fonts.semibold, fontSize: 12, flex: 1, marginRight: 8 },
+  confirmDeleteText: { color: "#FFFFFF", fontFamily: fonts.semibold, fontSize: 13, flex: 1, marginRight: 8 },
   confirmActions: { flexDirection: "row", alignItems: "center", gap: 8 },
-  confirmCancelBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.sm, backgroundColor: colors.elevated },
-  confirmCancelText: { color: colors.secondaryText, fontFamily: fonts.medium, fontSize: 11 },
-  confirmDeleteBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.sm, backgroundColor: colors.error },
-  confirmDeleteTextBtn: { color: colors.white, fontFamily: fonts.bold, fontSize: 11 },
-  payoutHero: { minHeight: 118, borderRadius: radius.md, backgroundColor: colors.black, padding: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 14, marginBottom: 12 },
+  confirmCancelBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.12)" },
+  confirmCancelText: { color: "#8E8E93", fontFamily: fonts.medium, fontSize: 12 },
+  confirmDeleteBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, backgroundColor: colors.error },
+  confirmDeleteTextBtn: { color: colors.white, fontFamily: fonts.bold, fontSize: 12 },
+  payoutHero: { minHeight: 118, borderRadius: radius.md, backgroundColor: "#1C1C1E", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", padding: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 14, marginBottom: 12 },
   payoutCopy: { flex: 1, minWidth: 0 },
-  payoutLabel: { color: "#C4C6C2", fontFamily: fonts.medium, fontSize: 10, textTransform: "uppercase" },
-  payoutValue: { color: colors.white, fontFamily: fonts.headingHeavy, fontSize: 32, marginTop: 6 },
+  payoutLabel: { color: "#8E8E93", fontFamily: fonts.medium, fontSize: 10, textTransform: "uppercase" },
+  payoutValue: { color: "#FFFFFF", fontFamily: fonts.headingHeavy, fontSize: 32, marginTop: 6 },
   payoutMeta: { color: "#D9DBD7", fontFamily: fonts.body, fontSize: 11, marginTop: 5 },
-  readyBadge: { minHeight: 34, borderRadius: radius.full, backgroundColor: "rgba(30,141,91,0.14)", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingHorizontal: 10 },
+  readyBadge: { minHeight: 34, borderRadius: radius.full, backgroundColor: "rgba(30,141,91,0.24)", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingHorizontal: 10 },
   readyText: { color: "#75D7A6", fontFamily: fonts.semibold, fontSize: 9 },
   metricGrid: { flexDirection: "row", gap: 10 },
-  businessMetric: { flex: 1, minHeight: 96, borderRadius: radius.md, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, padding: 14 },
-  businessMetricLabel: { color: colors.secondaryText, fontFamily: fonts.medium, fontSize: 16 },
-  businessMetricValue: { color: colors.text, fontFamily: fonts.heading, fontSize: 22, marginTop: 9 },
-  businessMetricChange: { color: colors.success, fontFamily: fonts.semibold, fontSize: 9, marginTop: 5 },
-  withdrawButton: { minHeight: 50, borderRadius: radius.full, backgroundColor: colors.primary, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 },
-  withdrawText: { color: colors.black, fontFamily: fonts.bold, fontSize: 12 },
-  successMessage: { color: colors.success, fontFamily: fonts.medium, fontSize: 10, textAlign: "center", marginTop: 10 },
-  shopHero: { minHeight: 104, borderRadius: radius.md, backgroundColor: colors.black, padding: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 12 },
+  businessMetric: { flex: 1, minHeight: 96, borderRadius: radius.md, backgroundColor: "#1C1C1E", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", padding: 14 },
+  businessMetricLabel: { color: "#8E8E93", fontFamily: fonts.medium, fontSize: 14 },
+  businessMetricValue: { color: "#FFFFFF", fontFamily: fonts.heading, fontSize: 22, marginTop: 9 },
+  businessMetricChange: { color: colors.success, fontFamily: fonts.semibold, fontSize: 10, marginTop: 5 },
+  withdrawButton: { minHeight: 50, borderRadius: radius.full, backgroundColor: "#C89A43", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 },
+  withdrawText: { color: "#000000", fontFamily: fonts.bold, fontSize: 13 },
+  successMessage: { color: colors.success, fontFamily: fonts.medium, fontSize: 11, textAlign: "center", marginTop: 10 },
+  shopHero: { minHeight: 104, borderRadius: radius.md, backgroundColor: "#1C1C1E", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", padding: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 12 },
   shopHeroCopy: { flex: 1, minWidth: 0 },
-  shopEyebrow: { color: colors.primarySoft, fontFamily: fonts.semibold, fontSize: 9, textTransform: "uppercase" },
-  shopName: { color: colors.white, fontFamily: fonts.headingSemi, fontSize: 17, marginTop: 6 },
-  shopAddress: { color: "#C3C5C1", fontFamily: fonts.body, fontSize: 9, marginTop: 4 },
-  shopStatus: { borderRadius: radius.full, backgroundColor: "rgba(30,141,91,0.18)", paddingHorizontal: 10, paddingVertical: 7 },
-  shopStatusClosed: { backgroundColor: "rgba(198,64,70,0.18)" },
+  shopEyebrow: { color: "#C89A43", fontFamily: fonts.semibold, fontSize: 9, textTransform: "uppercase" },
+  shopName: { color: "#FFFFFF", fontFamily: fonts.headingSemi, fontSize: 17, marginTop: 6 },
+  shopAddress: { color: "#8E8E93", fontFamily: fonts.body, fontSize: 10, marginTop: 4 },
+  shopStatus: { borderRadius: radius.full, backgroundColor: "rgba(30,141,91,0.24)", paddingHorizontal: 10, paddingVertical: 7 },
+  shopStatusClosed: { backgroundColor: "rgba(198,64,70,0.24)" },
   shopStatusText: { color: "#75D7A6", fontFamily: fonts.semibold, fontSize: 9 },
   shopStatusTextClosed: { color: "#F28D91" },
-  settingRow: { minHeight: 76, borderRadius: radius.md, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, flexDirection: "row", alignItems: "center", gap: 10 },
-  settingIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: colors.primarySoft },
+  settingRow: { minHeight: 76, borderRadius: radius.md, backgroundColor: "#1C1C1E", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 10 },
+  settingIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(200,154,67,0.18)" },
   settingCopy: { flex: 1, minWidth: 0 },
-  settingTitle: { color: colors.text, fontFamily: fonts.semibold, fontSize: 12 },
-  settingBody: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, marginTop: 4 },
-  shopActions: { borderRadius: radius.md, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, overflow: "hidden", marginTop: 10 },
-  shopAction: { minHeight: 58, borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 12 },
-  shopActionText: { flex: 1, color: colors.text, fontFamily: fonts.medium, fontSize: 12 },
+  settingTitle: { color: "#FFFFFF", fontFamily: fonts.semibold, fontSize: 14 },
+  settingBody: { color: "#8E8E93", fontFamily: fonts.body, fontSize: 12, marginTop: 2 },
+  shopActions: { borderRadius: radius.md, backgroundColor: "#1C1C1E", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", overflow: "hidden", marginTop: 10 },
+  shopAction: { minHeight: 58, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.08)", flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 12 },
+  shopActionText: { flex: 1, color: "#FFFFFF", fontFamily: fonts.medium, fontSize: 14 },
   pressed: { opacity: 0.76, transform: [{ scale: 0.99 }] },
-  modalOverlay: { flex: 1, backgroundColor: "rgba(15,17,21,0.76)", justifyContent: "center", alignItems: "center", padding: 24 },
-  qrContainer: { width: "100%", maxWidth: 320, backgroundColor: colors.white, borderRadius: radius.lg, padding: 24, alignItems: "center" },
-  qrTitle: { color: colors.text, fontFamily: fonts.heading, fontSize: 20, textAlign: "center" },
-  qrSubtitle: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, textAlign: "center", marginTop: 6, lineHeight: 22 },
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.8)", justifyContent: "center", alignItems: "center", padding: 24 },
+  qrContainer: { width: "100%", maxWidth: 320, backgroundColor: "#1C1C1E", borderRadius: radius.lg, padding: 24, alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" },
+  qrTitle: { color: "#FFFFFF", fontFamily: fonts.heading, fontSize: 20, textAlign: "center" },
+  qrSubtitle: { color: "#8E8E93", fontFamily: fonts.body, fontSize: 13, textAlign: "center", marginTop: 6, lineHeight: 18 },
   qrImage: { width: 220, height: 220, marginTop: 20, borderRadius: radius.sm },
-  qrShopName: { color: colors.text, fontFamily: fonts.semibold, fontSize: 15, marginTop: 16 },
-  qrCloseButton: { width: "100%", minHeight: 46, borderRadius: radius.full, backgroundColor: colors.black, justifyContent: "center", alignItems: "center", marginTop: 24 },
-  qrCloseText: { color: colors.white, fontFamily: fonts.semibold, fontSize: 12 },
+  qrShopName: { color: "#FFFFFF", fontFamily: fonts.semibold, fontSize: 15, marginTop: 16 },
+  qrCloseButton: { width: "100%", minHeight: 46, borderRadius: radius.full, backgroundColor: "#C89A43", justifyContent: "center", alignItems: "center", marginTop: 24 },
+  qrCloseText: { color: "#000000", fontFamily: fonts.semibold, fontSize: 13 },
   subviewHeader: { height: 56, flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 18 },
-  backButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, alignItems: "center", justifyContent: "center" },
-  subviewTitle: { color: colors.text, fontFamily: fonts.heading, fontSize: 20 },
-  banner: { minHeight: 64, borderRadius: radius.md, backgroundColor: "rgba(200,154,67,0.1)", paddingHorizontal: 12, paddingVertical: 10, flexDirection: "row", gap: 10, alignItems: "flex-start", marginBottom: 18 },
+  backButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#1C1C1E", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", alignItems: "center", justifyContent: "center" },
+  subviewTitle: { color: "#FFFFFF", fontFamily: fonts.heading, fontSize: 20 },
+  banner: { minHeight: 64, borderRadius: radius.md, backgroundColor: "rgba(200,154,67,0.15)", paddingHorizontal: 12, paddingVertical: 10, flexDirection: "row", gap: 10, alignItems: "flex-start", marginBottom: 18 },
   bannerIcon: { marginTop: 2 },
-  bannerText: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, flex: 1, marginRight: 8, lineHeight: 22 },
+  bannerText: { color: "#E5E5EA", fontFamily: fonts.body, fontSize: 13, flex: 1, marginRight: 8, lineHeight: 18 },
   bannerClose: { width: 24, height: 24, alignItems: "center", justifyContent: "center" },
-  addLocButton: { minHeight: 46, borderRadius: radius.full, backgroundColor: colors.primaryDark, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 20 },
-  addLocButtonText: { color: colors.white, fontFamily: fonts.bold, fontSize: 12 },
-  sectionHeading: { color: colors.text, fontFamily: fonts.headingSemi, fontSize: 16, marginBottom: 12 },
-  locCard: { borderRadius: radius.md, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, padding: 14, gap: 12, marginBottom: 12 },
+  addLocButton: { minHeight: 46, borderRadius: radius.full, backgroundColor: "#C89A43", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 20 },
+  addLocButtonText: { color: "#000000", fontFamily: fonts.bold, fontSize: 13 },
+  sectionHeading: { color: "#FFFFFF", fontFamily: fonts.headingSemi, fontSize: 16, marginBottom: 12 },
+  locCard: { borderRadius: radius.md, backgroundColor: "#1C1C1E", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", padding: 14, gap: 12, marginBottom: 12 },
   locCardHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 },
-  locCardTitle: { color: colors.text, fontFamily: fonts.headingSemi, fontSize: 15 },
+  locCardTitle: { color: "#FFFFFF", fontFamily: fonts.headingSemi, fontSize: 15 },
   defaultBadge: { borderRadius: radius.full, backgroundColor: colors.success, paddingHorizontal: 8, paddingVertical: 4 },
   defaultBadgeText: { color: colors.white, fontFamily: fonts.bold, fontSize: 8 },
   locCardAddressRow: { gap: 4 },
-  locCardAddressLabel: { color: colors.primaryDark, fontFamily: fonts.bold, fontSize: 9 },
-  locCardAddress: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, lineHeight: 22 },
-  locCardActions: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
+  locCardAddressLabel: { color: "#C89A43", fontFamily: fonts.bold, fontSize: 9 },
+  locCardAddress: { color: "#8E8E93", fontFamily: fonts.body, fontSize: 13, lineHeight: 18 },
+  locCardActions: { borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.08)", paddingTop: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
   locActionBtn: { flexDirection: "row", alignItems: "center", gap: 6 },
-  locActionBtnText: { color: colors.secondaryText, fontFamily: fonts.semibold, fontSize: 11 },
+  locActionBtnText: { color: "#8E8E93", fontFamily: fonts.semibold, fontSize: 11 },
   locActionRight: { flexDirection: "row", alignItems: "center", gap: 14 },
   locEditBtn: { flexDirection: "row", alignItems: "center", gap: 4 },
-  locEditBtnText: { color: colors.secondaryText, fontFamily: fonts.semibold, fontSize: 11 },
+  locEditBtnText: { color: "#8E8E93", fontFamily: fonts.semibold, fontSize: 11 },
   locDeleteBtn: { width: 28, height: 28, alignItems: "center", justifyContent: "center" },
   fabContainer: { position: "absolute", bottom: 20, right: 14, zIndex: 10 },
-  fab: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.success, alignItems: "center", justifyContent: "center", elevation: 4 },
+  fab: { width: 52, height: 52, borderRadius: 26, backgroundColor: "#C89A43", alignItems: "center", justifyContent: "center", elevation: 4 },
   mapContainer: { height: 200, borderRadius: radius.md, overflow: "hidden", marginBottom: 18 },
-  mapPinOverlay: { position: "absolute", top: 12, left: 12, backgroundColor: "rgba(255,255,255,0.9)", paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.full },
-  mapPinText: { color: colors.text, fontFamily: fonts.medium, fontSize: 10 },
+  mapPinOverlay: { position: "absolute", top: 12, left: 12, backgroundColor: "rgba(28,28,30,0.9)", paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.full },
+  mapPinText: { color: "#FFFFFF", fontFamily: fonts.medium, fontSize: 10 },
   mapZoomControls: { position: "absolute", top: 12, right: 12, gap: 6 },
-  zoomBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: "rgba(255,255,255,0.9)", alignItems: "center", justifyContent: "center" },
-  zoomBtnText: { color: colors.text, fontFamily: fonts.bold, fontSize: 16 },
-  liveLocationBtn: { minHeight: 46, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.white, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 18 },
-  liveLocationText: { color: colors.primaryDark, fontFamily: fonts.semibold, fontSize: 12 },
+  zoomBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: "rgba(28,28,30,0.9)", alignItems: "center", justifyContent: "center" },
+  zoomBtnText: { color: "#FFFFFF", fontFamily: fonts.bold, fontSize: 16 },
+  liveLocationBtn: { minHeight: 46, borderRadius: radius.full, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", backgroundColor: "#252528", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 18 },
+  liveLocationText: { color: "#C89A43", fontFamily: fonts.semibold, fontSize: 13 },
   addressForm: { gap: 12, marginBottom: 20 },
-  inputLabel: { color: colors.text, fontFamily: fonts.semibold, fontSize: 12 },
-  formInput: { minHeight: 46, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.white, color: colors.text, fontFamily: fonts.body, fontSize: 12, paddingHorizontal: 12, marginBottom: 10 },
+  inputLabel: { color: "#FFFFFF", fontFamily: fonts.semibold, fontSize: 12 },
+  formInput: { minHeight: 46, borderRadius: radius.sm, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", backgroundColor: "#252528", color: "#FFFFFF", fontFamily: fonts.body, fontSize: 13, paddingHorizontal: 12, marginBottom: 10 },
   addressInputRow: { flexDirection: "row", gap: 10, alignItems: "center", marginBottom: 10 },
-  searchAddrBtn: { width: 46, height: 46, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.white, alignItems: "center", justifyContent: "center" },
+  searchAddrBtn: { width: 46, height: 46, borderRadius: radius.sm, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", backgroundColor: "#252528", alignItems: "center", justifyContent: "center" },
   googleMapsBtn: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 },
   googleMapsBtnText: { color: colors.info, fontFamily: fonts.semibold, fontSize: 12, textDecorationLine: "underline" },
-  helperText: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 16, marginTop: 8, fontStyle: "italic", lineHeight: 22 },
-  saveLocationBtn: { minHeight: 46, borderRadius: radius.full, backgroundColor: colors.primaryDark, justifyContent: "center", alignItems: "center" },
-  saveLocationBtnText: { color: colors.white, fontFamily: fonts.bold, fontSize: 12 },
-  empCard: { borderRadius: radius.md, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, padding: 14, marginBottom: 12 },
+  helperText: { color: "#8E8E93", fontFamily: fonts.body, fontSize: 12, marginTop: 8, fontStyle: "italic", lineHeight: 18 },
+  saveLocationBtn: { minHeight: 46, borderRadius: radius.full, backgroundColor: "#C89A43", justifyContent: "center", alignItems: "center" },
+  saveLocationBtnText: { color: "#000000", fontFamily: fonts.bold, fontSize: 13 },
+  empCard: { borderRadius: radius.md, backgroundColor: "#1C1C1E", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", padding: 14, marginBottom: 12 },
   empRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  empAvatar: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: colors.border },
+  empAvatar: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)" },
   empDetails: { flex: 1, minWidth: 0 },
-  empName: { color: colors.text, fontFamily: fonts.headingSemi, fontSize: 14 },
-  empRole: { color: colors.secondaryText, fontFamily: fonts.body, fontSize: 11, marginTop: 2 },
-  hoursEditor: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 12, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 12 },
+  empName: { color: "#FFFFFF", fontFamily: fonts.headingSemi, fontSize: 14 },
+  empRole: { color: "#8E8E93", fontFamily: fonts.body, fontSize: 11, marginTop: 2 },
+  hoursEditor: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 12, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.08)", paddingTop: 12 },
   hourInputGroup: { flex: 1 },
-  hourInputLabel: { color: colors.text, fontFamily: fonts.semibold, fontSize: 10, marginBottom: 4 },
-  hourInput: { minHeight: 40, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, color: colors.text, fontFamily: fonts.body, fontSize: 12, paddingHorizontal: 10 },
+  hourInputLabel: { color: "#FFFFFF", fontFamily: fonts.semibold, fontSize: 10, marginBottom: 4 },
+  hourInput: { minHeight: 40, borderRadius: radius.sm, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", backgroundColor: "#252528", color: "#FFFFFF", fontFamily: fonts.body, fontSize: 12, paddingHorizontal: 10 },
   hourSeparator: { justifyContent: "center", alignItems: "center", marginTop: 14 },
-  hourSeparatorText: { color: colors.muted, fontFamily: fonts.medium, fontSize: 12 },
-  offDutyBanner: { marginTop: 12, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 12 },
-  offDutyText: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, fontStyle: "italic" },
-  saveHoursBtn: { minHeight: 46, borderRadius: radius.full, backgroundColor: colors.primaryDark, justifyContent: "center", alignItems: "center", marginTop: 10 },
-  saveHoursBtnText: { color: colors.white, fontFamily: fonts.bold, fontSize: 12 },
-  modalOverlayBottom: { flex: 1, backgroundColor: "rgba(15,17,21,0.65)", justifyContent: "center", alignItems: "center", padding: 16 },
+  hourSeparatorText: { color: "#8E8E93", fontFamily: fonts.medium, fontSize: 12 },
+  offDutyBanner: { marginTop: 12, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.08)", paddingTop: 12 },
+  offDutyText: { color: "#8E8E93", fontFamily: fonts.body, fontSize: 11, fontStyle: "italic" },
+  saveHoursBtn: { minHeight: 46, borderRadius: radius.full, backgroundColor: "#C89A43", justifyContent: "center", alignItems: "center", marginTop: 10 },
+  saveHoursBtnText: { color: "#000000", fontFamily: fonts.bold, fontSize: 13 },
+  modalOverlayBottom: { flex: 1, backgroundColor: "rgba(0,0,0,0.75)", justifyContent: "center", alignItems: "center", padding: 16 },
   editContainer: {
     width: "100%",
-    backgroundColor: colors.white,
+    backgroundColor: "#1C1C1E",
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
     paddingTop: 16,
@@ -1472,7 +1484,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
     maxHeight: "92%",
     shadowColor: "#000",
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.3,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: -10 },
     elevation: 10
@@ -1480,7 +1492,7 @@ const styles = StyleSheet.create({
   modalHandle: {
     width: 40,
     height: 4,
-    backgroundColor: "#ECECE6",
+    backgroundColor: "rgba(255,255,255,0.2)",
     borderRadius: 2,
     alignSelf: "center",
     marginBottom: 10
@@ -1492,13 +1504,13 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#252528",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 10
   },
   editTitle: {
-    color: colors.text,
+    color: "#FFFFFF",
     fontFamily: fonts.heading,
     fontSize: 20,
     textAlign: "center",
@@ -1520,7 +1532,7 @@ const styles = StyleSheet.create({
     marginBottom: 20
   },
   editInputLabel: {
-    color: colors.text,
+    color: "#FFFFFF",
     fontFamily: fonts.bold,
     fontSize: 13,
     marginTop: 8
@@ -1534,7 +1546,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: "#F8F8F8",
+    backgroundColor: "#252528",
     alignItems: "center",
     justifyContent: "center"
   },
@@ -1542,9 +1554,9 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: 12,
-    backgroundColor: "#F8F8F8",
+    backgroundColor: "#252528",
     paddingHorizontal: 16,
-    color: colors.text,
+    color: "#FFFFFF",
     fontFamily: fonts.medium,
     fontSize: 14
   },
@@ -1558,13 +1570,13 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#946B22",
-    backgroundColor: colors.white,
+    borderColor: "#C89A43",
+    backgroundColor: "#1C1C1E",
     alignItems: "center",
     justifyContent: "center"
   },
   editCancelText: {
-    color: "#946B22",
+    color: "#C89A43",
     fontFamily: fonts.bold,
     fontSize: 14
   },
@@ -1572,12 +1584,12 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#946B22",
+    backgroundColor: "#C89A43",
     alignItems: "center",
     justifyContent: "center"
   },
   editSaveText: {
-    color: colors.white,
+    color: "#000000",
     fontFamily: fonts.bold,
     fontSize: 14
   },
@@ -1589,12 +1601,12 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.white,
+    borderColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "#1C1C1E",
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2
@@ -1605,7 +1617,9 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     overflow: "hidden",
     padding: 20,
-    backgroundColor: colors.black,
+    backgroundColor: "#1C1C1E",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
     position: "relative"
   },
   shopHeroInner: {
@@ -1619,10 +1633,10 @@ const styles = StyleSheet.create({
     padding: 0,
     borderRadius: 20,
     overflow: "hidden",
-    backgroundColor: colors.white,
+    backgroundColor: "#1C1C1E",
     marginTop: 14,
     borderWidth: 1,
-    borderColor: colors.border
+    borderColor: "rgba(255,255,255,0.08)"
   },
   shopActionRow: {
     height: 56,
@@ -1630,20 +1644,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border
+    borderBottomColor: "rgba(255,255,255,0.08)"
   },
   shopActionIconBox: {
     width: 34,
     height: 34,
     borderRadius: 8,
-    backgroundColor: "#FDF7EC",
+    backgroundColor: "rgba(200,154,67,0.18)",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12
   },
   shopActionLabel: {
     flex: 1,
-    color: colors.text,
+    color: "#FFFFFF",
     fontFamily: fonts.medium,
     fontSize: 14
   },
@@ -1653,11 +1667,11 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     overflow: "hidden",
     padding: 24,
-    backgroundColor: colors.white,
+    backgroundColor: "#1C1C1E",
     alignItems: "center",
     position: "relative",
     borderWidth: 1,
-    borderColor: colors.border
+    borderColor: "rgba(255,255,255,0.08)"
   },
   qrCardHeader: {
     alignItems: "center",
@@ -1665,7 +1679,7 @@ const styles = StyleSheet.create({
     zIndex: 2
   },
   qrShopAddress: {
-    color: colors.secondaryText,
+    color: "#8E8E93",
     fontFamily: fonts.body,
     fontSize: 13,
     marginTop: 4
@@ -1677,12 +1691,12 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: "#C89A43",
     padding: 8,
-    backgroundColor: colors.white,
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 2,
     shadowColor: "#000",
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.2,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
     elevation: 4
@@ -1693,7 +1707,7 @@ const styles = StyleSheet.create({
     borderRadius: 8
   },
   qrDescription: {
-    color: colors.secondaryText,
+    color: "#8E8E93",
     fontFamily: fonts.body,
     fontSize: 13,
     textAlign: "center",
@@ -1711,13 +1725,13 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#946B22",
+    backgroundColor: "#C89A43",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center"
   },
   shareQrText: {
-    color: colors.white,
+    color: "#000000",
     fontFamily: fonts.bold,
     fontSize: 14
   },
@@ -1726,14 +1740,14 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#946B22",
-    backgroundColor: colors.white,
+    borderColor: "#C89A43",
+    backgroundColor: "#1C1C1E",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center"
   },
   downloadQrText: {
-    color: "#946B22",
+    color: "#C89A43",
     fontFamily: fonts.bold,
     fontSize: 14
   },
@@ -1741,9 +1755,9 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: "#F3E2C3",
+    borderColor: "#C89A43",
     borderStyle: "dashed",
-    backgroundColor: "#FDF7EC",
+    backgroundColor: "rgba(200,154,67,0.12)",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -1755,23 +1769,21 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.white,
+    backgroundColor: "#C89A43",
     alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#F3E2C3"
+    justifyContent: "center"
   },
   addLocationCardText: {
-    color: "#946B22",
+    color: "#C89A43",
     fontFamily: fonts.bold,
     fontSize: 14
   },
   locationCard: {
     borderRadius: 20,
     padding: 16,
-    backgroundColor: colors.white,
+    backgroundColor: "#1C1C1E",
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: "rgba(255,255,255,0.08)",
     marginBottom: 12
   },
   locHeaderRow: {
@@ -1782,18 +1794,18 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 10,
-    backgroundColor: "#FDF7EC",
+    backgroundColor: "rgba(200,154,67,0.18)",
     alignItems: "center",
     justifyContent: "center",
     marginTop: 2
   },
   locTitleText: {
-    color: colors.text,
+    color: "#FFFFFF",
     fontFamily: fonts.headingSemi,
     fontSize: 15
   },
   locAddressText: {
-    color: colors.secondaryText,
+    color: "#8E8E93",
     fontFamily: fonts.body,
     fontSize: 13,
     marginTop: 4,
@@ -1801,7 +1813,7 @@ const styles = StyleSheet.create({
   },
   locDivider: {
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: "rgba(255,255,255,0.08)",
     marginVertical: 14
   },
   locActionsRow: {
@@ -1814,7 +1826,7 @@ const styles = StyleSheet.create({
     alignItems: "center"
   },
   setDefaultText: {
-    color: colors.secondaryText,
+    color: "#8E8E93",
     fontFamily: fonts.semibold,
     fontSize: 12
   },
@@ -1827,15 +1839,15 @@ const styles = StyleSheet.create({
     height: 34,
     borderRadius: 17,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.white,
+    borderColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "#252528",
     alignItems: "center",
     justifyContent: "center"
   },
   defaultBadgeGold: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#946B22",
+    backgroundColor: "#C89A43",
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6
@@ -1846,40 +1858,40 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     height: 200,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: "rgba(255,255,255,0.08)",
     padding: 0
   },
   useLiveLocationBtn: {
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#FDF7EC",
+    backgroundColor: "rgba(200,154,67,0.18)",
     borderWidth: 1,
-    borderColor: "#F3E2C3",
+    borderColor: "#C89A43",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16
   },
   useLiveLocationText: {
-    color: "#946B22",
+    color: "#C89A43",
     fontFamily: fonts.bold,
     fontSize: 14
   },
   addressFormCard: {
     borderRadius: 20,
     padding: 18,
-    backgroundColor: colors.white,
+    backgroundColor: "#1C1C1E",
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: "rgba(255,255,255,0.08)",
     marginBottom: 20
   },
   searchLocationBtnInner: {
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: "#FDF7EC",
+    backgroundColor: "#252528",
     borderWidth: 1,
-    borderColor: "#F3E2C3",
+    borderColor: "rgba(255,255,255,0.12)",
     alignItems: "center",
     justifyContent: "center"
   },
@@ -1893,13 +1905,13 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#946B22",
-    backgroundColor: colors.white,
+    borderColor: "#C89A43",
+    backgroundColor: "#1C1C1E",
     alignItems: "center",
     justifyContent: "center"
   },
   locCancelText: {
-    color: "#946B22",
+    color: "#C89A43",
     fontFamily: fonts.bold,
     fontSize: 14
   },
@@ -1907,21 +1919,21 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#946B22",
+    backgroundColor: "#C89A43",
     alignItems: "center",
     justifyContent: "center"
   },
   locSaveText: {
-    color: colors.white,
+    color: "#000000",
     fontFamily: fonts.bold,
     fontSize: 14
   },
   employeeCard: {
     borderRadius: 20,
     padding: 16,
-    backgroundColor: colors.white,
+    backgroundColor: "#1C1C1E",
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: "rgba(255,255,255,0.08)",
     marginBottom: 12
   },
   empAvatarWrapper: {
@@ -1929,7 +1941,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "#C89A43",
     padding: 2,
-    backgroundColor: colors.white
+    backgroundColor: "#1C1C1E"
   },
   empAvatarImg: {
     width: 38,
@@ -1937,12 +1949,12 @@ const styles = StyleSheet.create({
     borderRadius: 19
   },
   empNameText: {
-    color: colors.text,
+    color: "#FFFFFF",
     fontFamily: fonts.headingSemi,
     fontSize: 14
   },
   empRoleText: {
-    color: colors.secondaryText,
+    color: "#8E8E93",
     fontFamily: fonts.body,
     fontSize: 11,
     marginTop: 2
@@ -1952,7 +1964,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     marginTop: 14,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: "rgba(255,255,255,0.08)",
     paddingTop: 14,
     gap: 8
   },
@@ -1963,7 +1975,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4
   },
   toSeparatorText: {
-    color: colors.muted,
+    color: "#8E8E93",
     fontFamily: fonts.bold,
     fontSize: 14
   },
@@ -1972,7 +1984,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 14,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: "rgba(255,255,255,0.08)",
     paddingTop: 14
   },
   cardPatternDark: {
@@ -2002,7 +2014,7 @@ const styles = StyleSheet.create({
   sectionHeadingBento: {
     fontFamily: fonts.bold,
     fontSize: 12,
-    color: colors.secondaryText,
+    color: "#8E8E93",
     letterSpacing: 1.2,
     marginTop: 24,
     marginBottom: 10
@@ -2016,7 +2028,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: "rgba(255,255,255,0.08)",
     position: "relative"
   },
   tileMapBackground: {
@@ -2025,7 +2037,7 @@ const styles = StyleSheet.create({
   },
   tileGlassOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(255,255,255,0.3)"
+    backgroundColor: "rgba(0,0,0,0.4)"
   },
   tileContent: {
     ...StyleSheet.absoluteFill,
@@ -2041,11 +2053,13 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: colors.white,
+    backgroundColor: "#1C1C1E",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2
@@ -2057,12 +2071,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#10B981"
   },
   tileTitle: {
-    color: colors.text,
+    color: "#FFFFFF",
     fontFamily: fonts.headingSemi,
     fontSize: 16
   },
   tileSubtitle: {
-    color: colors.secondaryText,
+    color: "#8E8E93",
     fontFamily: fonts.body,
     fontSize: 11,
     marginTop: 2
@@ -2076,15 +2090,15 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: "rgba(255,255,255,0.08)",
     position: "relative",
     overflow: "hidden"
   },
   bentoQrTile: {
-    backgroundColor: colors.black
+    backgroundColor: "#1C1C1E"
   },
   bentoHoursTile: {
-    backgroundColor: colors.white
+    backgroundColor: "#1C1C1E"
   },
   tileContentHalf: {
     ...StyleSheet.absoluteFill,
@@ -2092,12 +2106,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between"
   },
   tileTitleHalf: {
-    color: colors.text,
+    color: "#FFFFFF",
     fontFamily: fonts.headingSemi,
     fontSize: 14
   },
   tileDescriptionHalf: {
-    color: colors.secondaryText,
+    color: "#8E8E93",
     fontFamily: fonts.body,
     fontSize: 11,
     marginTop: 2
@@ -2131,19 +2145,19 @@ const styles = StyleSheet.create({
     textShadowRadius: 3
   },
   activeRosterBadge: {
-    backgroundColor: "#946B22",
+    backgroundColor: "#C89A43",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8
   },
   activeRosterBadgeText: {
-    color: colors.white,
+    color: "#000000",
     fontFamily: fonts.bold,
     fontSize: 9
   },
   immersiveContainer: {
     flex: 1,
-    backgroundColor: "#FBFBF9"
+    backgroundColor: "#121214"
   },
   immersiveHeader: {
     flexDirection: "row",
@@ -2152,25 +2166,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border
+    borderBottomColor: "rgba(255,255,255,0.08)"
   },
   immersiveBackBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.white,
+    borderColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "#1C1C1E",
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2
   },
   immersiveHeaderTitle: {
-    color: colors.text,
+    color: "#FFFFFF",
     fontFamily: fonts.heading,
     fontSize: 18
   },
@@ -2184,11 +2198,11 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     borderWidth: 1.5,
     borderColor: "#C89A43",
-    backgroundColor: colors.white,
+    backgroundColor: "#1C1C1E",
     padding: 20,
     maxHeight: "85%",
     shadowColor: "#000",
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.4,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 10 },
     elevation: 10
@@ -2200,7 +2214,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#ECECE6"
+    borderBottomColor: "rgba(255,255,255,0.08)"
   },
   modalHeaderTitleBox: {
     flexDirection: "row",
@@ -2208,7 +2222,7 @@ const styles = StyleSheet.create({
     gap: 8
   },
   modalTitleText: {
-    color: colors.text,
+    color: "#FFFFFF",
     fontFamily: fonts.heading,
     fontSize: 18
   },
@@ -2216,9 +2230,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#FDF7EC",
+    backgroundColor: "#252528",
     borderWidth: 1,
-    borderColor: "#F3E2C3",
+    borderColor: "rgba(255,255,255,0.12)",
     alignItems: "center",
     justifyContent: "center"
   }

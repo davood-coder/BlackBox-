@@ -7,7 +7,7 @@ import { useBooking } from "../../state/BookingContext";
 import { colors, fonts, radius } from "../../theme";
 
 export default function BookingConfirmed({ navigation }) {
-  const { selectedShop, selectedDate, selectedTime, selectedBarber, selectedPreference, bookingTotal, bookingId, lastConfirmation } = useBooking();
+  const { selectedShop, selectedDate, selectedTime, selectedBarber, selectedPreference, bookingTotal, bookingId, lastConfirmation, currency } = useBooking();
   const confirmation = lastConfirmation || {
     id: bookingId,
     date: `${selectedDate.full} ${timeRanges[selectedTime] || selectedTime}`,
@@ -28,7 +28,7 @@ export default function BookingConfirmed({ navigation }) {
           <View style={[styles.checkCircle, isPending && styles.pendingCircle]}>
             <Feather name={isPending ? "clock" : "check"} size={34} color={isPending ? colors.warning : colors.success} />
           </View>
-          <Text style={styles.title}>{isPending ? "Your request is with the shop" : "Your booking is confirmed"}</Text>
+          <Text style={styles.title}>{isPending ? "Your Request Is With The Shop" : "Your Booking Is Confirmed"}</Text>
           <Text style={styles.requestCopy}>
             {isPending ? "You will receive a notification when the barber accepts or suggests another time." : "Your chair is reserved. Show your ticket when you arrive."}
           </Text>
@@ -43,7 +43,7 @@ export default function BookingConfirmed({ navigation }) {
           <View style={styles.detailGrid}>
             <DetailItem label="Barber" value={confirmation.barber || selectedBarber.name} />
             <DetailItem label="Preference" value={confirmation.preference || selectedPreference.label} />
-            <DetailItem label="Total" value={`$${confirmation.total || bookingTotal}`} />
+            <DetailItem label="Total" value={`${currency.symbol}${confirmation.total || bookingTotal}`} />
           </View>
           <View style={styles.divider} />
           <View style={styles.idBlock}>

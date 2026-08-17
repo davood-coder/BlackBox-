@@ -92,7 +92,7 @@ export default function BookAppointment({ navigation }: any) {
         })}
       </View>
 
-      <SectionTitle title="Choose Your Barber" action="View all" onAction={() => navigation.navigate("Barbers")} />
+      <SectionTitle title="Choose Your Barber" action="View All" onAction={() => navigation.navigate("Barbers")} />
       <View style={styles.list}>
         {shopBarbers.slice(0, 3).map((barber) => (
           <Pressable key={barber.name} onPress={() => setSelectedBarber(barber)}>
@@ -158,7 +158,7 @@ export default function BookAppointment({ navigation }: any) {
       <Animated.View style={{ transform: [{ scale: totalPulse }] }}>
         <Card style={styles.totalBar}>
           <View>
-            <Text style={styles.totalLabel}>Estimated total</Text>
+            <Text style={styles.totalLabel}>Estimated Total</Text>
             <Text style={styles.totalMeta}>{selectedService.duration} service{selectedAddOns.length ? ` + ${selectedAddOns.length} add-on${selectedAddOns.length > 1 ? "s" : ""}` : ""}</Text>
           </View>
           <Text style={styles.totalPrice}>{currency.symbol}{bookingTotal}</Text>

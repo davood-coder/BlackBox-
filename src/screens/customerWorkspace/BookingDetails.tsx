@@ -14,9 +14,9 @@ export default function BookingDetails({ navigation, route }: any) {
   if (!booking) {
     return (
       <Screen>
-        <AppHeader title="Booking details" onBack={() => goBackOrNavigate(navigation, "MyBookings")} />
+        <AppHeader title="Booking Details" onBack={() => goBackOrNavigate(navigation, "MyBookings")} />
         <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>Booking not found</Text>
+          <Text style={styles.emptyTitle}>Booking Not Found</Text>
           <Text style={styles.emptyCopy}>This booking is no longer available.</Text>
         </View>
       </Screen>
@@ -33,7 +33,7 @@ export default function BookingDetails({ navigation, route }: any) {
 
   return (
     <Screen scroll>
-      <AppHeader title="Booking details" onBack={() => goBackOrNavigate(navigation, "MyBookings")} />
+      <AppHeader title="Booking Details" onBack={() => goBackOrNavigate(navigation, "MyBookings")} />
       <View style={styles.statusHeader}>
         <View style={[styles.statusIcon, statusIconStyle(booking.status)]}>
           <Feather name={statusIcon(booking.status) as any} size={22} color={statusColor(booking.status)} />
@@ -48,7 +48,7 @@ export default function BookingDetails({ navigation, route }: any) {
         <View style={styles.ticket}>
           <View style={styles.ticketTop}>
             <View>
-              <Text style={styles.ticketEyebrow}>Cutzix ticket</Text>
+              <Text style={styles.ticketEyebrow}>Cutzix Ticket</Text>
               <Text style={styles.ticketNumber}>{booking.appointmentNumber || "A-104"}</Text>
             </View>
             <View style={styles.qr}>
@@ -64,10 +64,10 @@ export default function BookingDetails({ navigation, route }: any) {
 
       <View style={styles.details}>
         <DetailRow icon="scissors" label="Service" value={booking.service} />
-        <DetailRow icon="user" label="Barber" value={booking.barber || "Any available barber"} />
-        <DetailRow icon="calendar" label="Date & time" value={booking.date} />
+        <DetailRow icon="user" label="Barber" value={booking.barber || "Any Available Barber"} />
+        <DetailRow icon="calendar" label="Date & Time" value={booking.date} />
         <DetailRow icon="map-pin" label="Shop" value={booking.shop} />
-        <DetailRow icon="clock" label="Estimated wait" value={booking.estimatedWait || "15 min"} />
+        <DetailRow icon="clock" label="Estimated Wait" value={booking.estimatedWait || "15 Min"} />
         <DetailRow icon="credit-card" label="Payment" value={booking.paymentStatus || "Pending"} />
       </View>
 
@@ -77,22 +77,22 @@ export default function BookingDetails({ navigation, route }: any) {
       </View>
 
       <View style={styles.timeline}>
-        <Text style={styles.sectionTitle}>Appointment progress</Text>
-        <TimelineStep title="Request sent" copy="The shop received your preferred service and time." complete />
+        <Text style={styles.sectionTitle}>Appointment Progress</Text>
+        <TimelineStep title="Request Sent" copy="The shop received your preferred service and time." complete />
         <TimelineStep
-          title="Shop decision"
+          title="Shop Decision"
           copy={booking.status === "Pending" ? "Waiting for the shop to accept or suggest another time." : booking.status === "Rejected" ? "This time was unavailable." : "Your chair is reserved."}
           complete={booking.status !== "Pending"}
           active={booking.status === "Pending"}
         />
-        <TimelineStep title="Service complete" copy="Payment and review become available after your visit." complete={booking.status === "Completed"} />
+        <TimelineStep title="Service Complete" copy="Payment and review become available after your visit." complete={booking.status === "Completed"} />
       </View>
 
       <View style={styles.actions}>
         <PrimaryButton label="Directions" icon="navigate-outline" onPress={openDirections} />
         {canCancel ? (
           <Pressable onPress={() => updateBookingStatus(booking.id || "", "Cancelled")} style={({ pressed }) => [styles.cancelButton, pressed && styles.pressed]}>
-            <Text style={styles.cancelText}>Cancel booking</Text>
+            <Text style={styles.cancelText}>Cancel Booking</Text>
           </Pressable>
         ) : null}
         {booking.status === "Rejected" || booking.status === "Cancelled" ? (

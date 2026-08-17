@@ -7,7 +7,8 @@ import { useBooking } from "../../state/BookingContext";
 import { colors, fonts, radius } from "../../theme";
 
 export default function Favorites({ navigation }: any) {
-  const { availableShops, favoriteShopIds, toggleFavoriteShop, setSelectedShop, setSelectedBarber } = useBooking();
+  const { availableShops, favoriteShopIds, toggleFavoriteShop, setSelectedShop, setSelectedBarber, themeMode } = useBooking();
+  const isDark = themeMode === "dark";
   const allShops = [...availableShops, ...barbershops].filter((shop, index, items) => items.findIndex((item) => item.id === shop.id) === index);
   const favorites = allShops.filter((shop) => favoriteShopIds.includes(shop.id));
 
@@ -20,18 +21,18 @@ export default function Favorites({ navigation }: any) {
   return (
     <Screen scroll>
       <AppHeader title="Favorites" onBack={() => goBackOrNavigate(navigation, "Home")} />
-      <Text style={styles.intro}>Your saved shops and go-to professionals.</Text>
+      <Text style={[styles.intro, isDark && { color: "#8E8E93" }]}>Your saved shops and go-to professionals.</Text>
       <View style={styles.tabs}>
         <View style={styles.activeTab}><Text style={styles.activeTabText}>Shops</Text></View>
-        <Pressable onPress={() => navigation.navigate("Barbers")} style={styles.tab}><Text style={styles.tabText}>Barbers</Text></Pressable>
+        <Pressable onPress={() => navigation.navigate("Barbers")} style={styles.tab}><Text style={[styles.tabText, isDark && { color: "#8E8E93" }]}>Barbers</Text></Pressable>
       </View>
       <View style={styles.list}>
         {favorites.map((shop) => (
-          <Pressable key={shop.id} onPress={() => openShop(shop)} style={({ pressed }) => [styles.shopRow, pressed && styles.pressed]}>
+          <Pressable key={shop.id} onPress={() => openShop(shop)} style={({ pressed }) => [styles.shopRow, isDark && { backgroundColor: "#1C1C1E", borderColor: "rgba(255,255,255,0.08)" }, pressed && styles.pressed]}>
             <Image source={shop.image} style={styles.image} />
             <View style={styles.shopCopy}>
-              <Text style={styles.name} numberOfLines={1}>{shop.name}</Text>
-              <Text style={styles.address} numberOfLines={1}>{shop.address}</Text>
+              <Text style={[styles.name, isDark && { color: "#FFFFFF" }]} numberOfLines={1}>{shop.name}</Text>
+              <Text style={[styles.address, isDark && { color: "#8E8E93" }]} numberOfLines={1}>{shop.address}</Text>
               <View style={styles.meta}>
                 <Rating value={shop.rating} count={shop.reviews} small />
                 <Text style={styles.distance}>{shop.distance}</Text>
