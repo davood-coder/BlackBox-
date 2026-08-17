@@ -30,19 +30,19 @@ export default function BarberBookings({ navigation }: any) {
         <View style={styles.header}>
           <View>
             <Text style={styles.eyebrow}>Operations</Text>
-            <Text style={styles.title}>Booking management</Text>
+            <Text style={styles.title}>Booking Management</Text>
           </View>
         </View>
 
         <View style={styles.summaryBand}>
           <View>
-            <Text style={styles.summaryLabel}>Today's floor</Text>
-            <Text style={styles.summaryValue}>{bookings.filter((item) => item.status === "Confirmed").length + 3} appointments</Text>
+            <Text style={styles.summaryLabel}>Today's Floor</Text>
+            <Text style={styles.summaryValue}>{bookings.filter((item) => item.status === "Confirmed").length + 3} Appointments</Text>
           </View>
           <View style={styles.summaryDivider} />
           <View>
             <Text style={styles.summaryLabel}>Pending</Text>
-            <Text style={styles.summaryValue}>{bookings.filter((item) => item.status === "Pending").length} requests</Text>
+            <Text style={styles.summaryValue}>{bookings.filter((item) => item.status === "Pending").length} Requests</Text>
           </View>
         </View>
 
@@ -66,7 +66,7 @@ export default function BarberBookings({ navigation }: any) {
         {!visibleBookings.length ? (
           <View style={styles.empty}>
             <View style={styles.emptyIcon}><Feather name="inbox" size={23} color={colors.primaryDark} /></View>
-            <Text style={styles.emptyTitle}>No {tab.toLowerCase()} bookings</Text>
+            <Text style={styles.emptyTitle}>No {tab} Bookings</Text>
             <Text style={styles.emptyCopy}>Bookings will move here as their status changes.</Text>
           </View>
         ) : null}
@@ -91,7 +91,7 @@ function BookingRequest({ booking, onUpdate }: { booking: Booking; onUpdate: (bo
         <View style={styles.avatar}><Text style={styles.avatarText}>{(booking.customer || "C").charAt(0)}</Text></View>
         <View style={styles.customerCopy}>
           <Text style={styles.customer}>{booking.customer || "Cutzix customer"}</Text>
-          <Text style={styles.phone}>{booking.customerPhone || "Phone not provided"}</Text>
+          <Text style={styles.phone}>{booking.customerPhone || "Phone Not Provided"}</Text>
         </View>
         <View style={[styles.statusBadge, statusBadgeStyle(booking.status)]}>
           <Text style={[styles.statusText, { color: statusColor(booking.status) }]}>{booking.status}</Text>
@@ -102,20 +102,20 @@ function BookingRequest({ booking, onUpdate }: { booking: Booking; onUpdate: (bo
         <View style={styles.serviceIcon}><Feather name="scissors" size={17} color={colors.primaryDark} /></View>
         <View style={styles.serviceCopy}>
           <Text style={styles.service}>{booking.service}</Text>
-          <Text style={styles.barber}>{booking.barber || "Any barber"} · {booking.date}</Text>
+          <Text style={styles.barber}>{booking.barber || "Any Barber"} · {booking.date}</Text>
         </View>
         <Text style={styles.price}>{currency.symbol}{booking.total || 0}</Text>
       </View>
 
       {booking.note ? (
         <View style={styles.notes}>
-          <Text style={styles.notesLabel}>Special notes</Text>
+          <Text style={styles.notesLabel}>Special Notes</Text>
           <Text style={styles.notesText}>{booking.note}</Text>
         </View>
       ) : null}
 
       <View style={styles.metaRow}>
-        <Meta icon="clock" value={booking.estimatedWait || "15 min wait"} />
+        <Meta icon="clock" value={booking.estimatedWait || "15 Min Wait"} />
         <Meta icon="credit-card" value={booking.paymentStatus || "Pending"} />
         <Meta icon="hash" value={booking.appointmentNumber || "New"} />
       </View>
@@ -130,7 +130,7 @@ function BookingRequest({ booking, onUpdate }: { booking: Booking; onUpdate: (bo
               <Text style={styles.rejectText}>Decline</Text>
             </Pressable>
             <Pressable onPress={() => onUpdate(booking.id || "", "Confirmed")} style={({ pressed }) => [styles.primaryAction, pressed && styles.pressed]}>
-              <Text style={styles.primaryActionText}>Accept request</Text>
+              <Text style={styles.primaryActionText}>Accept Request</Text>
             </Pressable>
           </>
         ) : null}
@@ -140,7 +140,7 @@ function BookingRequest({ booking, onUpdate }: { booking: Booking; onUpdate: (bo
               <Text style={styles.rejectText}>Cancel</Text>
             </Pressable>
             <Pressable onPress={() => onUpdate(booking.id || "", "Completed")} style={({ pressed }) => [styles.primaryAction, pressed && styles.pressed]}>
-              <Text style={styles.primaryActionText}>Complete service</Text>
+              <Text style={styles.primaryActionText}>Complete Service</Text>
             </Pressable>
           </>
         ) : null}

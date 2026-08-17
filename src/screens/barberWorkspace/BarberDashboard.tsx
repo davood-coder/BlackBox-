@@ -64,18 +64,18 @@ export default function BarberDashboard({ navigation }: any) {
         </View>
 
         <View style={styles.metrics}>
-          <MetricCard label="Today's revenue" value={`${currency.symbol}${revenue}`} change="+12%" icon="trending-up" tone="gold" />
-          <MetricCard label="Bookings" value={String(pending.length + confirmed.length + completed.length)} change={`${pending.length} pending`} icon="calendar" tone="black" />
-          <MetricCard label="Live queue" value={String(confirmed.length + 2)} change="18 min avg" icon="users" tone="blue" />
-          <MetricCard label="Rating" value="4.9" change="179 reviews" icon="star" tone="green" />
+          <MetricCard label="Today's Revenue" value={`${currency.symbol}${revenue}`} change="+12%" icon="trending-up" tone="gold" />
+          <MetricCard label="Bookings" value={String(pending.length + confirmed.length + completed.length)} change={`${pending.length} Pending`} icon="calendar" tone="black" />
+          <MetricCard label="Live Queue" value={String(confirmed.length + 2)} change="18 Min Avg" icon="users" tone="blue" />
+          <MetricCard label="Rating" value="4.9" change="179 Reviews" icon="star" tone="green" />
         </View>
 
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.sectionEyebrow}>Needs attention</Text>
-            <Text style={styles.sectionTitle}>Booking requests</Text>
+            <Text style={styles.sectionEyebrow}>Needs Attention</Text>
+            <Text style={styles.sectionTitle}>Booking Requests</Text>
           </View>
-          <Pressable onPress={() => navigation.navigate("BarberBookings")}><Text style={styles.viewAll}>View all</Text></Pressable>
+          <Pressable onPress={() => navigation.navigate("BarberBookings")}><Text style={styles.viewAll}>View All</Text></Pressable>
         </View>
 
         <View style={styles.requestList}>
@@ -84,7 +84,7 @@ export default function BarberDashboard({ navigation }: any) {
               <View style={styles.requestTop}>
                 <View style={styles.customerAvatar}><Text style={styles.customerInitial}>{(booking.customer || "C").charAt(0)}</Text></View>
                 <View style={styles.requestCopy}>
-                  <Text style={styles.customerName}>{booking.customer || "Cutzix customer"}</Text>
+                  <Text style={styles.customerName}>{booking.customer || "Cutzix Customer"}</Text>
                   <Text style={styles.requestMeta}>{booking.service} with {booking.barber}</Text>
                   <View style={styles.timeRow}>
                     <Feather name="clock" size={12} color={colors.primaryDark} />
@@ -110,7 +110,7 @@ export default function BarberDashboard({ navigation }: any) {
             <View style={styles.emptyRequests}>
               <View style={styles.emptyIcon}><Feather name="check-circle" size={22} color={colors.success} /></View>
               <View>
-                <Text style={styles.emptyTitle}>Requests are cleared</Text>
+                <Text style={styles.emptyTitle}>Requests Are Cleared</Text>
                 <Text style={styles.emptyCopy}>New customer requests will appear here.</Text>
               </View>
             </View>
@@ -119,8 +119,8 @@ export default function BarberDashboard({ navigation }: any) {
 
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.sectionEyebrow}>Floor view</Text>
-            <Text style={styles.sectionTitle}>Today's schedule</Text>
+            <Text style={styles.sectionEyebrow}>Floor View</Text>
+            <Text style={styles.sectionTitle}>Today's Schedule</Text>
           </View>
           <Pressable onPress={() => navigation.navigate("BarberBookings")}><Text style={styles.viewAll}>Timeline</Text></Pressable>
         </View>
@@ -129,7 +129,7 @@ export default function BarberDashboard({ navigation }: any) {
           {[
             { time: "10:00", name: "Michael Johnson", service: "Haircut & Beard Trim", status: "In chair" },
             { time: "11:30", name: "Ethan Brown", service: "Classic Shave", status: "Confirmed" },
-            { time: "01:00", name: "Walk-in window", service: "2 chairs available", status: "Open" }
+            { time: "01:00", name: "Walk-In Window", service: "2 Chairs Available", status: "Open" }
           ].map((item, index) => (
             <View key={item.time} style={styles.scheduleRow}>
               <Text style={styles.scheduleTime}>{item.time}</Text>
@@ -149,7 +149,7 @@ export default function BarberDashboard({ navigation }: any) {
         <View style={styles.insight}>
           <View style={styles.insightIcon}><Ionicons name="sparkles" size={20} color={colors.black} /></View>
           <View style={styles.insightCopy}>
-            <Text style={styles.insightTitle}>Peak window: 5:00 - 7:00 PM</Text>
+            <Text style={styles.insightTitle}>Peak Window: 5:00 - 7:00 PM</Text>
             <Text style={styles.insightBody}>Keep one chair flexible. Fridays run 22% busier in this window.</Text>
           </View>
         </View>

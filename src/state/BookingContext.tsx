@@ -86,7 +86,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const [workspace, setWorkspace] = useState<Workspace>("Customer");
   const [notifications, setNotifications] = useState<AppNotification[]>(appNotifications);
   const [favoriteShopIds, setFavoriteShopIds] = useState<string[]>([barbershops[0].id]);
-  const [currency, setCurrency] = useState<CurrencyConfig>({ code: "USD", symbol: "$" });
+  const [currency, setCurrency] = useState<CurrencyConfig>({ code: "INR", symbol: "₹" });
 
   useEffect(() => {
     if (selectedShop?.address) {

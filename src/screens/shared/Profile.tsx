@@ -8,6 +8,7 @@ import { goBackOrNavigate } from "../../navigation/goBack";
 import { useBooking } from "../../state/BookingContext";
 import { colors, fonts, radius } from "../../theme";
 import { images } from "../../assets/images";
+import { convertCurrencyAmount } from "../../utils/currency";
 import * as ImagePicker from "expo-image-picker";
 
 const MenuIcon = Feather as ComponentType<any>;
@@ -54,7 +55,8 @@ export default function Profile({ navigation }: any) {
     selectedBarber,
     selectedPaymentMethod,
     selectedPreference,
-    workspace
+    workspace,
+    currency
   } = useBooking();
   const isBarber = workspace === "Barber";
   const profile = temporaryProfiles[workspace];
@@ -115,6 +117,7 @@ export default function Profile({ navigation }: any) {
   const confirmedBookings = profileBookings.filter((booking) => booking.status === "Confirmed");
   const completedBookings = profileBookings.filter((booking) => booking.status === "Completed");
   const payout = (profile.basePayout || 0) + completedBookings.reduce((total, booking) => total + (booking.total || 0), 0);
+  const displayPayout = convertCurrencyAmount(payout, currency.code);
   const homeRoute = isBarber ? "BarberDashboard" : "Home";
 
   const statsWithIcons = isBarber
@@ -133,8 +136,8 @@ export default function Profile({ navigation }: any) {
         },
         {
           label: "Payout",
-          value: `$${payout}`,
-          icon: "wallet" as const,
+          value: `${currency.symbol}${displayPayout.toLocaleString("en-IN")}`,
+          icon: "credit-card" as const,
           route: "BusinessHub"
         }
       ]

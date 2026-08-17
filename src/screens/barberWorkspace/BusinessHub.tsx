@@ -39,8 +39,8 @@ export default function BusinessHub({ navigation }: any) {
       <Screen scroll bottomInset>
         <View style={styles.header}>
           <View style={styles.headerCopy}>
-            <Text style={styles.eyebrow}>Business workspace</Text>
-            <Text style={styles.title}>Manage your shop</Text>
+            <Text style={styles.eyebrow}>Business Workspace</Text>
+            <Text style={styles.title}>Manage Your Shop</Text>
           </View>
         </View>
 
@@ -385,9 +385,9 @@ function PaymentsPanel() {
       <PanelHeader title="Payments" copy="Payouts and collected revenue" />
       <View style={styles.payoutHero}>
         <View style={styles.payoutCopy}>
-          <Text style={styles.payoutLabel}>Available balance</Text>
+          <Text style={styles.payoutLabel}>Available Balance</Text>
           <Text style={styles.payoutValue}>{currency.symbol}{formatValue(displayBalance)}</Text>
-          <Text style={styles.payoutMeta}>Today collected {currency.symbol}{formatValue(displayToday)}</Text>
+          <Text style={styles.payoutMeta}>Today Collected {currency.symbol}{formatValue(displayToday)}</Text>
         </View>
         <View style={styles.readyBadge}>
           <Feather name="check-circle" size={14} color={colors.success} />
@@ -395,12 +395,12 @@ function PaymentsPanel() {
         </View>
       </View>
       <View style={styles.metricGrid}>
-        <BusinessMetric label="This week" value={`${currency.symbol}${formatValue(displayWeek)}`} change="+8%" />
-        <BusinessMetric label="Avg ticket" value={`${currency.symbol}${formatValue(displayAvgTicket)}`} change={`+${currency.symbol}${formatValue(displayAvgTicketChange)}`} />
+        <BusinessMetric label="This Week" value={`${currency.symbol}${formatValue(displayWeek)}`} change="+8%" />
+        <BusinessMetric label="Avg Ticket" value={`${currency.symbol}${formatValue(displayAvgTicket)}`} change={`+${currency.symbol}${formatValue(displayAvgTicketChange)}`} />
       </View>
       <Pressable onPress={() => setMessage("Withdrawal request sent to your verified account.")} style={({ pressed }) => [styles.withdrawButton, pressed && styles.pressed]}>
         <Feather name="arrow-down-circle" size={18} color={colors.black} />
-        <Text style={styles.withdrawText}>Withdraw earnings</Text>
+        <Text style={styles.withdrawText}>Withdraw Earnings</Text>
       </Pressable>
       {message ? <Text style={styles.successMessage}>{message}</Text> : null}
     </View>

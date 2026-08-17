@@ -16,7 +16,8 @@ export default function ShopProfile({ navigation }: any) {
     selectedBarber,
     setSelectedBarber,
     favoriteShopIds,
-    toggleFavoriteShop
+    toggleFavoriteShop,
+    currency
   } = useBooking();
   const isFavorite = favoriteShopIds.includes(selectedShop.id);
   const shopServices = selectedShop.services || services;
@@ -127,7 +128,7 @@ export default function ShopProfile({ navigation }: any) {
                     <Text style={styles.serviceDescription} numberOfLines={1}>{service.description}</Text>
                     <Text style={styles.serviceDuration}>{service.duration}</Text>
                   </View>
-                  <Text style={styles.servicePrice}>${service.price}</Text>
+                  <Text style={styles.servicePrice}>{currency.symbol}{service.price}</Text>
                 </Pressable>
               );
             })}
