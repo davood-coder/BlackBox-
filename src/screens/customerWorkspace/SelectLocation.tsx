@@ -18,7 +18,8 @@ export default function SelectLocation({ navigation, route }: any) {
   const { height, width } = useWindowDimensions();
   const mounted = useRef(true);
   const searchRequestId = useRef(0);
-  const { availableShops, setAvailableShops, selectedShop, setSelectedShop, setSelectedBarber, setCurrency } = useBooking();
+  const { availableShops, setAvailableShops, selectedShop, setSelectedShop, setSelectedBarber, setCurrency, themeMode } = useBooking();
+  const isDark = themeMode === "dark";
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [lookupState, setLookupState] = useState<LookupState>("loading");
@@ -251,7 +252,7 @@ export default function SelectLocation({ navigation, route }: any) {
   const emptyCopy = getEmptyCopy(lookupState);
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, isDark && { backgroundColor: "#121214" }]}>
       <Screen scroll bottomInset contentStyle={styles.screenContent}>
         <AppHeader title="Nearby Barbers" onBack={() => goBackOrNavigate(navigation, "Home")} />
         <View style={styles.locationRow}>

@@ -14,7 +14,7 @@ import {
   SelectLocation,
   ShopProfile
 } from "../screens/customerWorkspace";
-import { BarberBookings, BarberDashboard, BusinessHub } from "../screens/barberWorkspace";
+import { BarberBookings, BarberDashboard, BusinessHub, WorkingHours } from "../screens/barberWorkspace";
 import {
   Login,
   Notifications,
@@ -52,6 +52,7 @@ export type RootStackParamList = {
   BarberDashboard: undefined;
   BarberBookings: undefined;
   BusinessHub: undefined;
+  WorkingHours: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -91,6 +92,7 @@ export default function AppNavigator() {
       <Stack.Screen name="BarberDashboard" component={BarberDashboard} />
       <Stack.Screen name="BarberBookings" component={BarberBookings} />
       <Stack.Screen name="BusinessHub" component={BusinessHub} />
+      <Stack.Screen name="WorkingHours" component={WorkingHours} />
     </Stack.Navigator>
   );
 }

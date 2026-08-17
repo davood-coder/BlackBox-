@@ -19,8 +19,10 @@ export default function Home({ navigation }: any) {
     bookings,
     unreadNotificationCount,
     setWorkspace,
-    currency
+    currency,
+    themeMode
   } = useBooking();
+  const isDark = themeMode === "dark";
   const cardWidth = Math.min(292, Math.max(250, width * 0.76));
   const visibleShops = availableShops.slice(0, 4);
   const activeBookings = bookings.filter((booking) => booking.status === "Confirmed" || booking.status === "Pending");
@@ -40,13 +42,13 @@ export default function Home({ navigation }: any) {
   }
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, isDark && { backgroundColor: "#121214" }]}>
       <Screen scroll bottomInset contentStyle={styles.screenContent}>
         <View style={styles.topbar}>
           <View style={styles.brandRow}>
             <View style={styles.brandMark}><Feather name="scissors" size={16} color={colors.black} /></View>
             <View>
-              <Text style={styles.brand}>Cutzix</Text>
+              <Text style={[styles.brand, isDark && { color: "#FFFFFF" }]}>Cutzix</Text>
               <View style={styles.locationRow}>
                 <Feather name="map-pin" size={10} color={colors.primaryDark} />
                 <Text style={styles.location} numberOfLines={1}>{selectedShop.distance} away · {selectedShop.address.split(",")[0]}</Text>

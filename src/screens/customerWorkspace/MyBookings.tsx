@@ -9,14 +9,15 @@ import { colors, fonts, radius } from "../../theme";
 
 export default function MyBookings({ navigation }) {
   const [tab, setTab] = useState("Upcoming");
-  const { bookings, currency } = useBooking();
+  const { bookings, currency, themeMode } = useBooking();
+  const isDark = themeMode === "dark";
   const upcomingBookings = bookings.filter((booking) => booking.status === "Confirmed" || booking.status === "Pending");
   const pastBookings = bookings.filter((booking) => booking.status === "Completed");
   const cancelledBookings = bookings.filter((booking) => booking.status === "Cancelled" || booking.status === "Rejected");
   const visibleBookings = tab === "Upcoming" ? upcomingBookings : tab === "Past" ? pastBookings : cancelledBookings;
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, isDark && { backgroundColor: "#121214" }]}>
       <Screen scroll bottomInset>
         <AppHeader title="My Bookings" onBack={() => goBackOrNavigate(navigation, "Home")} right={<Feather name="search" size={20} color={colors.text} />} />
         <Card style={styles.summaryCard}>

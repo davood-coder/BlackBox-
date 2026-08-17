@@ -1,10 +1,20 @@
 import { Ionicons, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 import type { StyleProp, TextInputProps, ViewStyle } from "react-native";
-import { Animated, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Animated, Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { colors, fonts, radius, shadows, spacing } from "../theme";
+import { useBooking } from "../state/BookingContext";
+
+export function useSafeThemeMode(): "light" | "dark" {
+  try {
+    const booking = useBooking();
+    return booking?.themeMode || "light";
+  } catch {
+    return "light";
+  }
+}
 
 type ScreenProps = {
   children: ReactNode;
@@ -92,6 +102,8 @@ const AnyMaterialCommunityIcon = MaterialCommunityIcons as ComponentType<any>;
 
 export function Screen({ children, scroll = false, padded = true, bottomInset = false, style, contentStyle, animated = true }: ScreenProps) {
   const entry = useRef(new Animated.Value(animated ? 0 : 1)).current;
+  const themeMode = useSafeThemeMode();
+  const isDark = themeMode === "dark";
 
   useEffect(() => {
     if (!animated) return;
@@ -114,9 +126,11 @@ export function Screen({ children, scroll = false, padded = true, bottomInset = 
     ]
   };
 
+  const darkBgStyle = isDark ? { backgroundColor: "#121214" } : undefined;
+
   if (scroll) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={[styles.safe, darkBgStyle]}>
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[styles.scrollContent, padded && styles.padded, bottomInset && styles.bottomInset, contentStyle]}
@@ -129,7 +143,7 @@ export function Screen({ children, scroll = false, padded = true, bottomInset = 
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, darkBgStyle]}>
       <Animated.View style={[styles.flex, padded && styles.padded, bottomInset && styles.bottomInset, style, entryStyle]}>
         {children}
       </Animated.View>
@@ -138,16 +152,23 @@ export function Screen({ children, scroll = false, padded = true, bottomInset = 
 }
 
 export function AppHeader({ title, onBack, right, center = true, backVariant = "plain" }: AppHeaderProps) {
+  const themeMode = useSafeThemeMode();
+  const isDark = themeMode === "dark";
   return (
     <View style={styles.header}>
       <Pressable
         accessibilityLabel="Go back"
         onPress={onBack}
-        style={({ pressed }) => [styles.headerBack, backVariant === "circle" && styles.headerBackCircle, pressed && styles.pressed]}
+        style={({ pressed }) => [
+          styles.headerBack,
+          backVariant === "circle" && styles.headerBackCircle,
+          isDark && { backgroundColor: "rgba(255, 255, 255, 0.12)" },
+          pressed && styles.pressed
+        ]}
       >
-        <AnyFeather name="arrow-left" size={24} color={colors.text} />
+        <AnyFeather name="arrow-left" size={24} color={isDark ? "#FFFFFF" : colors.text} />
       </Pressable>
-      <Text style={[styles.headerTitle, center && styles.headerCenter]} numberOfLines={1}>
+      <Text style={[styles.headerTitle, center && styles.headerCenter, isDark && { color: "#FFFFFF" }]} numberOfLines={1}>
         {title}
       </Text>
       <View style={styles.headerRight}>{right}</View>
@@ -156,10 +177,21 @@ export function AppHeader({ title, onBack, right, center = true, backVariant = "
 }
 
 export function IconButton({ icon, onPress, active = false, family = "Feather", label }: { icon: string; onPress?: () => void; active?: boolean; family?: "Feather" | "Ionicons" | "MaterialCommunityIcons"; label?: string }) {
+  const themeMode = useSafeThemeMode();
+  const isDark = themeMode === "dark";
   const Icon = family === "Ionicons" ? AnyIonicon : family === "MaterialCommunityIcons" ? AnyMaterialCommunityIcon : AnyFeather;
   return (
-    <Pressable accessibilityLabel={label || icon} onPress={onPress} style={({ pressed }) => [styles.iconButton, active && styles.iconButtonActive, pressed && styles.pressed]}>
-      <Icon name={icon} size={20} color={active ? colors.black : colors.text} />
+    <Pressable
+      accessibilityLabel={label || icon}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.iconButton,
+        isDark && { backgroundColor: "rgba(255, 255, 255, 0.12)" },
+        active && styles.iconButtonActive,
+        pressed && styles.pressed
+      ]}
+    >
+      <Icon name={icon} size={20} color={active ? colors.black : (isDark ? "#FFFFFF" : colors.text)} />
     </Pressable>
   );
 }
@@ -174,16 +206,32 @@ export function PrimaryButton({ label, icon = "arrow-forward", onPress, dark = f
 }
 
 export function GhostButton({ label, icon, onPress, style }: ButtonProps) {
+  const themeMode = useSafeThemeMode();
+  const isDark = themeMode === "dark";
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.ghostButton, pressed && styles.pressed, style]}>
-      {icon ? <AnyFeather name={icon} size={16} color={colors.text} /> : null}
-      <Text style={styles.ghostButtonText}>{label}</Text>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.ghostButton,
+        isDark && { backgroundColor: "#1C1C1E", borderColor: "rgba(255, 255, 255, 0.1)" },
+        pressed && styles.pressed,
+        style
+      ]}
+    >
+      {icon ? <AnyFeather name={icon} size={16} color={isDark ? "#FFFFFF" : colors.text} /> : null}
+      <Text style={[styles.ghostButtonText, isDark && { color: "#FFFFFF" }]}>{label}</Text>
     </Pressable>
   );
 }
 
 export function Card({ children, style }: CardProps) {
-  return <View style={[styles.card, style]}>{children}</View>;
+  const themeMode = useSafeThemeMode();
+  const isDark = themeMode === "dark";
+  return (
+    <View style={[styles.card, isDark && styles.cardDark, style]}>
+      {children}
+    </View>
+  );
 }
 
 export function FadeInView({ children, delay = 0, style }: FadeInViewProps) {
@@ -221,21 +269,34 @@ export function FadeInView({ children, delay = 0, style }: FadeInViewProps) {
 }
 
 export function Pill({ label, active, icon, onPress, compact = false }: PillProps) {
+  const themeMode = useSafeThemeMode();
+  const isDark = themeMode === "dark";
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.pill, active && styles.pillActive, compact && styles.pillCompact, pressed && styles.pressed]}>
-      {icon ? <AnyFeather name={icon} size={compact ? 14 : 18} color={active ? colors.black : colors.text} /> : null}
-      <Text style={[styles.pillText, active && styles.pillTextActive]}>{label}</Text>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.pill,
+        isDark && { backgroundColor: "#1C1C1E", borderColor: "rgba(255,255,255,0.08)" },
+        active && styles.pillActive,
+        compact && styles.pillCompact,
+        pressed && styles.pressed
+      ]}
+    >
+      {icon ? <AnyFeather name={icon} size={compact ? 14 : 18} color={active ? colors.black : (isDark ? "#FFFFFF" : colors.text)} /> : null}
+      <Text style={[styles.pillText, isDark && { color: "#E5E5EA" }, active && styles.pillTextActive]}>{label}</Text>
     </Pressable>
   );
 }
 
 export function Field({ icon, placeholder, value, onChangeText, onSubmitEditing, secureTextEntry, keyboardType, returnKeyType, autoCapitalize, style }: FieldProps) {
+  const themeMode = useSafeThemeMode();
+  const isDark = themeMode === "dark";
   return (
-    <View style={[styles.field, style]}>
-      {icon ? <AnyFeather name={icon} size={18} color={colors.muted} /> : null}
+    <View style={[styles.field, isDark && styles.fieldDark, style]}>
+      {icon ? <AnyFeather name={icon} size={18} color={isDark ? "#8E8E93" : colors.muted} /> : null}
       <TextInput
         placeholder={placeholder}
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={isDark ? "#8E8E93" : colors.muted}
         value={value}
         onChangeText={onChangeText}
         onSubmitEditing={onSubmitEditing}
@@ -243,40 +304,63 @@ export function Field({ icon, placeholder, value, onChangeText, onSubmitEditing,
         keyboardType={keyboardType}
         returnKeyType={returnKeyType}
         autoCapitalize={autoCapitalize}
-        style={styles.input}
+        style={[styles.input, isDark && { color: "#FFFFFF" }]}
       />
     </View>
   );
 }
 
 export function BottomNav({ active, navigation }: BottomNavProps) {
+  const themeMode = useSafeThemeMode();
+  const isDark = themeMode === "dark";
   const items = [
     { key: "Home", label: "Home", icon: "home-outline", activeIcon: "home", route: "Home" },
     { key: "Explore", label: "Explore", icon: "compass-outline", activeIcon: "compass", route: "SelectLocation", params: { nextScreen: "ShopProfile" } },
-    { key: "Scan", label: "Scan", icon: "scan-outline", activeIcon: "scan", route: "QRScanner" },
     { key: "Bookings", label: "Bookings", icon: "calendar-outline", activeIcon: "calendar", route: "MyBookings" },
     { key: "Profile", label: "Profile", icon: "person-outline", activeIcon: "person", route: "Profile" }
   ];
 
   return (
     <View style={styles.bottomNavWrap} pointerEvents="box-none">
-      <LinearGradient colors={["rgba(255,255,255,0.96)", "#FFFFFF"]} style={styles.bottomNav}>
+      <View style={[styles.glassDockContainer, isDark && styles.glassDockContainerDark]}>
         {items.map((item) => {
           const isActive = active === item.key;
           return (
-            <Pressable key={item.key} onPress={() => navigation.navigate(item.route, "params" in item ? item.params : undefined)} style={({ pressed }) => [styles.navItem, pressed && styles.pressed]}>
-              <AnyIonicon name={isActive ? item.activeIcon : item.icon} size={21} color={isActive ? colors.primary : colors.muted} />
-              <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>{item.label}</Text>
-              {isActive ? <View style={styles.navDot} /> : null}
+            <Pressable
+              key={item.key}
+              onPress={() => navigation.navigate(item.route, "params" in item ? item.params : undefined)}
+              style={({ pressed }) => [
+                styles.glassDockItem,
+                isActive && (isDark ? styles.glassDockItemActiveDark : styles.glassDockItemActive),
+                pressed && styles.pressed
+              ]}
+            >
+              <AnyIonicon
+                name={isActive ? item.activeIcon : item.icon}
+                size={19}
+                color={isActive ? (isDark ? "#C89A43" : colors.primaryDark) : (isDark ? "#8E8E93" : "#757575")}
+              />
+              <Text
+                style={[
+                  styles.glassNavLabel,
+                  isDark && { color: "#8E8E93" },
+                  isActive && (isDark ? { color: "#FFFFFF", fontFamily: fonts.bold } : styles.glassNavLabelActive)
+                ]}
+                numberOfLines={1}
+              >
+                {item.label}
+              </Text>
             </Pressable>
           );
         })}
-      </LinearGradient>
+      </View>
     </View>
   );
 }
 
 export function BarberBottomNav({ active, navigation }: BottomNavProps) {
+  const themeMode = useSafeThemeMode();
+  const isDark = themeMode === "dark";
   const items = [
     { key: "Dashboard", label: "Dashboard", icon: "grid-outline", activeIcon: "grid", route: "BarberDashboard" },
     { key: "Requests", label: "Requests", icon: "calendar-outline", activeIcon: "calendar", route: "BarberBookings" },
@@ -286,36 +370,108 @@ export function BarberBottomNav({ active, navigation }: BottomNavProps) {
 
   return (
     <View style={styles.bottomNavWrap} pointerEvents="box-none">
-      <LinearGradient colors={["rgba(255,255,255,0.96)", "#FFFFFF"]} style={styles.bottomNav}>
+      <View style={[styles.glassDockContainer, isDark && styles.glassDockContainerDark]}>
         {items.map((item) => {
           const isActive = active === item.key;
           return (
-            <Pressable key={item.key} onPress={() => navigation.navigate(item.route)} style={({ pressed }) => [styles.navItem, pressed && styles.pressed]}>
-              <AnyIonicon name={isActive ? item.activeIcon : item.icon} size={21} color={isActive ? colors.primaryDark : colors.muted} />
-              <Text style={[styles.navLabel, isActive && styles.barberNavLabelActive]}>{item.label}</Text>
-              {isActive ? <View style={styles.barberNavDot} /> : null}
+            <Pressable
+              key={item.key}
+              onPress={() => navigation.navigate(item.route)}
+              style={({ pressed }) => [
+                styles.glassDockItem,
+                isActive && (isDark ? styles.glassDockItemActiveDark : styles.glassDockItemActive),
+                pressed && styles.pressed
+              ]}
+            >
+              <AnyIonicon
+                name={isActive ? item.activeIcon : item.icon}
+                size={19}
+                color={isActive ? (isDark ? "#C89A43" : colors.primaryDark) : (isDark ? "#8E8E93" : "#757575")}
+              />
+              <Text
+                style={[
+                  styles.glassNavLabel,
+                  isDark && { color: "#8E8E93" },
+                  isActive && (isDark ? { color: "#FFFFFF", fontFamily: fonts.bold } : styles.glassNavLabelActive)
+                ]}
+                numberOfLines={1}
+              >
+                {item.label}
+              </Text>
             </Pressable>
           );
         })}
-      </LinearGradient>
+      </View>
+    </View>
+  );
+}
+
+export function IOSSegmentedControl<T extends string>({
+  values,
+  selectedValue,
+  onChange
+}: {
+  values: { key: T; label: string; count?: number }[];
+  selectedValue: T;
+  onChange: (key: T) => void;
+}) {
+  const themeMode = useSafeThemeMode();
+  const isDark = themeMode === "dark";
+  return (
+    <View style={[styles.iosSegmentedTrack, isDark && { backgroundColor: "rgba(255, 255, 255, 0.08)" }]}>
+      {values.map((item) => {
+        const isSelected = selectedValue === item.key;
+        return (
+          <Pressable
+            key={item.key}
+            onPress={() => onChange(item.key)}
+            style={({ pressed }) => [
+              styles.iosSegmentedItem,
+              isSelected && (isDark ? styles.iosSegmentedItemActiveDark : styles.iosSegmentedItemActive),
+              pressed && styles.pressed
+            ]}
+          >
+            <Text
+              style={[
+                styles.iosSegmentedText,
+                isDark && { color: "#8E8E93" },
+                isSelected && (isDark ? { color: "#FFFFFF", fontFamily: fonts.bold } : styles.iosSegmentedTextActive)
+              ]}
+            >
+              {item.label}
+            </Text>
+            {item.count !== undefined ? (
+              <View style={[styles.iosBadge, isDark && { backgroundColor: "rgba(255,255,255,0.12)" }, isSelected && (isDark ? { backgroundColor: "#C89A43" } : styles.iosBadgeActive)]}>
+                <Text style={[styles.iosBadgeText, isDark && { color: "#FFFFFF" }, isSelected && (isDark ? { color: "#000000" } : styles.iosBadgeTextActive)]}>
+                  {item.count}
+                </Text>
+              </View>
+            ) : null}
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
 
 export function Rating({ value = "4.9", count, small = false }: RatingProps) {
+  const themeMode = useSafeThemeMode();
+  const isDark = themeMode === "dark";
   return (
     <View style={styles.ratingRow}>
       <AnyIonicon name="star" size={small ? 12 : 16} color={colors.primaryLight} />
-      <Text style={[styles.ratingText, small && styles.smallText]}>{value}</Text>
-      {count ? <Text style={[styles.mutedText, small && styles.smallText]}>({count})</Text> : null}
+      <Text style={[styles.ratingText, small && styles.smallText, isDark && { color: "#FFFFFF" }]}>{value}</Text>
+      {count ? <Text style={[styles.mutedText, small && styles.smallText, isDark && { color: "#8E8E93" }]}>({count})</Text> : null}
     </View>
   );
 }
 
 export function SectionTitle({ title, action, onAction }: SectionTitleProps) {
+  const themeMode = useSafeThemeMode();
+  const isDark = themeMode === "dark";
   return (
     <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <Text style={[styles.sectionTitle, isDark && { color: "#FFFFFF" }]}>{title}</Text>
       {action ? (
         <Pressable onPress={onAction}>
           <Text style={styles.sectionAction}>{action}</Text>
@@ -340,58 +496,61 @@ const styles = StyleSheet.create({
     flexGrow: 1
   },
   padded: {
-    paddingHorizontal: spacing.screen
+    paddingHorizontal: spacing.screen,
+    paddingTop: 12
   },
   bottomInset: {
-    paddingBottom: 102
+    paddingBottom: 96
   },
   header: {
-    height: 46,
+    height: 52,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 10
+    marginTop: 8,
+    marginBottom: 14
   },
   headerBack: {
-    width: 42,
-    height: 42,
-    alignItems: "flex-start",
-    justifyContent: "center"
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(118, 118, 128, 0.12)"
   },
   headerBackCircle: {
     alignItems: "center",
-    borderRadius: 21,
-    backgroundColor: colors.elevated
+    borderRadius: 18,
+    backgroundColor: "rgba(118, 118, 128, 0.12)"
   },
   headerTitle: {
     flex: 1,
-    color: colors.text,
-    fontFamily: fonts.heading,
-    fontSize: 16
+    color: "#000000",
+    fontFamily: fonts.headingSemi,
+    fontSize: 18,
+    letterSpacing: -0.4
   },
   headerCenter: {
     textAlign: "center"
   },
   headerRight: {
-    width: 42,
+    width: 36,
     alignItems: "flex-end"
   },
   iconButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.elevated,
-    borderWidth: 1,
-    borderColor: colors.border
+    backgroundColor: "rgba(118, 118, 128, 0.12)"
   },
   iconButtonActive: {
     backgroundColor: colors.primary
   },
   primaryButton: {
-    minHeight: 56,
-    borderRadius: radius.full,
+    minHeight: 50,
+    borderRadius: radius.lg,
     backgroundColor: colors.black,
     alignItems: "center",
     justifyContent: "center",
@@ -403,7 +562,7 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: colors.white,
     fontFamily: fonts.bold,
-    fontSize: 15
+    fontSize: 16
   },
   goldButton: {
     backgroundColor: colors.primary
@@ -412,10 +571,10 @@ const styles = StyleSheet.create({
     color: colors.black
   },
   ghostButton: {
-    minHeight: 52,
-    borderRadius: radius.full,
+    minHeight: 48,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: "#C8CAC5",
+    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
@@ -426,26 +585,30 @@ const styles = StyleSheet.create({
   ghostButtonText: {
     color: colors.text,
     fontFamily: fonts.semibold,
-    fontSize: 14
+    fontSize: 15
   },
   card: {
     backgroundColor: colors.card,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: radius.sm,
-    padding: 14,
+    borderColor: "rgba(0, 0, 0, 0.08)",
+    borderWidth: 0.5,
+    borderRadius: 16,
+    padding: 16,
     ...shadows.card
   },
+  cardDark: {
+    backgroundColor: "#1C1C1E",
+    borderColor: "rgba(255, 255, 255, 0.08)"
+  },
   pill: {
-    minHeight: 58,
-    minWidth: 74,
+    minHeight: 52,
+    minWidth: 70,
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
     paddingHorizontal: 12,
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     backgroundColor: colors.card,
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: colors.border
   },
   pillActive: {
@@ -453,90 +616,163 @@ const styles = StyleSheet.create({
     borderColor: colors.primary
   },
   pillCompact: {
-    minHeight: 42,
-    minWidth: 66
+    minHeight: 40,
+    minWidth: 64
   },
   pillText: {
     color: colors.text,
     fontFamily: fonts.medium,
-    fontSize: 12
+    fontSize: 13
   },
   pillTextActive: {
     color: colors.black,
     fontFamily: fonts.bold
   },
   field: {
-    minHeight: 56,
-    borderRadius: radius.md,
+    minHeight: 52,
+    borderRadius: 12,
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: colors.border,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 15,
+    paddingHorizontal: 14,
     gap: 10
+  },
+  fieldDark: {
+    backgroundColor: "#252528",
+    borderColor: "rgba(255, 255, 255, 0.08)"
   },
   input: {
     flex: 1,
     color: colors.text,
     fontFamily: fonts.body,
-    fontSize: 15,
+    fontSize: 16,
     paddingVertical: 0
   },
   bottomNavWrap: {
     position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: 0,
-    paddingBottom: 0
+    left: 14,
+    right: 14,
+    bottom: 22,
+    zIndex: 99
   },
-  bottomNav: {
-    height: 88,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    borderTopWidth: 1,
-    borderColor: colors.border,
+  glassDockContainer: {
+    height: 66,
+    borderRadius: 33,
+    backgroundColor: "rgba(255, 255, 255, 0.88)",
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.95)",
     flexDirection: "row",
-    justifyContent: "space-around",
     alignItems: "center",
-    overflow: "hidden",
-    ...shadows.floating
+    justifyContent: "space-between",
+    paddingHorizontal: 6,
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 10
   },
-  navItem: {
+  glassDockContainerDark: {
+    backgroundColor: "rgba(28, 28, 30, 0.92)",
+    borderColor: "rgba(255, 255, 255, 0.14)"
+  },
+  glassDockItem: {
     flex: 1,
-    minWidth: 0,
-    height: 70,
+    height: 52,
+    borderRadius: 26,
     alignItems: "center",
     justifyContent: "center",
-    gap: 4
+    gap: 2,
+    paddingHorizontal: 4
   },
-  navLabel: {
-    color: colors.muted,
-    fontFamily: fonts.medium,
+  glassDockItemActive: {
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4
+  },
+  glassDockItemActiveDark: {
+    backgroundColor: "rgba(200, 154, 67, 0.28)"
+  },
+  glassNavLabel: {
+    color: "#3C3C43",
+    fontFamily: fonts.semibold,
+    fontSize: 11,
+    letterSpacing: -0.1
+  },
+  glassNavLabelActive: {
+    color: "#000000",
+    fontFamily: fonts.bold,
     fontSize: 11
   },
-  navLabelActive: {
-    color: colors.primary
+  quickActionSub: {
+    color: colors.secondaryText,
+    fontFamily: fonts.body,
+    fontSize: 13,
+    marginTop: 2
   },
-  barberNavLabelActive: {
+  iosSegmentedTrack: {
+    flexDirection: "row",
+    backgroundColor: "rgba(118, 118, 128, 0.12)",
+    borderRadius: 10,
+    padding: 3,
+    marginVertical: 10
+  },
+  iosSegmentedItem: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 7,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 5
+  },
+  iosSegmentedItemActive: {
+    backgroundColor: colors.white,
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2
+  },
+  iosSegmentedItemActiveDark: {
+    backgroundColor: "#2C2C2E",
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3
+  },
+  iosSegmentedText: {
+    color: "#3C3C43",
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    letterSpacing: -0.2
+  },
+  iosSegmentedTextActive: {
+    color: "#000000",
+    fontFamily: fonts.bold
+  },
+  iosBadge: {
+    backgroundColor: "rgba(118, 118, 128, 0.16)",
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 1
+  },
+  iosBadgeActive: {
+    backgroundColor: colors.primarySoft
+  },
+  iosBadgeText: {
+    color: colors.secondaryText,
+    fontFamily: fonts.bold,
+    fontSize: 11
+  },
+  iosBadgeTextActive: {
     color: colors.primaryDark
-  },
-  navDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.primary,
-    position: "absolute",
-    bottom: 4
-  },
-  barberNavDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.primaryDark,
-    position: "absolute",
-    bottom: 4
   },
   ratingRow: {
     flexDirection: "row",
@@ -560,20 +796,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 12
+    marginBottom: 10,
+    marginTop: 6
   },
   sectionTitle: {
-    color: colors.text,
+    color: "#000000",
     fontFamily: fonts.headingSemi,
-    fontSize: 16
+    fontSize: 18,
+    letterSpacing: -0.4
   },
   sectionAction: {
-    color: colors.secondaryText,
-    fontFamily: fonts.medium,
-    fontSize: 16
+    color: colors.primaryDark,
+    fontFamily: fonts.bold,
+    fontSize: 14
   },
   pressed: {
-    opacity: 0.78,
+    opacity: 0.72,
     transform: [{ scale: 0.98 }]
   }
 });
+
