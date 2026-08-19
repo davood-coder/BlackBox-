@@ -342,8 +342,9 @@ export default function WorkingHours({ navigation }: any) {
                       current.map((item) => (item.id === emp.id ? { ...item, active: val } : item))
                     );
                   }}
-                  trackColor={{ false: "#3A3A3C", true: "#C89A43" }}
-                  thumbColor={emp.active ? colors.white : colors.muted}
+                  trackColor={{ false: isDark ? "#3A3A3C" : "#E0E0E0", true: "#00A896" }}
+                  thumbColor="#FFFFFF"
+                  ios_backgroundColor={isDark ? "#3A3A3C" : "#E0E0E0"}
                 />
               </View>
 

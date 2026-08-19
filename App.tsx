@@ -71,6 +71,42 @@ export default function App() {
       root.style.backgroundColor = colors.background;
       root.style.minHeight = "100vh";
     }
+
+    // Inject 60fps/120fps smooth CSS transitions and hardware acceleration
+    try {
+      if (!document.getElementById("global-smooth-styles")) {
+        const style = document.createElement("style");
+        style.id = "global-smooth-styles";
+        style.innerHTML = `
+          * {
+            -webkit-tap-highlight-color: transparent !important;
+            scroll-behavior: smooth !important;
+          }
+          input, textarea, select {
+            outline: none !important;
+            outline-width: 0 !important;
+            box-shadow: none !important;
+          }
+          input:focus, textarea:focus, select:focus {
+            outline: none !important;
+            outline-width: 0 !important;
+            box-shadow: none !important;
+          }
+          html, body, #root {
+            scroll-behavior: smooth !important;
+            -webkit-font-smoothing: antialiased !important;
+            -moz-osx-font-smoothing: grayscale !important;
+            font-smooth: always !important;
+          }
+          /* Smooth interactive transitions for buttons, inputs, cards & switches */
+          [role="button"], button, a, input, select, textarea, div[tabindex] {
+            transition: background-color 0.22s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s ease, transform 0.18s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            will-change: transform, opacity;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    } catch {}
   }, []);
 
   const [fontsLoaded] = useFonts({

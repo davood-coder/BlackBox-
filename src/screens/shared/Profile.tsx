@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import type { ComponentProps, ComponentType } from "react";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { AppHeader, BarberBottomNav, BottomNav, Card, IOSSegmentedControl, Screen } from "../../components/ui";
+import { AppHeader, BarberBottomNav, BottomNav, Card, IOSSegmentedControl, Screen, UniqueThemeToggle } from "../../components/ui";
 import { temporaryProfiles, type Workspace } from "../../data";
 import { goBackOrNavigate } from "../../navigation/goBack";
 import { useBooking } from "../../state/BookingContext";
@@ -324,8 +324,8 @@ export default function Profile({ navigation }: any) {
         <Text style={[styles.iosGroupHeader, isDark && styles.darkGroupHeader]}>
           {isBarber ? "BUSINESS DETAILS" : "CUSTOMER DETAILS"}
         </Text>
-        <Card style={[styles.detailsCard, isDark && styles.darkCard]}>
-          {details.map((item, index) => {
+        <View style={{ gap: 10, marginBottom: 14 }}>
+          {details.map((item) => {
             const isWorkingHours = item.label.toLowerCase().includes("working") || item.label.toLowerCase().includes("hours");
             return (
               <Pressable
@@ -333,58 +333,54 @@ export default function Profile({ navigation }: any) {
                 onPress={isWorkingHours ? () => navigation.navigate("WorkingHours") : undefined}
                 disabled={!isWorkingHours}
                 style={({ pressed }) => [
-                  styles.detailRow,
-                  index === details.length - 1 && styles.lastRow,
+                  styles.individualDetailRow,
+                  isDark && styles.darkIndividualDetailRow,
                   isWorkingHours && pressed && styles.pressed
                 ]}
               >
                 <View style={styles.detailIconContainer}>
-                  <Feather name={getDetailIcon(item.label)} size={16} color="#946B22" />
+                  <Feather name={getDetailIcon(item.label)} size={16} color={isDark ? "#FFFFFF" : "#1C1C1E"} />
                 </View>
                 <Text style={[styles.detailLabel, isDark && styles.darkText]}>{item.label}</Text>
                 <Text style={[styles.detailValue, isDark && styles.darkSubText]} numberOfLines={1}>{item.value}</Text>
-                <Ionicons name="chevron-forward" size={16} color={isDark ? "#55555E" : "#C7C7CC"} style={{ marginLeft: 6 }} />
+                <Ionicons name="chevron-forward" size={16} color={isDark ? "#55555E" : "#C7C7CC"} style={{ marginLeft: 4 }} />
               </Pressable>
             );
           })}
-        </Card>
+        </View>
 
-        {/* Section 2: Appearance Theme Selector */}
+        {/* Section 2: Appearance Theme Selector (Unique Style) */}
         <Text style={[styles.iosGroupHeader, isDark && styles.darkGroupHeader]}>APPEARANCE</Text>
-        <Card style={[styles.detailsCard, isDark && styles.darkCard, { paddingVertical: 14, paddingHorizontal: 14 }]}>
-          <IOSSegmentedControl
-            values={[
-              { key: "light", label: "☀️ Light Mode" },
-              { key: "dark", label: "🌙 Dark Mode" }
-            ]}
-            selectedValue={themeMode}
-            onChange={(mode) => setThemeMode(mode as "light" | "dark")}
-          />
-          <Text style={[styles.themeSubText, isDark && styles.darkSubText, { marginTop: 6, textAlign: "center" }]}>
-            {isDark ? "Dark Mode Active" : "Light Mode Active"}
-          </Text>
-        </Card>
+        <UniqueThemeToggle
+          selectedValue={themeMode}
+          onChange={(mode) => setThemeMode(mode)}
+        />
 
         {/* Section 3: Account & Settings */}
         <Text style={[styles.iosGroupHeader, isDark && styles.darkGroupHeader]}>ACCOUNT & SETTINGS</Text>
-        <Card style={[styles.menuCard, isDark && styles.darkCard]}>
-          {menu.map((item, index) => {
+        <View style={{ gap: 10, marginBottom: 24 }}>
+          {menu.map((item) => {
             const isLogout = item.label === "Logout";
             return (
               <Pressable
                 key={item.label}
                 onPress={() => openMenuItem(item)}
-                style={({ pressed }) => [styles.menuRow, index === menu.length - 1 && styles.lastRow, pressed && styles.pressed]}
+                style={({ pressed }) => [
+                  styles.individualDetailRow,
+                  isDark && styles.darkIndividualDetailRow,
+                  pressed && styles.pressed
+                ]}
               >
-                <View style={[styles.menuIconContainer, isLogout && { backgroundColor: "rgba(255, 59, 48, 0.1)" }]}>
-                  <Feather name={item.icon} size={16} color={isLogout ? "#FF3B30" : "#946B22"} />
+                <View style={[styles.detailIconContainer, isLogout && { backgroundColor: "rgba(255, 59, 48, 0.12)", borderColor: "rgba(255, 59, 48, 0.25)" }]}>
+                  <Feather name={item.icon} size={16} color={isLogout ? "#FF3B30" : (isDark ? "#FFFFFF" : "#1C1C1E")} />
                 </View>
-                <Text style={[styles.menuLabel, isDark && !isLogout && styles.darkText, isLogout && { color: "#FF3B30" }]}>{item.label}</Text>
+                <Text style={[styles.detailLabel, isDark && !isLogout && styles.darkText, isLogout && { color: "#FF3B30" }]}>{item.label}</Text>
+                <View style={{ flex: 1 }} />
                 <Ionicons name="chevron-forward" size={16} color={isDark ? "#55555E" : "#C7C7CC"} />
               </Pressable>
             );
           })}
-        </Card>
+        </View>
       </Screen>
       {isBarber ? <BarberBottomNav active="Profile" navigation={navigation} /> : <BottomNav active="Profile" navigation={navigation} />}
 
@@ -652,8 +648,9 @@ export default function Profile({ navigation }: any) {
                   <Switch
                     value={opt.val}
                     onValueChange={opt.setVal}
-                    trackColor={{ false: "#DADCD7", true: "#E7CE9B" }}
-                    thumbColor={opt.val ? colors.primaryDark : colors.muted}
+                    trackColor={{ false: isDark ? "#3A3A3C" : "#E0E0E0", true: "#00A896" }}
+                    thumbColor="#FFFFFF"
+                    ios_backgroundColor={isDark ? "#3A3A3C" : "#E0E0E0"}
                   />
                 </View>
               ))}
@@ -1076,6 +1073,25 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     fontSize: 12
   },
+  individualDetailRow: {
+    minHeight: 56,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 0.5,
+    borderColor: "rgba(0, 0, 0, 0.08)",
+    paddingHorizontal: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2
+  },
+  darkIndividualDetailRow: {
+    backgroundColor: "#1C1C1E",
+    borderColor: "rgba(255, 255, 255, 0.08)"
+  },
   detailRow: {
     height: 50,
     flexDirection: "row",
@@ -1085,25 +1101,28 @@ const styles = StyleSheet.create({
     borderBottomColor: "#E5E5EA"
   },
   detailIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: "#FDF7EC",
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.16)",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12
   },
   detailLabel: {
-    flex: 1,
-    color: colors.text,
-    fontFamily: fonts.medium,
-    fontSize: 15
+    fontFamily: fonts.bold,
+    fontSize: 15,
+    color: colors.text
   },
   detailValue: {
+    flex: 1,
     color: colors.secondaryText,
     fontFamily: fonts.body,
     fontSize: 14,
-    textAlign: "right"
+    textAlign: "right",
+    marginLeft: 12
   },
   menuCard: {
     padding: 0,

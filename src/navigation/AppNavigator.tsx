@@ -23,6 +23,7 @@ import {
   OnboardingTwo,
   OtpVerification,
   Profile,
+  SignUp,
   SplashScreen
 } from "../screens/shared";
 import { colors } from "../theme";
@@ -33,6 +34,7 @@ export type RootStackParamList = {
   OnboardingTwo: undefined;
   OnboardingThree: undefined;
   Login: undefined;
+  SignUp: undefined;
   OtpVerification: { role?: "Customer" | "Barber" } | undefined;
   SelectLocation: { nextScreen?: "Barbers" | "BookAppointment" | "ShopProfile" } | undefined;
   Home: undefined;
@@ -73,6 +75,7 @@ export default function AppNavigator() {
       <Stack.Screen name="OnboardingTwo" component={OnboardingTwo} />
       <Stack.Screen name="OnboardingThree" component={OnboardingThree} />
       <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="SignUp" component={SignUp} />
       <Stack.Screen name="OtpVerification" component={OtpVerification} />
       <Stack.Screen name="SelectLocation" component={SelectLocation} />
       <Stack.Screen name="Home" component={Home} />
