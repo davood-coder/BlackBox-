@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 import type { StyleProp, TextInputProps, ViewStyle } from "react-native";
-import { Animated, Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Animated, LayoutAnimation, Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import { colors, fonts, radius, shadows, spacing } from "../theme";
 import { useBooking } from "../state/BookingContext";
 
@@ -328,7 +328,12 @@ export function BottomNav({ active, navigation }: BottomNavProps) {
           return (
             <Pressable
               key={item.key}
-              onPress={() => navigation.navigate(item.route, "params" in item ? item.params : undefined)}
+              onPress={() => {
+                try {
+                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                } catch {}
+                navigation.navigate(item.route, "params" in item ? item.params : undefined);
+              }}
               style={({ pressed }) => [
                 styles.glassDockItem,
                 isActive && (isDark ? styles.glassDockItemActiveDark : styles.glassDockItemActive),
@@ -338,13 +343,12 @@ export function BottomNav({ active, navigation }: BottomNavProps) {
               <AnyIonicon
                 name={isActive ? item.activeIcon : item.icon}
                 size={19}
-                color={isActive ? (isDark ? "#C89A43" : colors.primaryDark) : (isDark ? "#8E8E93" : "#757575")}
+                color={isActive ? (isDark ? "#FFFFFF" : colors.primaryDark) : (isDark ? "#8E8E93" : "#757575")}
               />
               <Text
                 style={[
                   styles.glassNavLabel,
-                  isDark && { color: "#8E8E93" },
-                  isActive && (isDark ? { color: "#FFFFFF", fontFamily: fonts.bold } : styles.glassNavLabelActive)
+                  isActive ? (isDark ? { color: "#FFFFFF", fontFamily: fonts.bold } : styles.glassNavLabelActive) : (isDark ? { color: "#8E8E93" } : { color: "#757575" })
                 ]}
                 numberOfLines={1}
               >
@@ -376,7 +380,12 @@ export function BarberBottomNav({ active, navigation }: BottomNavProps) {
           return (
             <Pressable
               key={item.key}
-              onPress={() => navigation.navigate(item.route)}
+              onPress={() => {
+                try {
+                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                } catch {}
+                navigation.navigate(item.route);
+              }}
               style={({ pressed }) => [
                 styles.glassDockItem,
                 isActive && (isDark ? styles.glassDockItemActiveDark : styles.glassDockItemActive),
@@ -386,13 +395,12 @@ export function BarberBottomNav({ active, navigation }: BottomNavProps) {
               <AnyIonicon
                 name={isActive ? item.activeIcon : item.icon}
                 size={19}
-                color={isActive ? (isDark ? "#C89A43" : colors.primaryDark) : (isDark ? "#8E8E93" : "#757575")}
+                color={isActive ? (isDark ? "#FFFFFF" : colors.primaryDark) : (isDark ? "#8E8E93" : "#757575")}
               />
               <Text
                 style={[
                   styles.glassNavLabel,
-                  isDark && { color: "#8E8E93" },
-                  isActive && (isDark ? { color: "#FFFFFF", fontFamily: fonts.bold } : styles.glassNavLabelActive)
+                  isActive ? (isDark ? { color: "#FFFFFF", fontFamily: fonts.bold } : styles.glassNavLabelActive) : (isDark ? { color: "#8E8E93" } : { color: "#757575" })
                 ]}
                 numberOfLines={1}
               >
@@ -450,6 +458,120 @@ export function IOSSegmentedControl<T extends string>({
           </Pressable>
         );
       })}
+    </View>
+  );
+}
+
+export function UniqueThemeToggle({
+  selectedValue,
+  onChange
+}: {
+  selectedValue: "light" | "dark";
+  onChange: (mode: "light" | "dark") => void;
+}) {
+  const isDark = selectedValue === "dark";
+  const animValue = useRef(new Animated.Value(isDark ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.spring(animValue, {
+      toValue: isDark ? 1 : 0,
+      friction: 7,
+      tension: 55,
+      useNativeDriver: false
+    }).start();
+  }, [isDark, animValue]);
+
+  const trackBg = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["#FFEAB6", "#0B1D2D"]
+  });
+
+  const trackBorder = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["#FAD7A0", "#1A3650"]
+  });
+
+  const thumbBg = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["#F5B041", "#38BDF8"]
+  });
+
+  const thumbLeft = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [3, 43]
+  });
+
+  const textOpacityLight = animValue.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [1, 0, 0]
+  });
+
+  const textOpacityDark = animValue.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0, 0, 1]
+  });
+
+  const handleToggle = () => {
+    try {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    } catch {
+      // fallback
+    }
+    onChange(isDark ? "light" : "dark");
+  };
+
+  return (
+    <View style={[styles.dayNightCard, isDark && styles.dayNightCardDark]}>
+      <View style={styles.dayNightRow}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <View style={[styles.dayNightHeaderIcon, isDark ? styles.dayNightHeaderIconDark : styles.dayNightHeaderIconLight]}>
+            <AnyFeather name={isDark ? "moon" : "sun"} size={18} color={isDark ? "#38BDF8" : "#F5B041"} />
+          </View>
+          <View>
+            <Text style={[styles.dayNightTitle, isDark && { color: "#FFFFFF" }]}>
+              {isDark ? "Dark Mode" : "Light Mode"}
+            </Text>
+            <Text style={[styles.dayNightSubtitle, isDark && { color: "#8E8E93" }]}>
+              {isDark ? "Cosmic Night Theme" : "Solar Day Theme"}
+            </Text>
+          </View>
+        </View>
+
+        {/* Custom Animated Day/Night Solar & Lunar Switch */}
+        <Pressable
+          accessibilityLabel="Toggle Theme Mode"
+          onPress={handleToggle}
+          style={({ pressed }) => [pressed && styles.pressed]}
+        >
+          <Animated.View
+            style={[
+              styles.dayNightSwitchTrack,
+              { backgroundColor: trackBg, borderColor: trackBorder }
+            ]}
+          >
+            {/* Internal Track Labels with Fade Interpolation */}
+            <Animated.Text style={[styles.dayNightTrackLabel, styles.dayNightTrackLabelLight, { opacity: textOpacityLight }]}>
+              Light
+            </Animated.Text>
+            <Animated.Text style={[styles.dayNightTrackLabel, styles.dayNightTrackLabelDark, { opacity: textOpacityDark }]}>
+              Dark
+            </Animated.Text>
+
+            {/* Glowing Solar/Lunar Thumb Orb with Spring Movement */}
+            <Animated.View
+              style={[
+                styles.dayNightThumb,
+                {
+                  left: thumbLeft,
+                  backgroundColor: thumbBg
+                }
+              ]}
+            >
+              <AnyFeather name={isDark ? "moon" : "sun"} size={17} color="#FFFFFF" />
+            </Animated.View>
+          </Animated.View>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -658,24 +780,25 @@ const styles = StyleSheet.create({
     zIndex: 99
   },
   glassDockContainer: {
-    height: 66,
-    borderRadius: 33,
-    backgroundColor: "rgba(255, 255, 255, 0.88)",
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     borderWidth: 1.5,
     borderColor: "rgba(255, 255, 255, 0.95)",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
     shadowOffset: { width: 0, height: 8 },
     elevation: 10
   },
   glassDockContainerDark: {
-    backgroundColor: "rgba(28, 28, 30, 0.92)",
-    borderColor: "rgba(255, 255, 255, 0.14)"
+    backgroundColor: "#161719",
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.12)"
   },
   glassDockItem: {
     flex: 1,
@@ -683,30 +806,35 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     alignItems: "center",
     justifyContent: "center",
-    gap: 2,
-    paddingHorizontal: 4
+    gap: 3,
+    paddingHorizontal: 6
   },
   glassDockItemActive: {
     backgroundColor: "#FFFFFF",
     shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
     elevation: 4
   },
   glassDockItemActiveDark: {
-    backgroundColor: "rgba(200, 154, 67, 0.28)"
+    backgroundColor: "#343538",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5
   },
   glassNavLabel: {
-    color: "#3C3C43",
+    color: "#8E8E93",
     fontFamily: fonts.semibold,
-    fontSize: 11,
+    fontSize: 12,
     letterSpacing: -0.1
   },
   glassNavLabelActive: {
     color: "#000000",
     fontFamily: fonts.bold,
-    fontSize: 11
+    fontSize: 12
   },
   quickActionSub: {
     color: colors.secondaryText,
@@ -813,6 +941,110 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.72,
     transform: [{ scale: 0.98 }]
+  },
+  dayNightCard: {
+    minHeight: 64,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 0.5,
+    borderColor: "rgba(0, 0, 0, 0.08)",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    justifyContent: "center",
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2
+  },
+  dayNightCardDark: {
+    backgroundColor: "#1C1C1E",
+    borderColor: "rgba(255, 255, 255, 0.08)"
+  },
+  dayNightRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  dayNightHeaderIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  dayNightHeaderIconLight: {
+    backgroundColor: "rgba(245, 176, 65, 0.14)",
+    borderColor: "rgba(245, 176, 65, 0.28)"
+  },
+  dayNightHeaderIconDark: {
+    backgroundColor: "rgba(56, 189, 248, 0.14)",
+    borderColor: "rgba(56, 189, 248, 0.28)"
+  },
+  dayNightTitle: {
+    color: "#000000",
+    fontFamily: fonts.bold,
+    fontSize: 15
+  },
+  dayNightSubtitle: {
+    color: colors.secondaryText,
+    fontFamily: fonts.body,
+    fontSize: 12,
+    marginTop: 1
+  },
+  dayNightSwitchTrack: {
+    width: 86,
+    height: 42,
+    borderRadius: 21,
+    position: "relative",
+    justifyContent: "center",
+    paddingHorizontal: 3
+  },
+  dayNightSwitchTrackLight: {
+    backgroundColor: "#FFEAB6",
+    borderWidth: 1,
+    borderColor: "#FAD7A0"
+  },
+  dayNightSwitchTrackDark: {
+    backgroundColor: "#0B1D2D",
+    borderWidth: 1,
+    borderColor: "#1A3650"
+  },
+  dayNightThumb: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4
+  },
+  dayNightThumbLight: {
+    backgroundColor: "#F5B041",
+    alignSelf: "flex-start"
+  },
+  dayNightThumbDark: {
+    backgroundColor: "#38BDF8",
+    alignSelf: "flex-end"
+  },
+  dayNightTrackLabel: {
+    position: "absolute",
+    fontFamily: fonts.bold,
+    fontSize: 12
+  },
+  dayNightTrackLabelLight: {
+    right: 12,
+    color: "#7D5A29"
+  },
+  dayNightTrackLabelDark: {
+    left: 12,
+    color: "#94A3B8"
   }
 });
+
 

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import type { ComponentProps } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -16,28 +15,24 @@ import {
   View
 } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { colors, fonts, shadows, spacing } from "../../theme";
+import { colors, fonts, shadows } from "../../theme";
 import { useBooking } from "../../state/BookingContext";
 
 type Role = "Customer" | "Barber";
 
-export default function Login({ navigation }: { navigation: any }) {
-  const [identifier, setIdentifier] = useState("");
+export default function SignUp({ navigation }: { navigation: any }) {
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("Customer");
   const [passwordHidden, setPasswordHidden] = useState(true);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [agreeTerms, setAgreeTerms] = useState(true);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  
-  // Google Account Picker Modal & Authentication State
+
+  // Google Account Picker Modal State
   const [googleModalVisible, setGoogleModalVisible] = useState(false);
   const [authenticatingAccount, setAuthenticatingAccount] = useState<string | null>(null);
-
-  // Forgot Password Modal State
-  const [forgotModalVisible, setForgotModalVisible] = useState(false);
-  const [resetInput, setResetInput] = useState("");
-  const [resetSending, setResetSending] = useState(false);
-  const [resetSuccess, setResetSuccess] = useState(false);
 
   const { height } = useWindowDimensions();
   const { setWorkspace, themeMode } = useBooking();
@@ -52,7 +47,7 @@ export default function Login({ navigation }: { navigation: any }) {
     { name: "Lois Becket", email: "loisbecket@gmail.com", roleBadge: "Customer Account", initial: "L", bg: "#6366F1" },
   ];
 
-  function continueWithRole() {
+  function handleCreateAccount() {
     setWorkspace(role);
     navigation.navigate("OtpVerification", { role });
   }
@@ -95,19 +90,6 @@ export default function Login({ navigation }: { navigation: any }) {
     }, 1000);
   }
 
-  function handleSendResetCode() {
-    setResetSending(true);
-    setTimeout(() => {
-      setResetSending(false);
-      setResetSuccess(true);
-      setTimeout(() => {
-        setResetSuccess(false);
-        setForgotModalVisible(false);
-        navigation.navigate("OtpVerification", { role });
-      }, 1100);
-    }, 650);
-  }
-
   return (
     <SafeAreaView style={[styles.root, isDark && styles.rootDark]}>
       <KeyboardAvoidingView style={styles.keyboard} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -127,9 +109,9 @@ export default function Login({ navigation }: { navigation: any }) {
 
             {/* Title & Subtitle */}
             <View style={styles.introHeader}>
-              <Text style={[styles.title, isDark && styles.textWhite]}>Sign in to your Account</Text>
+              <Text style={[styles.title, isDark && styles.textWhite]}>Get Started</Text>
               <Text style={[styles.subtitle, isDark && styles.textMutedDark]}>
-                Enter your email and password to log in
+                Create an account to continue with Cutzix
               </Text>
             </View>
 
@@ -159,6 +141,28 @@ export default function Login({ navigation }: { navigation: any }) {
 
             {/* Form Fields */}
             <View style={styles.form}>
+              {/* Full Name Field */}
+              <View style={styles.fieldGroup}>
+                <Text style={[styles.fieldLabel, isDark && styles.textWhite]}>Full Name</Text>
+                <View style={[
+                  styles.inputPill,
+                  isDark && styles.inputPillDark,
+                  focusedField === "name" && styles.inputPillFocused,
+                  focusedField === "name" && isDark && styles.inputPillFocusedDark
+                ]}>
+                  <TextInput
+                    onBlur={() => setFocusedField(null)}
+                    onChangeText={setFullName}
+                    onFocus={() => setFocusedField("name")}
+                    placeholder="Lois Becket"
+                    placeholderTextColor={isDark ? "#64748B" : "#9CA3AF"}
+                    returnKeyType="next"
+                    style={[styles.input, isDark && styles.textWhite]}
+                    value={fullName}
+                  />
+                </View>
+              </View>
+
               {/* Email Field */}
               <View style={styles.fieldGroup}>
                 <Text style={[styles.fieldLabel, isDark && styles.textWhite]}>Email</Text>
@@ -172,16 +176,36 @@ export default function Login({ navigation }: { navigation: any }) {
                     autoCapitalize="none"
                     keyboardType="email-address"
                     onBlur={() => setFocusedField(null)}
-                    onChangeText={(val) => {
-                      setIdentifier(val);
-                      setResetInput(val);
-                    }}
+                    onChangeText={setEmail}
                     onFocus={() => setFocusedField("email")}
                     placeholder="Loisbecket@gmail.com"
                     placeholderTextColor={isDark ? "#64748B" : "#9CA3AF"}
                     returnKeyType="next"
                     style={[styles.input, isDark && styles.textWhite]}
-                    value={identifier}
+                    value={email}
+                  />
+                </View>
+              </View>
+
+              {/* Phone Field */}
+              <View style={styles.fieldGroup}>
+                <Text style={[styles.fieldLabel, isDark && styles.textWhite]}>Phone Number</Text>
+                <View style={[
+                  styles.inputPill,
+                  isDark && styles.inputPillDark,
+                  focusedField === "phone" && styles.inputPillFocused,
+                  focusedField === "phone" && isDark && styles.inputPillFocusedDark
+                ]}>
+                  <TextInput
+                    keyboardType="phone-pad"
+                    onBlur={() => setFocusedField(null)}
+                    onChangeText={setPhone}
+                    onFocus={() => setFocusedField("phone")}
+                    placeholder="+1 555 019 2834"
+                    placeholderTextColor={isDark ? "#64748B" : "#9CA3AF"}
+                    returnKeyType="next"
+                    style={[styles.input, isDark && styles.textWhite]}
+                    value={phone}
                   />
                 </View>
               </View>
@@ -199,7 +223,7 @@ export default function Login({ navigation }: { navigation: any }) {
                     onBlur={() => setFocusedField(null)}
                     onChangeText={setPassword}
                     onFocus={() => setFocusedField("password")}
-                    onSubmitEditing={continueWithRole}
+                    onSubmitEditing={handleCreateAccount}
                     placeholder="••••••••"
                     placeholderTextColor={isDark ? "#64748B" : "#9CA3AF"}
                     returnKeyType="done"
@@ -218,34 +242,26 @@ export default function Login({ navigation }: { navigation: any }) {
                 </View>
               </View>
 
-              {/* Options Row: Remember Me & Working Forgot Password Link */}
-              <View style={styles.optionsRow}>
-                <Pressable
-                  onPress={() => setRememberMe((val) => !val)}
-                  style={({ pressed }) => [styles.rememberBox, pressed && styles.pressed]}
-                >
-                  <View style={[styles.checkbox, rememberMe && styles.checkboxChecked, isDark && !rememberMe && styles.checkboxDark]}>
-                    {rememberMe ? <Ionicons name="checkmark" size={13} color="#000000" /> : null}
-                  </View>
-                  <Text style={[styles.rememberText, isDark && styles.textMutedDark]}>Remember me</Text>
-                </Pressable>
-
-                <Pressable
-                  hitSlop={10}
-                  onPress={() => setForgotModalVisible(true)}
-                  style={({ pressed }) => [pressed && styles.pressed]}
-                >
-                  <Text style={styles.forgotLink}>Forgot Password ?</Text>
-                </Pressable>
-              </View>
-
-              {/* Main Log In Button */}
+              {/* Terms Checkbox Row */}
               <Pressable
-                onPress={continueWithRole}
-                style={({ pressed }) => [styles.loginBtn, pressed && styles.pressed]}
+                onPress={() => setAgreeTerms((val) => !val)}
+                style={({ pressed }) => [styles.termsRow, pressed && styles.pressed]}
               >
-                <Text style={styles.loginBtnText}>
-                  {role === "Customer" ? "Log In" : "Log In as Barber"}
+                <View style={[styles.checkbox, agreeTerms && styles.checkboxChecked, isDark && !agreeTerms && styles.checkboxDark]}>
+                  {agreeTerms ? <Ionicons name="checkmark" size={13} color="#000000" /> : null}
+                </View>
+                <Text style={[styles.termsText, isDark && styles.textMutedDark]}>
+                  I agree to the <Text style={styles.goldLink}>Terms & Privacy Policy</Text>
+                </Text>
+              </Pressable>
+
+              {/* Main Sign Up Button */}
+              <Pressable
+                onPress={handleCreateAccount}
+                style={({ pressed }) => [styles.signupBtn, pressed && styles.pressed]}
+              >
+                <Text style={styles.signupBtnText}>
+                  {role === "Customer" ? "Create Account" : "Register Barber Account"}
                 </Text>
               </Pressable>
             </View>
@@ -267,16 +283,16 @@ export default function Login({ navigation }: { navigation: any }) {
                   <Text style={{ fontSize: 16, fontWeight: "700", color: "#4285F4" }}>G</Text>
                 </View>
                 <Text style={[styles.googleOfficialText, isDark && styles.textWhite]}>
-                  {role === "Barber" ? "Connect Google Barber Account" : "Continue with Google"}
+                  Sign up with Google
                 </Text>
               </Pressable>
             </View>
 
-            {/* Signup Footer */}
-            <View style={styles.signupFooter}>
-              <Text style={[styles.signupText, isDark && styles.textMutedDark]}>Don't have an account? </Text>
-              <Pressable hitSlop={8} onPress={() => navigation.navigate("SignUp")} style={({ pressed }) => pressed && styles.pressed}>
-                <Text style={styles.signupLink}>Sign Up</Text>
+            {/* Login Link Footer */}
+            <View style={styles.loginFooter}>
+              <Text style={[styles.loginFooterText, isDark && styles.textMutedDark]}>Already have an account? </Text>
+              <Pressable hitSlop={8} onPress={() => navigation.navigate("Login")} style={({ pressed }) => pressed && styles.pressed}>
+                <Text style={styles.goldLink}>Log In</Text>
               </Pressable>
             </View>
           </View>
@@ -297,11 +313,11 @@ export default function Login({ navigation }: { navigation: any }) {
               <View style={styles.googleModalLogoCircle}>
                 <Ionicons name="logo-google" size={26} color="#4285F4" />
               </View>
-              <Text style={[styles.googleModalTitle, isDark && styles.textWhite]}>Sign in with Google</Text>
+              <Text style={[styles.googleModalTitle, isDark && styles.textWhite]}>Sign up with Google</Text>
               <Text style={[styles.googleModalSubtitle, isDark && styles.textMutedDark]}>
                 {role === "Barber"
-                  ? "Select your Barber Google Account to connect your schedule & workspace"
-                  : "Choose an account to continue to Cutzix"}
+                  ? "Select your Barber Google Account to register your schedule & workspace"
+                  : "Choose an account to register with Cutzix"}
               </Text>
             </View>
 
@@ -355,78 +371,6 @@ export default function Login({ navigation }: { navigation: any }) {
             {/* Modal Actions */}
             <Pressable
               onPress={() => setGoogleModalVisible(false)}
-              style={({ pressed }) => [styles.cancelModalBtn, pressed && styles.pressed]}
-            >
-              <Text style={styles.cancelModalBtnText}>Cancel</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Working Forgot Password Modal */}
-      <Modal
-        animationType="fade"
-        transparent
-        visible={forgotModalVisible}
-        onRequestClose={() => setForgotModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.googleModalCard, isDark && styles.googleModalCardDark]}>
-            <View style={styles.googleModalHeader}>
-              <View style={[styles.googleModalLogoCircle, { backgroundColor: "rgba(200, 154, 67, 0.14)" }]}>
-                <Feather name="key" size={24} color="#C89A43" />
-              </View>
-              <Text style={[styles.googleModalTitle, isDark && styles.textWhite]}>Reset Password</Text>
-              <Text style={[styles.googleModalSubtitle, isDark && styles.textMutedDark]}>
-                Enter your registered email or phone number below. We'll send you a 4-digit verification code to reset your password.
-              </Text>
-            </View>
-
-            {resetSuccess ? (
-              <View style={styles.resetSuccessBox}>
-                <Ionicons name="checkmark-circle" size={44} color="#10B981" />
-                <Text style={styles.resetSuccessTitle}>Code Sent Successfully!</Text>
-                <Text style={styles.resetSuccessBody}>Redirecting to verification code screen...</Text>
-              </View>
-            ) : (
-              <View style={{ gap: 14, marginBottom: 20 }}>
-                <View style={styles.fieldGroup}>
-                  <Text style={[styles.fieldLabel, isDark && styles.textWhite]}>Email or Phone Number</Text>
-                  <View style={[
-                    styles.inputPill,
-                    isDark && styles.inputPillDark,
-                    focusedField === "reset" && styles.inputPillFocused,
-                    focusedField === "reset" && isDark && styles.inputPillFocusedDark
-                  ]}>
-                    <TextInput
-                      autoCapitalize="none"
-                      onBlur={() => setFocusedField(null)}
-                      onChangeText={setResetInput}
-                      onFocus={() => setFocusedField("reset")}
-                      placeholder="e.g. loisbecket@gmail.com"
-                      placeholderTextColor={isDark ? "#64748B" : "#9CA3AF"}
-                      style={[styles.input, isDark && styles.textWhite]}
-                      value={resetInput || identifier}
-                    />
-                  </View>
-                </View>
-
-                <Pressable
-                  disabled={resetSending}
-                  onPress={handleSendResetCode}
-                  style={({ pressed }) => [styles.loginBtn, { marginTop: 4 }, pressed && styles.pressed]}
-                >
-                  {resetSending ? (
-                    <ActivityIndicator size="small" color="#000000" />
-                  ) : (
-                    <Text style={styles.loginBtnText}>Send Verification Code</Text>
-                  )}
-                </Pressable>
-              </View>
-            )}
-
-            <Pressable
-              onPress={() => setForgotModalVisible(false)}
               style={({ pressed }) => [styles.cancelModalBtn, pressed && styles.pressed]}
             >
               <Text style={styles.cancelModalBtnText}>Cancel</Text>
@@ -558,10 +502,10 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold
   },
   form: {
-    gap: 16
+    gap: 14
   },
   fieldGroup: {
-    gap: 6
+    gap: 5
   },
   fieldLabel: {
     fontFamily: fonts.bold,
@@ -609,16 +553,11 @@ const styles = StyleSheet.create({
     padding: 4,
     marginLeft: 6
   },
-  optionsRow: {
+  termsRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 2
-  },
-  rememberBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8
+    gap: 9,
+    marginTop: 4
   },
   checkbox: {
     width: 18,
@@ -638,17 +577,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#C89A43",
     borderColor: "#C89A43"
   },
-  rememberText: {
+  termsText: {
     fontFamily: fonts.medium,
     fontSize: 13,
     color: "#4B5563"
   },
-  forgotLink: {
+  goldLink: {
     fontFamily: fonts.bold,
     fontSize: 13,
     color: "#C89A43"
   },
-  loginBtn: {
+  signupBtn: {
     height: 52,
     borderRadius: 26,
     backgroundColor: "#C89A43",
@@ -661,7 +600,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 3
   },
-  loginBtnText: {
+  signupBtnText: {
     fontFamily: fonts.bold,
     fontSize: 16,
     color: "#000000"
@@ -670,7 +609,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    marginVertical: 22
+    marginVertical: 20
   },
   dividerRule: {
     flex: 1,
@@ -721,21 +660,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#3C4043"
   },
-  signupFooter: {
+  loginFooter: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 24
+    marginTop: 22
   },
-  signupText: {
+  loginFooterText: {
     fontFamily: fonts.body,
     fontSize: 14,
     color: "#6B7280"
-  },
-  signupLink: {
-    fontFamily: fonts.bold,
-    fontSize: 14,
-    color: "#C89A43"
   },
   modalOverlay: {
     flex: 1,
@@ -841,23 +775,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     fontSize: 14,
     color: "#475569"
-  },
-  resetSuccessBox: {
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 20
-  },
-  resetSuccessTitle: {
-    fontFamily: fonts.headingHeavy,
-    fontSize: 18,
-    color: "#10B981"
-  },
-  resetSuccessBody: {
-    fontFamily: fonts.medium,
-    fontSize: 13,
-    color: "#64748B",
-    textAlign: "center"
   },
   pressed: {
     opacity: 0.76,

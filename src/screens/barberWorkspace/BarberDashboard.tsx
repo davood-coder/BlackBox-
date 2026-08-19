@@ -53,8 +53,9 @@ export default function BarberDashboard({ navigation }: any) {
             <Switch
               value={shopOpen}
               onValueChange={setShopOpen}
-              trackColor={{ false: isDark ? "#3A3A3C" : "#E9E9EA", true: "#C89A43" }}
-              thumbColor={colors.white}
+              trackColor={{ false: isDark ? "#3A3A3C" : "#E0E0E0", true: "#00A896" }}
+              thumbColor="#FFFFFF"
+              ios_backgroundColor={isDark ? "#3A3A3C" : "#E0E0E0"}
             />
             <Text style={[styles.availabilityText, !shopOpen && styles.availabilityTextClosed]}>
               {shopOpen ? "Open" : "Closed"}

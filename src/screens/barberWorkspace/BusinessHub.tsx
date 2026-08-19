@@ -343,8 +343,9 @@ function ServicesPanel() {
                           )
                         );
                       }}
-                      trackColor={{ false: "#3A3A3C", true: "#C89A43" }}
-                      thumbColor={service.enabled ? colors.white : colors.muted}
+                      trackColor={{ false: isDark ? "#3A3A3C" : "#E0E0E0", true: "#00A896" }}
+                      thumbColor="#FFFFFF"
+                      ios_backgroundColor={isDark ? "#3A3A3C" : "#E0E0E0"}
                     />
                   </View>
                 </>
@@ -1238,8 +1239,9 @@ function ShopPanel({ navigation }: { navigation: any }) {
                               current.map((item) => (item.id === emp.id ? { ...item, active: val } : item))
                             );
                           }}
-                          trackColor={{ false: "#DADCD7", true: "#E7CE9B" }}
-                          thumbColor={emp.active ? colors.primaryDark : colors.muted}
+                          trackColor={{ false: isDark ? "#3A3A3C" : "#E0E0E0", true: "#00A896" }}
+                          thumbColor="#FFFFFF"
+                          ios_backgroundColor={isDark ? "#3A3A3C" : "#E0E0E0"}
                         />
                       </View>
 
@@ -1322,7 +1324,13 @@ function SettingRow({ icon, title, copy, value, onChange }: { icon: FeatherName;
         <Text style={[styles.settingTitle, { color: theme.text }]}>{title}</Text>
         <Text style={[styles.settingBody, { color: theme.secondaryText }]}>{copy}</Text>
       </View>
-      <Switch value={value} onValueChange={onChange} trackColor={{ false: "#DADCD7", true: "#E7CE9B" }} thumbColor={value ? colors.primaryDark : colors.muted} />
+      <Switch
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ false: isDark ? "#3A3A3C" : "#E0E0E0", true: "#00A896" }}
+        thumbColor="#FFFFFF"
+        ios_backgroundColor={isDark ? "#3A3A3C" : "#E0E0E0"}
+      />
     </View>
   );
 }
